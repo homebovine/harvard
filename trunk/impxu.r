@@ -221,9 +221,9 @@ theta <- exp(tbb[1])
 beta1 <- tbb[2 : (p + 1)]
 beta2 <- tbb[(p + 2) : (2 * p + 1)]
 beta3 <- tbb[(2 * p + 2) : (3 * p + 1)]
-vl1 <- cbind(exp(vl[1 : m]), resp[ind1, "y1"])
-vl2 <- cbind(exp(vl[(m + 1) : (m + f)]), resp[ind2, "y2"])
-vl3 <- cbind(exp(vl[(m + f + 1) : (m + f + g)]), resp[ind3, "y2"])
+#vl1 <- cbind(exp(vl[1 : m]), resp[ind1, "y1"])
+#vl2 <- cbind(exp(vl[(m + 1) : (m + f)]), resp[ind2, "y2"])
+#vl3 <- cbind(exp(vl[(m + f + 1) : (m + f + g)]), resp[ind3, "y2"])
 
 
 ######variance calculation
@@ -297,7 +297,7 @@ ulambda <- function(theta, beta1, beta2, beta3, vl1, vl2, vl3, resp, cov, xi){
 
 
 
-
+xi <- 0.0001
 
 I11 <- matrix(NA, 19, 19)
 I11[1, 1] <- sum(sapply(1 : n, ufun, resp, cov, theta, beta1, beta2, beta3, vl1, vl2, vl3, 1, 1))
@@ -311,3 +311,49 @@ for(k in 1 : 3){
     }
 }
 Imtx <- ulambda(theta, beta1, beta2, beta3, vl1, vl2, vl3, resp, cov, xi)
+
+coxd1 <- coxph(Surv(resp[, "y1"], resp[, "d1"] )~cov[, 1] + cov[, 2] + cov[, 3] + cov[, 4]+ cov[, 5]+cov[, 6])
+coxd2 <- coxph(Surv(resp[, "y2"], (1 - resp[, "d1"]) * resp[, "d2"])~cov[, 1] + cov[, 2] + cov[, 3] + cov[, 4]+ cov[, 5]+cov[, 6])
+coxd3 <- coxph(Surv(resp[, "y2"], resp[, "d1"] * resp[, "d2"])~cov[, 1] + cov[, 2] + cov[, 3] + cov[, 4]+ cov[, 5]+cov[, 6])
+coxd4 <- coxph(Surv(resp[, "y1"], resp[, "d1"] * (1 - resp[, "d2"]))~cov[, 1] + cov[, 2] + cov[, 3] + cov[, 4]+ cov[, 5]+cov[, 6])
+coxd5 <- coxph(Surv(resp[, "y1"], resp[, "d2"] )~cov[, 1] + cov[, 2] + cov[, 3] + cov[, 4]+ cov[, 5]+cov[, 6])
+#######reconstruct data
+ix <- which(resp[, 1] == 0)
+ix1 <- which(resp[, 1] != 0)
+l1 <- length(ix)
+l2 <- length(ix1)
+colnames(resp3) <- c("id", "d", "t", "death")
+resp2 <- resp[ix, c(1, 4)]
+resp1 <- rbind(resp[ix1, c(1, 3)], cbind(rep(0, l2), resp[ix1, c(4)]))
+resp1 <- cbind(c(1 : l2, 1 : l2 ), resp1, c(rep(0, l2), rep(1, l2)))
+resp2 <- cbind(c((l2+1) : (l2 + l1)), resp2, rep(1, l1))
+resp3 <- rbind(resp1, resp2)
+cov1 <- rbind(cov[ix1, ], cov[ix1, ], cov[ix, ])
+o <- order(resp3[, "id"])
+cov1 <- cov1[o, ]
+resp3 <- resp3[o, ]
+
+resp3 <- data.frame(resp3)
+a <- frailtyPenal(Surv(t, d) ~ cluster(id) + cov1[, 1] + cov1[, 2] + cov1[, 3] + cov1[, 4]+ cov1[, 5]+cov1[,6] + terminal(death), formula.terminalEvent = ~ cov1[, 1] + cov1[, 2] + cov1[, 3] + cov1[, 4]+ cov1[, 5]+cov1[,6], data = resp3, Frailty = TRUE, joint = TRUE, n.knots=5, kappa1=1000, kappa2=1000)
+a <- frailtyPenal(Surv(t, d) ~ + cov1[, 1] + cov1[, 2] + cov1[, 3] +death, data = resp1,  n.knots=5, kappa1=9.55e9, kappa2=1.41e12)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
