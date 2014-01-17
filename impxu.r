@@ -335,10 +335,43 @@ resp3 <- resp3[o, ]
 
 resp3 <- data.frame(resp3)
 a <- frailtyPenal(Surv(t, d) ~ cluster(id) + cov1[, 1] + cov1[, 2] + cov1[, 3] + cov1[, 4]+ cov1[, 5]+cov1[,6] + terminal(death), formula.terminalEvent = ~ cov1[, 1] + cov1[, 2] + cov1[, 3] + cov1[, 4]+ cov1[, 5]+cov1[,6], data = resp3, Frailty = TRUE, joint = TRUE, n.knots=5, kappa1=1000, kappa2=1000)
+cfit <- coxph(Surv(t, d)~cov1[, 1] + cov1[, 2] + cov1[, 3] + cov1[, 4]+ cov1[, 5]+cov1[,6], data = resp3)
 a <- frailtyPenal(Surv(t, d) ~ + cov1[, 1] + cov1[, 2] + cov1[, 3] +death, data = resp1,  n.knots=5, kappa1=9.55e9, kappa2=1.41e12)
 
 
-
+#Fine's method
+fineinner <- function(i, t){
+    y1 <- resp[i, 3]
+    y2 <- resp[i, 4]
+    if(resp[i, 2] ==1){
+        c = y2 + runif(1, 0, 10)
+    }else
+        c = y2
+    d1 <- resp[i, 1]
+    inner <- function(j, t){
+        y11 <- resp[j, 3]
+        y21 <- resp[j, 4]
+        d11 <- resp[j, 1]
+        if(resp[j, 2] ==1){
+            c1 = y21 + runif(1, 0, 10)
+        }else
+            c1 = y21
+        ny1 <- min(y1, y11)
+        ny2 <- min(y2, y21)
+        nc <- min(c, c1)
+        S <- min(ny1, ny2, nc)
+        R <- min(ny2, nc)
+        W <- n/  sum(resp[, "y1"] >= S & resp[, "y2"] >= R)
+        D <- (ny1 < ny2) & (ny2 < nc)
+        W * D * (((y1 - y11)*(y2 - y21) >0 ) - (1 + t)/(2 + t))
+        
+    }
+    sum(sapply((i + 1) : n, inner, t))
+}
+fine <- function(t){
+    sum(sapply(1: (n-1), fineinner, t))
+}
+uniroot(fine, c(0, 1000))
 
 
 
