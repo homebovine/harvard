@@ -224,8 +224,8 @@ vl1 <- vl10
 vl2 <- vl20
 vl3 <- vl30
 
-nitr <- 20
-mtbb <- tbb
+nitr <- 100
+mtbb <- tbb[1]
 for(itr in 1: nitr){
     print(itr)
     tbb <- dfsane(tbb, slvtbb, method = 2, control = list(tol = 1e-5,  maxit = 15000, triter = 100), quiet = FALSE, vl1, vl2, vl3, resp, cov, n, flag = 1)$par
@@ -395,32 +395,26 @@ a <- frailtyPenal(Surv(t, d) ~ + cov1[, 1] + cov1[, 2] + cov1[, 3] +death, data 
 
 
 #Fine's method
-nresp <- resp[ix1, ]
+nresp <- realresp
+ix <- which(is.na(resp[, 1])&is.na(resp[, 2]))
+ix1 <- which(is.na(resp[, 1])&!is.na(resp[, 2]))
+ix3 <- which(!is.na(resp[, 1])&!is.na(resp[, 2]))
+ix4 <- which(!is.na(resp[, 1])&is.na(resp[, 2]))
+nresp[ix, 1:2] <- nresp[ix, 3] + 10
+nresp[ix1, 1] <- nresp[ix, 2] + 10
+nresp[ix3, 3] <- nresp[ix, 2] + 10
+nresp[ix4, 2] <- nresp[ix, 3] + 10
 nr <- nrow(nresp)
 fineinner <- function(i, t, resp, n){
     
     y1 <- resp[i, 1]
     y2 <- resp[i, 2]
     c <- resp[i, 3]
-    if(is.na(y2)){
-        y2 <- c + 10
-    }
-    if(is.na(y1)){
-        y1 <- min(y2, c, na.rm = T) + 10
-    }
-    if(resp[i, 2] == 1){
-        c = y2 + runif(1, 0, 10)
-    }else
-        c = y2
     d1 <- resp[i, 1]
     inner <- function(j, t){
         y11 <- resp[j, 3]
         y21 <- resp[j, 4]
         d11 <- resp[j, 1]
-        if(resp[j, 2] ==1){
-            c1 = y21 + runif(1, 0, 10)
-        }else
-            c1 = y21
         ny1 <- min(y1, y11)
         ny2 <- min(y2, y21)
         nc <- min(c, c1)
@@ -436,7 +430,7 @@ fineinner <- function(i, t, resp, n){
 fine <- function(t, resp, n){
     sum(sapply(1: (n-1), fineinner, t, resp, n))
 }
-uniroot(fine, c(0, 10), resp, n)
+uniroot(fine, c(0, 10), nresp, nr)
 
 a <- uniroot(wrapfun, c(0.01, 10), beta10, beta20, beta30, vl10, vl20, vl30, resp, cov,nr,  2)
 
