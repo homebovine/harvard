@@ -82,17 +82,17 @@ wrapfun <- function(theta, beta1, beta2, beta3, vl1, vl2, vl3, resp, cov, n, fla
     tbb <- c((theta), beta1, beta2, beta3)
     slvtbb(tbb, vl1, vl2, vl3, resp, cov, n, flag = 2) 
 }
-slvl <- function(subvl, theta, beta1, beta2, beta3, vl1, vl2, vl3, subvl1, subvl2, subvl3, resp, cov, n, flag = 0){
+slvl <- function(subvl, theta, beta1, beta2, beta3, vl1, vl2, vl3, resp, cov, n, flag = 0){
     d1 <- resp[, "d1"]
     d2 <- resp[, "d2"]
     y1 <- resp[, "y1"]
     y2 <- resp[, "y2"]
-    subvl1[, 1] <- exp(subvl[1 : m1])
-    subvl2[, 1] <- exp(subvl[(m1 + 1) : (m1 + f1)])
-    subvl3[, 1] <- exp(subvl[(m1 + f1 + 1) : (m1 + f1 + g1)])
-    vl1[, 1] <- subvl1[, 1] #approxfun(subvl1[, 2], subvl1[, 1])(vl1[, 2])
-    vl2[, 1] <-subvl2[, 1] #approxfun(subvl2[, 2], subvl2[, 1])(vl2[, 2])
-    vl3[, 1] <- subvl3[, 1]#approxfun(subvl3[, 2], subvl3[, 1])(vl3[, 2])
+    subvl1 <- exp(subvl[1 : m])
+    subvl2 <- exp(subvl[(m + 1) : (m + f)])
+    subvl3 <- exp(subvl[(m + f + 1) : (m + f + g)])
+    vl1[, 1] <- subvl1 #approxfun(subvl1[, 2], subvl1[, 1])(vl1[, 2])
+    vl2[, 1] <-subvl2 #approxfun(subvl2[, 2], subvl2[, 1])(vl2[, 2])
+    vl3[, 1] <- subvl3#approxfun(subvl3[, 2], subvl3[, 1])(vl3[, 2])
     lres <- lapply(1 : n, fU, theta, beta1, beta2, beta3, vl1, vl2, vl3, resp, cov, n, flag = 0)
     mu <- do.call(rbind, lres)
     fvl <- function(j, vl, submu, flg){
@@ -102,9 +102,9 @@ slvl <- function(subvl, theta, beta1, beta2, beta3, vl1, vl2, vl3, subvl1, subvl
             ix <- (y2 >= vl[j, 2]) & (y1 < vl[j, 2])
         1 / vl[j, 1] - sum(submu[ix])
     }
-    svl1 <- sapply(1 : m1, fvl, subvl1, mu[, 1], 1)
-    svl2 <- sapply(1 : f1, fvl, subvl2, mu[, 2], 1)
-    svl3 <- sapply(1: g1, fvl, subvl3, mu[, 3], 0)
+    svl1 <- sapply(1 : m, fvl, vl1, mu[, 1], 1)
+    svl2 <- sapply(1 : f, fvl, vl2, mu[, 2], 1)
+    svl3 <- sapply(1: g, fvl, vl3, mu[, 3], 0)
     return(c(svl1, svl2, svl3))
     
 }
@@ -141,17 +141,33 @@ slvl1 <- function(theta, beta1, beta2, beta3, vl1, vl2, vl3, rvl1, rvl2, rvl3, r
 set.seed <- 2014
 myData <- read.csv("DataForSebastien121127.csv")
 myData <- myData[complete.cases(myData[, 1:9]), ]
-n <- nrow(myData)
-ix <- sample(1:n, 300)
-myData <- myData[ix, ]
-y1 <- myData$DiagnosisAge - myData$EnrollAge
-y2 <- myData$AgeAtDeath - myData$EnrollAge
+missDeath <- (is.na(myData$AgeAtDeath))
+missDiagnosis <- (is.na(myData$DiagnosisAge))
+myData1 <- myData[which(missDeath * missDiagnosis == 1), ]
+myData2 <- myData[which(missDeath * (1 - missDiagnosis) == 1), ]
+myData3 <- myData[which((1 - missDeath) * (1 - missDiagnosis) == 1), ]
+myData4 <- myData[which((1 - missDeath) * (missDiagnosis) == 1), ]
 
+n1 <- nrow(myData1)
+n2 <- nrow(myData2)
+n3 <- nrow(myData3)
+n4 <- nrow(myData4)
+ix1 <- sample(1:n1, 50)
+ix2 <- sample(1:n2, 50)
+ix3 <- sample(1:n3, 100)
+ix4 <- sample(1:n4, 100)
+myData <- rbind(myData1[ix1, ], myData2[ix2, ],  myData3[ix3, ], myData4[ix4, ])
+twt <- runif(length(myData$EnrollAge), 0, 0.01)
+y1 <- myData$DiagnosisAge - myData$EnrollAge + twt  #+ runif(length(myData$EnrollAge), 0, 0.01)
+y2 <- myData$AgeAtDeath - myData$EnrollAge + twt #+  runif(length(myData$EnrollAge), 0, 0.01)
 
+realresp <- cbind(y1, y2, rep(NA, nrow(myData)))
 d1 <- !is.na(y1) 
 d2 <- !is.na(y2)
 cen1 <- runif(sum((1 - d2) * d1), min(myData$AgeAtDeath - myData$DiagnosisAge, na.rm = T), max(myData$AgeAtDeath - myData$DiagnosisAge, na.rm = T) + 10)
 cen2 <- runif(sum((1 - d2) * (1 - d1)), min(myData$DiagnosisAge - myData$EnrollAge, na.rm = T), max(myData$DiagnosisAge - myData$EnrollAge, na.rm = T) + 10)
+realresp[which((1 - d2) * d1 ==1), 3] <- cen1 + realresp[which((1 - d2) * d1 ==1), 1]
+realresp[which((1 - d2) * (1 - d1)==1), 3] <- cen2
 #cenAge <- myData$EnrollAge[1 - d2] + cen1
 y2[which( d2 == 0&(d1 ==1))] <- cen1 + y1[which( d2 == 0&(d1 ==1))]
 y2[which( d2 == 0&(d1 ==0))] <- cen2
@@ -195,23 +211,19 @@ surv3 <- summary(survfit(Surv(resp[, "y2"], ind3) ~ 1),  times = resp[ind3, "y2"
 vl10[, 1]  <- (1 / surv1$n.risk)
 vl20[, 1]  <- (1 / surv2$n.risk)
 vl30[, 1]  <- (1 / surv3$n.risk)
-subvl10 <- vl10[subinx1, ]
-subvl20 <- vl20[subinx2, ]
-subvl30 <- vl30[subinx3, ]
+
 theta0 <- 0
 beta10 <-  beta20 <- beta30 <- rep(0, p)
 
 n <- nrow(resp)
 
 tbb <- c(theta0, beta10, beta20, beta30)
-vl <- c(log(vl10[, 1]), log(vl20[, 1]), log(vl30[, 1]))
-subvl <- c(log(subvl10[, 1]), log(subvl20[, 1]), log(subvl30[, 1]))
+subvl <- vl <- c(log(vl10[, 1]), log(vl20[, 1]), log(vl30[, 1]))
+
 vl1 <- vl10
 vl2 <- vl20
 vl3 <- vl30
-subvl1 <- cbind((subvl[1 : m1]), resp[subinx1, "y1"])
-subvl2 <- cbind((subvl[(m1 + 1) : (m1 + f1)]), resp[subinx2, "y2"])
-subvl3 <- cbind((subvl[(m1 + f1 + 1) : (m1 + f1+ g1)]), resp[subinx3, "y2"])
+
 nitr <- 20
 mtbb <- tbb
 for(itr in 1: nitr){
@@ -221,14 +233,14 @@ for(itr in 1: nitr){
     beta1 <- tbb[2 : (p + 1)]
     beta2 <- tbb[(p + 2) : (2 * p + 1)]
     beta3 <- tbb[(2 * p + 2) : (3 * p + 1)]
-    subvl <- dfsane(subvl, slvl, method = 2, control = list(tol = 1e-5, maxit = 1500, triter = 100), quiet = FALSE, exp(theta), beta1, beta2, beta3, vl1, vl2, vl3, subvl1, subvl2, subvl3,  resp, cov, n, flag = 0)$par
+    subvl <- dfsane(vl, slvl, method = 2, control = list(tol = 1e-5, maxit = 1500, triter = 100), quiet = FALSE, exp(theta), beta1, beta2, beta3, vl1, vl2, vl3,  resp, cov, n, flag = 0)$par
     
-    subvl1 <- cbind((subvl[1 : m1]), resp[subinx1, "y1"])
-    subvl2 <- cbind((subvl[(m1 + 1) : (m1 + f1)]), resp[subinx2, "y2"])
-    subvl3 <- cbind((subvl[(m1 + f1 + 1) : (m1 + f1 + g1)]), resp[subinx3, "y2"])
-    vl1[, 1] <- approxfun(subvl1[, 2], exp(subvl1[, 1]))(vl1[, 2])
-    vl2[, 1] <- approxfun(subvl2[, 2], exp(subvl2[, 1]))(vl2[, 2])
-    vl3[, 1] <- approxfun(subvl3[, 2], exp(subvl3[, 1]))(vl3[, 2])
+    vl1 <- cbind(exp(subvl[1 : m]), resp[ind1, "y1"])
+    vl2 <- cbind(exp(subvl[(m + 1) : (m + f)]), resp[ind2, "y2"])
+    vl3 <- cbind(exp(subvl[(m + f + 1) : (m + f + g)]), resp[ind3, "y2"])
+    ## vl1[, 1] <- approxfun(subvl1[, 2], exp(subvl1[, 1]))(vl1[, 2])
+    ## vl2[, 1] <- approxfun(subvl2[, 2], exp(subvl2[, 1]))(vl2[, 2])
+    ## vl3[, 1] <- approxfun(subvl3[, 2], exp(subvl3[, 1]))(vl3[, 2])>
    # vl2 <- approxfunc(subvl2[, 1], subvl2[, 2])(resp[ind2, "y2"])
     #vl1 <- cbind(exp(vl[1 : m]), resp[ind1, "y1"])
    # vl2 <- cbind(exp(vl[(m + 1) : (m + f)]), resp[ind2, "y2"])
@@ -239,19 +251,19 @@ for(itr in 1: nitr){
 for(itr in 1: nitr){
     print(itr)
     print(tbb)
-    tbb <-  uniroot(wrapfun, c(0.01, 10), beta10, beta20, beta30, vl1, vl2, vl3, resp, cov,n,  2)$root
+    tbb <-  uniroot(wrapfun, c(0.0001, 100), beta10, beta20, beta30, vl1, vl2, vl3, resp, cov,n,  2)$root
     theta <- tbb[1]
     beta1 <- beta10#tbb[2 : (p + 1)]
     beta2 <- beta20#tbb[(p + 2) : (2 * p + 1)]
     beta3 <- beta30#tbb[(2 * p + 2) : (3 * p + 1)]
-    subvl <- dfsane(subvl, slvl, method = 2, control = list(tol = 1e-5, maxit = 10000, triter = 100), quiet = FALSE, (theta), beta1, beta2, beta3, vl1, vl2, vl3, subvl1, subvl2, subvl3,  resp, cov, n, flag = 0)$par
+    subvl <- dfsane(subvl, slvl, method = 2, control = list(tol = 1e-5, maxit = 10000, triter = 100), quiet = FALSE, (theta), beta1, beta2, beta3, vl1, vl2, vl3, resp, cov, n, flag = 0)$par
     
-    subvl1 <- cbind((subvl[1 : m1]), resp[subinx1, "y1"])
-    subvl2 <- cbind((subvl[(m1 + 1) : (m1 + f1)]), resp[subinx2, "y2"])
-    subvl3 <- cbind((subvl[(m1 + f1 + 1) : (m1 + f1 + g1)]), resp[subinx3, "y2"])
-    vl1[, 1] <-  exp(subvl1[, 1])#approxfun(subvl1[, 2], exp(subvl1[, 1]))(vl1[, 2])
-    vl2[, 1] <- exp(subvl2[, 1])#approxfun(subvl2[, 2], exp(subvl2[, 1]))(vl2[, 2])
-    vl3[, 1] <- exp(subvl3[, 1])# approxfun(subvl3[, 2], exp(subvl3[, 1]))(vl3[, 2])
+    vl1 <- cbind(exp(subvl[1 : m]), vl1[, 2])
+    vl2 <- cbind(exp(subvl[(m + 1) : (m + f)]),  vl2[, 2])
+    vl3 <- cbind(exp(subvl[(m + f + 1) : (m + f + g)]),  vl3[, 2])
+   # vl1[, 1] <-  exp(subvl1[, 1])#approxfun(subvl1[, 2], exp(subvl1[, 1]))(vl1[, 2])
+   # vl2[, 1] <- exp(subvl2[, 1])#approxfun(subvl2[, 2], exp(subvl2[, 1]))(vl2[, 2])
+   # vl3[, 1] <- exp(subvl3[, 1])# approxfun(subvl3[, 2], exp(subvl3[, 1]))(vl3[, 2])
    # vl2 <- approxfunc(subvl2[, 1], subvl2[, 2])(resp[ind2, "y2"])
     #vl1 <- cbind(exp(vl[1 : m]), resp[ind1, "y1"])
    # vl2 <- cbind(exp(vl[(m + 1) : (m + f)]), resp[ind2, "y2"])
@@ -385,9 +397,17 @@ a <- frailtyPenal(Surv(t, d) ~ + cov1[, 1] + cov1[, 2] + cov1[, 3] +death, data 
 #Fine's method
 nresp <- resp[ix1, ]
 nr <- nrow(nresp)
-fineinner <- function(i, t, resp){
-    y1 <- resp[i, 3]
-    y2 <- resp[i, 4]
+fineinner <- function(i, t, resp, n){
+    
+    y1 <- resp[i, 1]
+    y2 <- resp[i, 2]
+    c <- resp[i, 3]
+    if(is.na(y2)){
+        y2 <- c + 10
+    }
+    if(is.na(y1)){
+        y1 <- min(y2, c, na.rm = T) + 10
+    }
     if(resp[i, 2] == 1){
         c = y2 + runif(1, 0, 10)
     }else
@@ -411,14 +431,14 @@ fineinner <- function(i, t, resp){
         W * D * (((y1 - y11)*(y2 - y21) >0 ) - (1 + t)/(2 + t))
         
     }
-    sum(sapply((i + 1) : nr, inner, t))
+    sum(sapply((i + 1) : n, inner, t))
 }
-fine <- function(t, resp){
-    sum(sapply(1: (nr-1), fineinner, t, nresp))
+fine <- function(t, resp, n){
+    sum(sapply(1: (n-1), fineinner, t, resp, n))
 }
-uniroot(fine, c(0, 10))
+uniroot(fine, c(0, 10), resp, n)
 
-a <- uniroot(wrapfun, c(0.01, 10), beta10, beta20, beta30, vl10, vl20, vl30, nresp, cov,nr,  2)
+a <- uniroot(wrapfun, c(0.01, 10), beta10, beta20, beta30, vl10, vl20, vl30, resp, cov,nr,  2)
 
 
 
