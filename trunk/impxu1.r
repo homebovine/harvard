@@ -396,47 +396,86 @@ a <- frailtyPenal(Surv(t, d) ~ + cov1[, 1] + cov1[, 2] + cov1[, 3] +death, data 
 
 #Fine's method
 nresp <- realresp
-ix <- which(is.na(resp[, 1])&is.na(resp[, 2]))
-ix1 <- which(is.na(resp[, 1])&!is.na(resp[, 2]))
-ix3 <- which(!is.na(resp[, 1])&!is.na(resp[, 2]))
-ix4 <- which(!is.na(resp[, 1])&is.na(resp[, 2]))
-nresp[ix, 1:2] <- nresp[ix, 3] + 10
-nresp[ix1, 1] <- nresp[ix, 2] + 10
-nresp[ix3, 3] <- nresp[ix, 2] + 10
-nresp[ix4, 2] <- nresp[ix, 3] + 10
+ix <- which(is.na(nresp[, 1])&is.na(nresp[, 2]))
+ix1 <- which(is.na(nresp[, 1])&!is.na(nresp[, 2]))
+ix3 <- which(is.na(nresp[, 2]))
+ix4 <- which(is.na(nresp[, 3]))
+nresp[ix, 1:2] <- nresp[ix, 3] + 2
+nresp[ix1, 1] <- nresp[ix, 2] + 2
+nresp[ix3, 2] <- pmax(nresp[ix3, 1], nresp[ix3, 3], na.rm = T) + 2
+nresp[ix4, 3] <- pmax(nresp[ix4, 1], nresp[ix4, 2], na.rm = T) + 2
 nr <- nrow(nresp)
-fineinner <- function(i, t, resp, n){
+fineinner <- function(i, t, resp, n, num){
     
     y1 <- resp[i, 1]
     y2 <- resp[i, 2]
     c <- resp[i, 3]
-    d1 <- resp[i, 1]
-    inner <- function(j, t){
-        y11 <- resp[j, 3]
-        y21 <- resp[j, 4]
-        d11 <- resp[j, 1]
+    
+    inner <- function(j, t, n){
+        y11 <- resp[j, 1]
+        y21 <- resp[j, 2]
+        c1 <- resp[i, 3]
         ny1 <- min(y1, y11)
         ny2 <- min(y2, y21)
         nc <- min(c, c1)
-        S <- min(ny1, ny2, nc)
-        R <- min(ny2, nc)
-        W <- n/  sum(resp[, "y1"] >= S & resp[, "y2"] >= R)
         D <- (ny1 < ny2) & (ny2 < nc)
-        W * D * (((y1 - y11)*(y2 - y21) >0 ) - (1 + t)/(2 + t))
+        if(num == 1){
+            if(!is.na(D)&D == 1){
+                S <- min(ny1, ny2, nc)
+                R <- min(ny2, nc)
+                W <- n/  sum(resp[, 1] >= S & resp[, 2] >= R)
+            W * D * (((y1 - y11)*(y2 - y21) >0 ))
+            }else{
+                0
+            }
+        }else{
+            if(!is.na(D)&D == 1){
+                S <- min(ny1, ny2, nc)
+                R <- min(ny2, nc)
+                W <- n/  sum(resp[, 1] >= S & resp[, 2] >= R)
+                W * D * (1 - ((y1 - y11)*(y2 - y21) >0 ))
+            }else{
+                0 
+            }
+        }
+                                        #- (1 + t)/(2 + t))
         
     }
-    sum(sapply((i + 1) : n, inner, t))
+    sum(sapply((i + 1) : n, inner, t, n))
 }
-fine <- function(t, resp, n){
-    sum(sapply(1: (n-1), fineinner, t, resp, n))
+fine <- function(t, resp, n, num){
+    sum(sapply(1: (n-1), fineinner, t, resp, n, num))
 }
-uniroot(fine, c(0, 10), nresp, nr)
+fine(0, nsimresp, nr, 1) / fine(0, nsimresp, nr, 0) - 1
+uniroot(fine, c(0.01, 10), nsimresp, nr)
 
 a <- uniroot(wrapfun, c(0.01, 10), beta10, beta20, beta30, vl10, vl20, vl30, resp, cov,nr,  2)
 
 
-
-
+############simulate samples
+simufun <- function(i, t, l1, l2, l3){
+    g <- rgamma(1, shape = 1/t, rate = 1/t)
+    r <- rbinom(1, 1, 0.5)
+    
+    u <- runif(1)
+    if(r == 1){
+        t1 <- rexp(1, g * l1)
+        t2 <- t1 + rexp(1, l2 *g)
+    }else{
+        t2 <- rexp(1, g* l3)
+        t1 <- t2 + rexp(1, l1 *g)
+    }
+    c <- runif(1, 1, 3)
+    c(t1, t2, c)
+    }
+simdata <- t(sapply(1 : n, simufun, 0.5, l1, l2, l3))
+d1 <- simdata[, 1] < simdata[, 2]&simdata[, 1] < simdata[, 3]
+d2 <- simdata[, 2] < simdata[, 3]
+y2 <- pmin(simdata[, 2], simdata[, 3])
+y1 <- pmin(simdata[, 1], y2)
+simresp <- cbind(d1, d2, y1, y2)
+nsimresp <- simdata
+colnames(simresp) <- c("d1", "d2", "y1", "y2")
 
 
 
