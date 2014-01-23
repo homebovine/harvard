@@ -31,18 +31,17 @@ slvl2 <- function( theta, beta1, beta2, beta3, vl1, vl2, vl3, resp, cov, n, zVec
     d2 <- resp[, "d2"]
     y1 <- resp[, "y1"]
     y2 <- resp[, "y2"]
-                                        #lres <- zVec# lapply(1 : n, fU, theta, beta1, beta2, beta3, vl1, vl2, vl3, resp, cov, n, zVec, flag = 0)
-    mu <- zVec#do.call(rbind, lres)
+                                      
     fvl <- function(j, vl,  flg){
         if(flg == 1){
             ix <- y1 >= (vl[j, 2] - 0.0001)
         }else 
             ix <- (y2 >= vl[j, 2] - 0.0001) & (y1 < vl[j, 2])
-                                        #b <- sum((y2 < vl[j, 2]) & (y1 < vl[j, 2]))
+                                      
         a <- (sum(zVec[ix]))
         
         if(a != 0 ){
-            1/a
+             1/a
         }else{
             browser()
             0
@@ -54,9 +53,52 @@ slvl2 <- function( theta, beta1, beta2, beta3, vl1, vl2, vl3, resp, cov, n, zVec
     svl1 <- sapply(1 : m, fvl, vl1,  1)
     svl2 <- sapply(1 : f, fvl, vl2, 1)
     svl3 <- sapply(1: g, fvl, vl3,  0)
+   
     return(c(svl1, svl2, svl3))
     
 }
+
+slvl3 <- function(slv, beta1, beta2, beta3, vl1, vl2, vl3, resp, cov, n, zVec, dilogZ,  flag = 0){
+    d1 <- resp[, "d1"]
+    d2 <- resp[, "d2"]
+    y1 <- resp[, "y1"]
+    y2 <- resp[, "y2"]
+    vl1[, 1] <- slv[1:m]^2
+    vl2[, 1] <- slv[(m+1) : (m + f)]^2
+    vl3[, 1] <- slv[(m + f + 1) : (m + f + g)]^2
+    theta <- slv[m + f +  g+ 1]^2
+    paras <- sapply(1 : n, getA,   beta1, beta2, beta3, vl1, vl2, vl3)
+    zVec <- sapply(1:n, postz, theta, paras, resp)
+    #logZ <- sapply(1:n, postlogz, theta, paras, resp)
+    #dilogZ <- sum(logZ) - sum(zVec)
+           
+    fvl <- function(j, vl,  flg){
+        if(flg == 1){
+            ix <- y1 >= (vl[j, 2] - 0.0001)
+        }else 
+            ix <- (y2 >= vl[j, 2] - 0.0001) & (y1 < vl[j, 2])
+                                      
+        a <- (sum(zVec[ix]))
+        
+        if(a != 0 ){
+           1/ vl[j, 1] - a
+        }else{
+            browser()
+            0
+        }
+        
+        
+    }
+    
+    
+    svl1 <- sapply(1 : m, fvl, vl1,  1)
+    svl2 <- sapply(1 : f, fvl, vl2, 1)
+    svl3 <- sapply(1: g, fvl, vl3,  0)
+    svl4 <- slvtheU(theta, paras, resp)#slvtheta(theta, dilogZ)
+    return(c(svl1, svl2, svl3, svl4))
+    
+}
+
 
 
 ##################################
@@ -68,12 +110,11 @@ slvl2 <- function( theta, beta1, beta2, beta3, vl1, vl2, vl3, resp, cov, n, zVec
 
 ####without covariates
 
-theta <- 1
+theta <- 0.5
 mtbb <- 1
 nitr <- 100
 for(simitr in 1 : nsim){
     print(simitr)
-    set.seed <- 2014
     resp <- lsimresp1[[simitr]]
     colnames(resp) <- c("d1", "d2", "y1", "y2")
     d1 <- resp[, 1]
@@ -82,7 +123,7 @@ for(simitr in 1 : nsim){
     y2 <- resp[, 4]
     p <- 6
     ind1 <- (d1 == 1 )
-   
+    
     subgix1 <- (d1 == 0)
     respsub1 <- resp[subgix1, ]
     respsub2 <- resp[ind1, ]
@@ -119,44 +160,77 @@ for(simitr in 1 : nsim){
     vl1 <- vl10
     vl2 <- vl20
     vl3 <- vl30
-
-    
-                                        score <- function(theta){
-    for(itr in 1: nitr){
-                                        #  print(itr)
-                                        # print(tbb)
-         paras <- sapply(1 : n, getA,   beta1, beta2, beta3, vl1, vl2, vl3)
-        zVec <- sapply(1:n, postz, theta, paras, resp)
-        logZ <- sapply(1:n, postlogz, theta, paras, resp)
-                                        # Z1 <- cbind((Z[1 : m]), vl1[, 2])
-                                        # Z2 <- cbind((Z[(m + 1) : (m + f)]),  vl2[, 2])
-                                        # Z3 <- cbind((Z[(m + f + 1) : (m + f + g)]),  vl3[, 2])
-        subvl <- slvl2(theta, beta1, beta2, beta3, vl1, vl2, vl3, resp, cov, n, zVec, flag = 0)#dfsane(subvl, slvl, method = 2, control = list(tol = 1e-5, maxit = 10000, triter = 100), quiet = FALSE, (theta), beta1, beta2, beta3, vl1, vl2, vl3, resp, cov, n, flag = 0)$par#
-
-        vl1 <- cbind((subvl[1 : m]), vl1[, 2])
-        vl2 <- cbind((subvl[(m + 1) : (m + f)]),  vl2[, 2])
-        vl3 <- cbind((subvl[(m + f + 1) : (m + f + g)]),  vl3[, 2])
-       # paras <- sapply(1 : n, getA,   beta1, beta2, beta3, vl1, vl2, vl3)
-        zVec <- sapply(1:n, postz, theta, paras, resp)
-        logZ <- sapply(1:n, postlogz, theta, paras, resp)
-        dilogZ <- sum(logZ) - sum(zVec)
-      #  theta <-  uniroot(slvtheta, c(0.01, 10), dilogZ)$root#uniroot(slvtheU, c(0.01, 10), paras, resp)$root##optim(theta, gammalike, gr= NULL, resp, paras, zVec, method = "L-BFGS-B", lower = 0.01, upper = Inf)$par
-        beta1 <- beta10#tbb[2 : (p + 1)]
-        beta2 <- beta20#tbb[(p + 2) : (2 * p + 1)]
-        beta3 <- beta30#tbb[(2 * p + 2) : (3 * p + 1)]
-     #  print(theta)
-
-    }
-  -log( prod(zVec^(1/theta + resp[, 1] + resp[, 2]) * exp(- zVec * 1/ theta) * 1/theta^(1/theta)/gamma(1/theta)))
-    #dilogZ - n* ( digamma(1/theta) ) - n * (log(theta) - 1)
-    }
+    subvl <- c(vl10[, 1]^(1/2), vl20[, 1]^(1/2), vl30[, 1]^1/2, theta^1/2)
+    subvl <- dfsane(subvl, slvl3, method = 2, control = list(tol = 1e-7, maxit = 10000, triter = 100), quiet = FALSE,  beta1, beta2, beta3, vl1, vl2, vl3, resp, cov, n, zVec, dilogZ, flag = 0)$par
+    vl1 <- cbind((subvl[1 : m])^(2), vl1[, 2])
+    vl2 <- cbind((subvl[(m + 1) : (m + f)])^2,  vl2[, 2])
+    vl3 <- cbind((subvl[(m + f + 1) : (m + f + g)])^2,  vl3[, 2])
+    theta <- subvl[m + f + g + 1]^2
     print(theta)
     mtbb <- c(mtbb, theta)
+            
+    ## score <- function(theta){
+   ## # for(outiter in 1: 10){
+   ##      for(itr in 1: nitr){
+   ##                                      #  print(itr)
+   ##                                      # print(tbb)
+   ##          paras <- sapply(1 : n, getA,   beta1, beta2, beta3, vl1, vl2, vl3)
+   ##          zVec <- sapply(1:n, postz, theta, paras, resp)
+   ##          logZ <- sapply(1:n, postlogz, theta, paras, resp)
+   ##          dilogZ <- sum(logZ) - sum(zVec)
+   ##          subvl <- slvl2(theta, beta1, beta2, beta3, vl1, vl2, vl3, resp, cov, n, zVec, flag = 0)###dfsane(subvl, slvl, method = 2, control = list(tol = 1e-5, maxit = 10000, triter = 100), quiet = FALSE, (theta), beta1, beta2, beta3, vl1, vl2, vl3, resp, cov, n, flag = 0)$par#
+
+   ##          vl1 <- cbind((subvl[1 : m]), vl1[, 2])
+   ##          vl2 <- cbind((subvl[(m + 1) : (m + f)]),  vl2[, 2])
+   ##          vl3 <- cbind((subvl[(m + f + 1) : (m + f + g)]),  vl3[, 2])
+   ##                                      # paras <- sapply(1 : n, getA,   beta1, beta2, beta3, vl1, vl2, vl3)
+   ##                                      #  zVec <- sapply(1:n, postz, theta, paras, resp)
+   ##                                      #  logZ <- sapply(1:n, postlogz, theta, paras, resp)
+   ##                                      # dilogZ <- sum(logZ) - sum(zVec)
+   ##                                      #  theta <-  uniroot(slvtheta, c(0.01, 10), dilogZ)$root#uniroot(slvtheU, c(0.01, 10), paras, resp)$root##optim(theta, gammalike, gr= NULL, resp, paras, zVec, method = "L-BFGS-B", lower = 0.01, upper = Inf)$par
+   ##      # theta <- subvl[m + f + g+ 1]
+   ##                       #                 print(theta)
+
+   ##      }
+   ##      paras <- sapply(1 : n, getA,   beta1, beta2, beta3, vl1, vl2, vl3)
+   ##      #zVec <- sapply(1:n, postz, theta, paras, resp)
+   ##     # logZ <- sapply(1:n, postlogz, theta, paras, resp)
+   ##    #  dilogZ <- sum(logZ) - sum(zVec)
+   ##      temp <- uniroot(slvtheta, c(0.01, 10), dilogZ)
+   ##   #  theta <- temp$root
+   ##    #  subvl2 <- c(subvl^(1/2), theta^(1/2))
+   ##      crit <- - margpartial(theta, subvl, paras)#sum(slvl3(subvl2, beta1, beta2, beta3, vl1, vl2, vl3, resp, cov, n, zVec, dilogZ, flag = 0)^2)
+   ## #     print(theta)
+   ## #}     
+   ##                                      # list(a$root, a$f.root, ) 
+   ##                                      #   slvtheU(theta, paras, resp)
+   ##                                      # -(1/theta* dilogZ +  n* 1/theta* log(1/theta) - n*lgamma(1/theta))
+   ##                                      #dilogZ - n* ( digamma(1/theta) ) - n * (log(theta) - 1)
+   ##      return(c(crit))
+   ##  }
+   ##  a <- sapply(grid, score)
+   ##  theta <- a[1, ][which(abs(a[2, ]) == min(abs(a[2, ])))]
+    
+   ##  print(theta)
+   ##  mtbb <- c(mtbb, theta)
 }
 
+
+grid <- seq(0.9, 1.1, 0.05)
+ospg <- spg(0.1, score, gr = NULL, method = 3, project = NULL, lower = 0.01, upper = 5, projectArgs = NULL, control = list(), quiet = FALSE)
                                         #wrapfun(theta, beta10, beta20, beta30, vl1, vl2, vl3, resp, cov, n, 2)
                                         #   }
 theta <- uniroot(score, c(0.001, 100))$root
+
+
+
+margpartial <- function(theta, vl, paras){
+    
+    B1 <- resp[, 1] * resp[, 2]
+    B2 <- resp[, 1] + resp[, 2]
+    B <- 1/theta + B2
+      sum(B1) * log(theta + 1)  - sum(B * log(1 + theta* paras))+ sum(log(vl))
+}
 
 mtbb <- c(mtbb, tbb)
 theta <- tbb
@@ -181,11 +255,11 @@ slvtheta <- function(t, dilogZ){
     dilogZ - n* ( digamma(1/t) ) - n * (log(t) - 1)
 }
 thetascore <- function(i, theta, paras, resp){
-    resp[i, 1] * resp[i, 2] / (theta) + 1/(theta^2) * log(1 + theta * paras[i]) - (1 / theta + resp[, 1] + resp[, 2]) * paras[i] / ( 1 + theta * paras[i])
-    }
+    resp[i, 1] * resp[i, 2] / (theta) + 1/(theta^2) * log(1 + theta * paras[i]) - (1 / theta + resp[i, 1] + resp[i, 2]) * paras[i] / ( 1 + theta * paras[i])
+}
 slvtheU <- function(theta, paras, resp){
-    sum(sapply(1 : n, thetascore, theta, paras, resp))
-    }
+   sum( resp[, 1] * resp[, 2] / (theta) + 1/(theta^2) * log(1 + theta * paras) - (1 / theta + resp[, 1] + resp[, 2]) * paras / ( 1 + theta * paras))
+}
 gammalike <- function(t, resp, paras, zVec){
     sum(-log(dgamma(zVec, 1/t , 1/t )))
 }
@@ -291,7 +365,7 @@ resp <- simresp
 
 lsimresp1 <- lsimnresp1 <- vector("list")
 for(itr in 1 : nsim){
-    simdata1 <- t(sapply(1 : n, simufun, 2, l1, l2, l3))
+    simdata1 <- t(sapply(1 : n, simufun, 0.5, l1, l2, l3))
     d1 <- simdata1[, 1] < simdata1[, 2]&simdata1[, 1] < simdata1[, 3]
     d2 <- simdata1[, 2] < simdata1[, 3]
     y2 <- pmin(simdata1[, 2], simdata1[, 3])
