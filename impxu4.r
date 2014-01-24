@@ -157,6 +157,8 @@ nitr <- 100
 for(simitr in 1 : nsim){
     print(simitr)
     resp <- lsimresp1[[simitr]]
+    B1 <- resp[, 1] * resp[, 2]
+    B2 <- resp[, 1] + resp[, 2]   
     colnames(resp) <- c("d1", "d2", "y1", "y2")
     d1 <- resp[, 1]
     d2 <- resp[, 2]
@@ -188,6 +190,7 @@ for(simitr in 1 : nsim){
     vl1 <- vl10
     vl2 <- vl20
     vl3 <- vl30
+
     subvl <- c((vl10[, 1]), (vl20[, 1]), (vl30[, 1]), (theta)) #c(log(vl10[, 1]), log(vl20[, 1]), log(vl30[, 1]), log(theta))
     subvl <- spg(subvl, slvl4, gr = NULL, method = 2, project = NULL, lower = 0.0001, upper = Inf, projectArgs = NULL, control = list(maxit = 3000), quiet = FALSE, beta1, beta2, beta3, vl1, vl2, vl3, resp, cov, n, flag = 0)$par# dfsane(subvl, slvl3, method = 2, control = list(tol = 1e-5, maxit = 3000, triter = 100), quiet = FALSE,  beta1, beta2, beta3, vl1, vl2, vl3, resp, cov, n, flag = 0)$par
     vl1 <- cbind(exp(subvl[1 : m]), vl1[, 2])
@@ -242,26 +245,34 @@ mtbb <- c(mtbb
 , theta)
 }
     score <- function(theta){
-
+        t <- theta
         for(itr in 1: nitr){
                                         #  print(itr)
                                         # print(tbb)
             paras <- sapply(1 : n, getA,   beta1, beta2, beta3, vl1, vl2, vl3)
-            zVec <- sapply(1:n, postz, theta, paras, resp)
-            logZ <- sapply(1:n, postlogz, theta, paras, resp)
-            dilogZ <- sum(logZ) - sum(zVec)
-            subvl <- slvl2(theta, beta1, beta2, beta3, vl1, vl2, vl3, resp, cov, n, zVec, flag = 0)###dfsane(subvl, slvl, method = 2, control = list(tol = 1e-5, maxit = 10000, triter = 100), quiet = FALSE, (theta), beta1, beta2, beta3, vl1, vl2, vl3, resp, cov, n, flag = 0)$par#
-
+            zVec <- sapply(1:n, postz, t, paras, resp)
+            #logZ <- sapply(1:n, postlogz, t, paras, resp)
+          #  dilogZ <- sum(logZ) - sum(zVec)
+            subvl <- slvl2(t, beta1, beta2, beta3, vl1, vl2, vl3, resp, cov, n, zVec, flag = 0)###dfsane(subvl, slvl, method = 2, control = list(tol = 1e-5, maxit = 10000, triter = 100), quiet = FALSE, (theta), beta1, beta2, beta3, vl1, vl2, vl3, resp, cov, n, flag = 0)$par#
             vl1 <- cbind((subvl[1 : m]), vl1[, 2])
             vl2 <- cbind((subvl[(m + 1) : (m + f)]),  vl2[, 2])
             vl3 <- cbind((subvl[(m + f + 1) : (m + f + g)]),  vl3[, 2])
+            ## paras <- sapply(1 : n, getA,   beta1, beta2, beta3, vl1, vl2, vl3)
+            ## zVec <- sapply(1:n, postz, t, paras, resp)
+             logZ <- sapply(1:n, postlogz, t, paras, resp)
+            dilogZ <- sum(logZ) - sum(zVec)
+          
+  #          t <- uniroot(slvtheta,  c(0.01, 10), dilogZ)$root
         
         }
         paras <- sapply(1 : n, getA,   beta1, beta2, beta3, vl1, vl2, vl3)
-        crit <- -margpartial(theta, subvl, paras)
+        zVec <- sapply(1:n, postz, t, paras, resp)
+        logZ <- sapply(1:n, postlogz, t, paras, resp)
+        crit <- -margpartial(t, subvl, paras)#-fulike(t, subvl, paras, zVec, logZ) #
    }     
         
      a <- sapply(grid, score)
+b<- sapply(grid, score)
    ##  theta <- a[1, ][which(abs(a[2, ]) == min(abs(a[2, ])))]
     
    ##  print(theta)
@@ -269,7 +280,7 @@ mtbb <- c(mtbb
 }
 
 
-grid <- seq(0.1, 1.1, 0.05)
+grid <- seq(0.2, 2, 0.2)
 ospg <- spg(0.1, score, gr = NULL, method = 3, project = NULL, lower = 0.01, upper = 5, projectArgs = NULL, control = list(), quiet = FALSE)
                                         #wrapfun(theta, beta10, beta20, beta30, vl1, vl2, vl3, resp, cov, n, 2)
                                         #   }
@@ -282,8 +293,15 @@ margpartial <- function(theta, vl, paras){
     B1 <- resp[, 1] * resp[, 2]
     B2 <- resp[, 1] + resp[, 2]
     B <- 1/theta + B2
-      sum(B1) * log(theta + 1)  - sum(B * log(1 + theta* paras))+ sum(log(vl))
+       sum(B1) * log(theta + 1)  - sum(B * log(1 + theta* paras))+ sum(log(vl))#
 }
+
+fulike <- function(theta, vl, paras, zVec, logZ){    
+    v <- 1/theta
+    B <- v + B2
+    sum(log(dgamma(zVec, shape = v, rate = v))) +  sum(log(vl)) +sum(B2 * logZ) - sum(paras * zVec)
+}
+
 
 
 getA <- function(i,  beta1, beta2, beta3, vl1, vl2, vl3){
@@ -340,12 +358,12 @@ simufun <- function(i, t, l1, l2, l3){
     ##     t2 <- rexp(1, g* l2)
     ##     t1 <- -log(exp(-l1 * t2 * g) - (u)* exp(-l1 * t2*g))/(l1*g)
     ## }
-    c <- runif(1, 1, 3)
+    c <- 100#runif(1, 1, 3)
     c(t1, t2, c)
 }
 l1 <- 1
-l2 <- 3
-l3 <- 2
+l2 <- 1
+l3 <- 1
 
 simdata <- t(sapply(1 : n, simufun, 2, l1, l2, l3))
 d1 <- simdata[, 1] < simdata[, 2]&simdata[, 1] < simdata[, 3]
