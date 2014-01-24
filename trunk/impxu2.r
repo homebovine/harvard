@@ -2,7 +2,7 @@
 library("survival")
 library("BB")
 fA12 <- function(i, beta, vl, resp, cov){
-    ix <- vl[, 2] < resp[i, "y1"]
+    ix <- vl[, 2] <= resp[i, "y1"]
     if(sum(ix) != 0)
         A <- sum(vl[ix, 1])* exp(t(beta) %*% cov[i, ])
     else
@@ -10,7 +10,7 @@ fA12 <- function(i, beta, vl, resp, cov){
     return(A)
 }
 fA3 <- function(i, beta, vl, resp, cov){
-    ix1 <- vl[, 2] >= resp[i, "y1"] & vl[, 2] < resp[i, "y2"]
+    ix1 <- vl[, 2] > resp[i, "y1"] & vl[, 2] <= resp[i, "y2"]
    
     A3 <- 0
     if(sum(ix1) != 0)
@@ -179,7 +179,7 @@ for(itr in 1: nitr){
    # Z1 <- cbind((Z[1 : m]), vl1[, 2])
    # Z2 <- cbind((Z[(m + 1) : (m + f)]),  vl2[, 2])
    # Z3 <- cbind((Z[(m + f + 1) : (m + f + g)]),  vl3[, 2])
-    subvl <- dfsane(subvl, slvl, method = 2, control = list(tol = 1e-5, maxit = 10000, triter = 100), quiet = FALSE,  beta1, beta2, beta3, vl1, vl2, vl3, resp, cov, n, flag = 0)$par#slvl2(theta, beta1, beta2, beta3, vl1, vl2, vl3, resp, cov, n, flag = 0)
+    subvl <- dfsane(subvl, slvl, method = 2, control = list(tol = 1e-5, maxit= 100000,  triter = 100), quiet = FALSE,  beta1, beta2, beta3, vl1, vl2, vl3, resp, cov, n, flag = 0)$par#slvl2(theta, beta1, beta2, beta3, vl1, vl2, vl3, resp, cov, n, flag = 0)
     
     vl1 <- cbind((subvl[1 : m])^2, vl1[, 2])
     vl2 <- cbind((subvl[(m + 1) : (m + f)])^2,  vl2[, 2])
