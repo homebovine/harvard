@@ -286,6 +286,7 @@ margpartial <- function(theta, vl, paras){
 }
 
 
+
 getA <- function(i,  beta1, beta2, beta3, vl1, vl2, vl3){
     d1 <- resp[i, "d1"]
     d2 <- resp[i, "d2"]
@@ -372,7 +373,6 @@ for(itr in 1 : nsim){
     lsimnresp1[[itr]] <- simdata1
     
 }
-
 
 
 

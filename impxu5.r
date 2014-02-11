@@ -82,10 +82,9 @@ mtbb <- 1
 nitr <- 10
 for(simitr in 1 : nsim){
     print(simitr)
+    resp <- lsimresp1[[simitr]]
     B1 <- resp[, 1] * resp[, 2]
     B2 <- resp[, 1] + resp[, 2]   
-    
-    resp <- lsimresp1[[simitr]]
     colnames(resp) <- c("d1", "d2", "y1", "y2")
     d1 <- resp[, 1]
     d2 <- resp[, 2]
@@ -120,6 +119,7 @@ for(simitr in 1 : nsim){
     mtbb <- c(mtbb
               , theta)
 }
+save(theta,mtbb,  file = paste(2, nsim, sep = "_"))
 score <- function(t){
     
     for(itr in 1: nitr){
@@ -145,17 +145,10 @@ ospg <- spg(0.1, score, gr = NULL, method = 3, project = NULL, lower = 0.01, upp
 
 margpartial <- function(theta, vl, paras){
     
-    B1 <- resp[, 1] * resp[, 2]
-    B2 <- resp[, 1] + resp[, 2]
     B <- 1/theta + B2
     sum(B1) * log(theta + 1)  - sum(B * log(1 + theta* paras))+ sum(log(vl))#
 }
 
-fulike <- function(theta, vl, paras, zVec, logZ){    
-    v <- 1/theta
-    B <- v + B2
-    sum((B-1) * logZ) - v * sum(zVec) - sum(paras * zVec) + v* log(v) - lgamma(v) + sum(log(vl))
-}
 
 
 
@@ -220,9 +213,9 @@ nsimresp <- simdata
 colnames(simresp) <- c("d1", "d2", "y1", "y2")
 resp <- simresp
 
-lsimresp1 <- lsimnresp1 <- vector("list")
+ lsimresp1 <- lsimnresp1 <- vector("list")
 for(itr in 1 : nsim){
-    simdata1 <- t(sapply(1 : n, simufun, 1, l1, l2, l3))
+    simdata1 <- t(sapply(1 : n, simufun, 2, l1, l2, l3))
     d1 <- simdata1[, 1] < simdata1[, 2]&simdata1[, 1] < simdata1[, 3]
     d2 <- simdata1[, 2] < simdata1[, 3]
     y2 <- pmin(simdata1[, 2], simdata1[, 3])
