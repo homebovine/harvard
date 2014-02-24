@@ -457,6 +457,11 @@ wrapscoreindv <- function(bb, resp, cov, n){
     apply(sapply(1 : n, scoreindv, bb, resp, cov), 1, mean)
     }
 
+wrapscoreindv1 <- function(bb, theta, resp, cov, n){
+    bb <- c(bb, log(theta))
+    apply(sapply(1 : n, scoreindv, bb, resp, cov), 1, mean)[1:3]
+    }
+
 
     
 margpartial <- function(theta, vl, paras, sumbb ){
@@ -800,7 +805,7 @@ lsimresp1 <- lsimnresp1 <- lcovm <-  vector("list")
 set.seed(2014)
 for(itr in 1 : nsim){
     covm <- matrix(runif(p * n, 0, 0.5), n, p)
-    simdata1 <- t(sapply(1 : n, simwei2, 1,  l1, l2, l3, b1, b2, b3, a1, covm))
+    simdata1 <- t(sapply(1 : n, simwei2, 0.5,  l1, l2, l3, b1, b2, b3, a1, covm))
     d1 <- simdata1[, 1] < simdata1[, 2]&simdata1[, 1] < simdata1[, 3]
     d2 <- simdata1[, 2] < simdata1[, 3]
     y2 <- pmin(simdata1[, 2], simdata1[, 3])
@@ -823,7 +828,7 @@ for(theta in seq(0.2, 5, 0.2)){
      beta1 <- 1
      beta2 <- 1
      beta3 <- 0.5
-                                        theta <- 1
+                                        theta <- 8
      vl1[, 1] <- vl[1 : m]
      vl2[, 1] <- vl[ (m + 1): (m + f)]
      vl3[, 1] <- vl[ (m + f + 1): (m + f+ g)]
@@ -833,37 +838,36 @@ for(theta in seq(0.2, 5, 0.2)){
      parasall <- sapply(1 : n, getA, theta,   beta1, beta2, beta3, vl1, vl2, vl3)
      paras <- parasall[4, ]
      crit <- 0
-     broot <- c(beta1, beta2, beta3, log(theta))
-     for(i in 1: 200){
+     broot <- c(beta1, beta2, beta3)
+     for(i in 10){
          
-        
-        # logZ <- sapply(1:n, postlogz, theta, paras, resp)
-        # dilogZ <- sum(logZ) - sum(zVec)
-    
-   # theta <- (bb[3*p+1])
-         evl <- dfsane(c(log(vl1[, 1]), log(vl2[, 1]), log(vl3[, 1])), scoremaxnobb, method = 2, control = list(trace = TRUE), quiet = FALSE)$par#warpslv3((vl),  beta1, beta2, beta3, theta, vl1, vl2, vl3, resp, cov, n, slvl31, parasall)## 
-         vl <- exp(evl)
+      
+         
+           #vl1[, 1]<- approxfun(nvl1[, 2], nvl1[, 1])(vl1[, 2])
+         #vl2[, 1]<- approxfun(nvl2[, 2], nvl2[, 1])(vl2[, 2])
+         #vl3[, 1]<- approxfun(nvl3[, 2], nvl3[, 1])(vl3[, 2])
+        # brootn<- multiroot(wrapscoreindv1, broot, maxiter = 100, rtol = 1e-06, atol = 1e-08, ctol = 1e-08, useFortran = TRUE, positive = FALSE, jacfunc = NULL,  jactype = "fullint", verbose = FALSE, bandup = 1, banddown = 1,  theta, resp, cov, n)$root
+         evl <- warpslv3((vl),  beta1, beta2, beta3, theta, vl1, vl2, vl3, resp, cov, n, slvl31, parasall)## dfsane(c(log(vl1[, 1]), log(vl2[, 1]), log(vl3[, 1])), scoremaxnobb, method = 2, control = list(trace = TRUE), quiet = FALSE)$par#
+         vl <- (evl)
          vl1[, 1] <- vl[1 : m]
          vl2[, 1] <- vl[ (m + 1): (m + f)]
          vl3[, 1] <- vl[ (m + f + 1): (m + f+ g)]
-         #vl1[, 1]<- approxfun(nvl1[, 2], nvl1[, 1])(vl1[, 2])
-         #vl2[, 1]<- approxfun(nvl2[, 2], nvl2[, 1])(vl2[, 2])
-         #vl3[, 1]<- approxfun(nvl3[, 2], nvl3[, 1])(vl3[, 2])
-         brootn<- multiroot(wrapscoreindv, broot, maxiter = 100, rtol = 1e-06, atol = 1e-08, ctol = 1e-08, useFortran = TRUE, positive = FALSE, jacfunc = NULL,  jactype = "fullint", verbose = FALSE, bandup = 1, banddown = 1,  resp, cov, n)$root
+       
          #broot <- multiroot(scoremaxnovl, c(1, 1, 0.5, 0), maxiter = 100, rtol = 1e-06, atol = 1e-08, ctol = 1e-08, useFortran = TRUE, positive = FALSE, jacfunc = NULL, jactype = "fullint",  verbose = FALSE, bandup = 1,banddown = 1)$root
          crit <- sum((brootn - broot)^2)
-         beta1 <- broot[1]
-         beta2 <- broot[2]
-         beta3 <- broot[3]
-         theta <- exp(broot[4])
+         #theta <- exp(broot[4])
          if(crit <= 1e-4){
              break
          }else{
              broot <- brootn
+             beta1 <- broot[1]
+             beta2 <- broot[2]
+             beta3 <- broot[3]
+        
               print(crit)
          }
              
-#         parasall <- sapply(1 : n, getA, theta,   beta1, beta2, beta3, vl1, vl2, vl3)
+        parasall <- sapply(1 : n, getA, theta,   beta1, beta2, beta3, vl1, vl2, vl3)
         # paras <- parasall[4, ]
          #sumbb <- sum(cov1%*%  beta1)  + sum(cov2%*%  beta2)+ sum(cov3 %*%  beta3)
          #subvl <- c(vl1[, 1], vl2[, 1], vl3[, 1])
@@ -872,7 +876,7 @@ for(theta in seq(0.2, 5, 0.2)){
 }
   
 
-}
+
     
     # vl <- slvl31(beta1, beta2, beta3, vl1, vl2, vl3, resp, cov, n, zVec)
     # vl1[, 1] <- vl[1 : m]
@@ -1034,6 +1038,7 @@ res[itr] <-  uniroot(testwrapfun, c(0.0001, 100), b1, b2, b3, vl1, vl2, vl3, lsi
 
 
 for(itr in 1: nsim){
+a1 <- a2 <- a3 <- a
 lres[itr, ]<- multiroot(wraptestscore, c( 1, 1, 0.5, 0), maxiter = 100, rtol = 1e-06, atol = 1e-08, ctol = 1e-08, useFortran = TRUE, positive = FALSE, jacfunc = NULL,  jactype = "fullint", verbose = FALSE, bandup = 1, banddown = 1,  lsimresp1[[itr]], lcovm[[itr]], n)$root
 }
 
@@ -1042,4 +1047,4 @@ l <- la[1]
 a <- la[2]
 sum((cumsum(vl[, 1]) - l * vl[, 2]^(a))^2)
 }
-a <- optim(c(1, 2), findla, gr = NULL, mvl1[[1]][[3]], method = "L-BFGS-B", lower = c(0.1, 0.1), upper = c(10, 10), control = list(), hessian = FALSE)
+a <- optim(c(1, 2), findla, gr = NULL, vl1, method = "L-BFGS-B", lower = c(0.1, 0.1), upper = c(10, 10), control = list(), hessian = FALSE)
