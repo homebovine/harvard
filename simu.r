@@ -31,6 +31,7 @@ nsim <- 100 #######simulation
 n <- 250 ######sample size
 p <- 1 #########number of covariates
 theta <- 0.5
+
 lsimresp1 <- lsimnresp1 <- lcovm <-  vector("list")
 set.seed(2013)
 for(itr in 1 : nsim){
