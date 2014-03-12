@@ -1,14 +1,14 @@
 source("sourcefun.r")
 mres <- mvl <- vector("list")
 ###initial values
-beta1 <- 1
-beta2 <- 1
-beta3 <- 0.5
+beta1 <- b1
+beta2 <- b2
+beta3 <- b3
 theta <- 0.5
-rtime <- 2 #how many iteratives when performing estimation,
+rtime <- 1 #how many iteratives when performing estimation,
 #####initial values
 estsim <- function(simitr, beta1, beta2, beta3, theta){
-    filenames = paste("./simdata/sim", paste(l1, l2, l3, a, b1, b2, b3, sep = ""),  simitr, sep = "_")
+    filenames = paste("./simdata/sim", paste(l1, l2, l3, a,  sep = ""),  simitr, sep = "_")
     load(filenames)
     print(simitr)
     covmy <<- matrix(covm, n, p)
@@ -28,9 +28,9 @@ estsim <- function(simitr, beta1, beta2, beta3, theta){
     respsub1 <- resp[subgix1, ]
     respsub2 <- resp[ind1, ]
 
-    surv1 <- (coxph(Surv(resp[, "y1"], resp[, "d1"]) ~ (covmy)))
-    surv2 <- (coxph(Surv(respsub1[, "y2"], respsub1[, "d2"]) ~ covmy[subgix1]))
-    surv3 <- (coxph(Surv(respsub2[, "y2"], respsub2[, "d2"]) ~ covmy[ind1, ]))
+    surv1 <- (coxph(Surv(resp[, "y1"], resp[, "d1"]) ~ 1))#covmy[, 1] + covmy[, 2] + covmy[, 3]
+    surv2 <- (coxph(Surv(respsub1[, "y2"], respsub1[, "d2"]) ~1))# covmy[subgix1, 1] + covmy[subgix1, 2]+covmy[subgix1, 3]))
+    surv3 <- (coxph(Surv(respsub2[, "y2"], respsub2[, "d2"]) ~ 1))#covmy[ind1, 1] + covmy[ind1, 2] + covmy[ind1, 3]))
     o1 <- order(resp[ind1, 3])
     o2 <- order(resp[ind2, 4])
     o3 <- order(resp[ind3, 4])
@@ -75,22 +75,22 @@ estsim <- function(simitr, beta1, beta2, beta3, theta){
     parasall <- sapply(1 : n, getA, theta,   beta1, beta2, beta3, vl1, vl2, vl3, resp, covmy)
     paras <- parasall[4, ]
     crit <- 0
-    broot0 <- broot <- c(0, 0, 0, -0.5)
+    broot0 <- broot <- c(rep(0, 3*p),   -0.5)
     for(i in 1 : rtime){
-        evl <- dfsane(c(log(vl10[, 1]), log(vl20[, 1]), log(vl30[, 1])), scoremaxnobb, method = 2, control = list(trace = FALSE), quiet = FALSE, resp, covmy, beta1, beta2, beta3, theta, vl1, vl2, vl3)$par
+        evl <- dfsane(c(log(vl10[, 1]), log(vl20[, 1]), log(vl30[, 1])), scoremaxnobb, method = 2, control = list(trace = FALSE), quiet = FALSE, resp, covmy, beta1, beta2, beta3, theta, vl1, vl2, vl3, m, f, g)$par
         vl <- exp(evl)
         vl1 <- cbind(vl[1 : m], vl1[, 2])
         vl2 <- cbind(vl[ (m + 1): (m + f)], vl2[, 2])
         vl3 <- cbind(vl[ (m + f + 1): (m + f+ g)], vl3[, 2])
-        brootn <- multiroot(wrapscoreindv, broot, maxiter = 100, rtol = 1e-06, atol = 1e-08, ctol = 1e-08, useFortran = TRUE, positive = FALSE, jacfunc = NULL,  jactype = "fullint", verbose = FALSE, bandup = 1, banddown = 1,  resp, covmy, n, vl1, vl2, vl3)$root
+        brootn <- multiroot(wrapscoreindv, broot0, maxiter = 100, rtol = 1e-06, atol = 1e-08, ctol = 1e-08, useFortran = TRUE, positive = FALSE, jacfunc = NULL,  jactype = "fullint", verbose = FALSE, bandup = 1, banddown = 1,  resp, covmy, n, vl1, vl2, vl3)$root
 
 
 
         broot <- brootn
-        beta1 <- brootn[1]
-        beta2 <- brootn[2]
-        beta3 <- brootn[3]
-        theta <- exp(brootn[4])
+        beta1 <- brootn[1 :p]
+        beta2 <- brootn[(p + 1) : (2 * p)]
+        beta3 <- brootn[(2*p + 1) : (3 * p)]
+        theta <- exp(brootn[3*p + 1])
 
 
 
@@ -98,17 +98,21 @@ estsim <- function(simitr, beta1, beta2, beta3, theta){
 
     }
 
-
-
+    hm <- try(jacobian(comscore, c(vl, beta1, beta2, beta3, theta), method = "simple", method.args= list(), vl1, vl2, vl3 ))
+    if(class(hm) == "try-error"){
+        browser()
+        }
+    l <- nrow(hm)
+    slv <- solve(hm)[((l-9) : l), ((l-9) : l) ]
     print(c(beta1, beta2, beta3, theta))
     mres <- c(beta1, beta2, beta3, theta)
     mvl <- list(vl1, vl2, vl3)
 
-    return(list(mres, mvl))
+    return(list(mres, mvl, hm, slv))
 
 }
 l1 <- 1###weibull shape parametr for lambda1
-l2 <- 1 ######weibull shape for 2
+vl2 <- 1 ######weibull shape for 2
 l3 <- 2#######weibull shape for 3
 a <- 2
 b1 <- c(1)
@@ -120,3 +124,8 @@ p <- 1 #########number of covariates
 theta <- 0.5
 estres <- mclapply(1:nsim, estsim, beta1, beta2, beta3, theta,  mc.cores = 8)
 res <- t(sapply(1:nsim, getfromlist, estres, 1))
+resv <- t(sapply(1:nsim, getfromlist, estres, 4))
+
+
+resvl <- sapply(1:nsim, getvlist, estres, 2, 1)
+vl1[, 1] 

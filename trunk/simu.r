@@ -1,4 +1,4 @@
-simwei2 <- function(i, t, l1, l2, l3, b1, b2, b3, a, cov){
+simwei2 <- function(i, t, l1, l2, l3, b1, b2, b3, a, cov, cen1, cen2){
     expb1 <- exp(sum(cov[i, ] * b1))
     expb2 <- exp(sum(cov[i, ] * b2))
     expb3 <- exp(sum(cov[i, ] * b3))
@@ -15,28 +15,27 @@ simwei2 <- function(i, t, l1, l2, l3, b1, b2, b3, a, cov){
     }else{
         t1 <- t2 + 3
     }
-    c <- runif(1, 2.5, 5) #censoring time
+    c <- runif(1, cen1, cen2) #censoring time
     c(t1, t2, c)
 }
 
 
 l1 <- 1###weibull shape parametr for lambda1
 l2 <- 1 ######weibull shape for 2
-l3 <- 2#######weibull shape for 3
+l3 <- 1#######weibull shape for 3
 a <- 2
-b1 <- c(1)
-b2 <- c(1)
-b3 <- c(0.5)
+b1 <- c(1, 1, 1)
+b2 <- c(1, 1, 1)
+b3 <- c(0.5, 0.5, 0.5)
 nsim <- 100 #######simulation
 n <- 250 ######sample size
-p <- 1 #########number of covariates
-theta <- 0.5
-
+p <- length(b1) #########number of covariates
+theta <- 1
 lsimresp1 <- lsimnresp1 <- lcovm <-  vector("list")
 set.seed(2013)
 for(itr in 1 : nsim){
-    covm <- matrix(runif(p * n, 0, 0.5), n, p) #covariance matrix 
-    simdata1 <- t(sapply(1 : n, simwei2, theta,  l1, l2, l3, b1, b2, b3, a, covm))
+    covm <- matrix(rnorm(p * n, 0, 1), n, p) #covariance matrix 
+    simdata1 <- t(sapply(1 : n, simwei2, theta,  l1, l2, l3, b1, b2, b3, a, covm, 2.5, 10))
     d1 <- simdata1[, 1] < simdata1[, 2]&simdata1[, 1] < simdata1[, 3]
     d2 <- simdata1[, 2] < simdata1[, 3]
     y2 <- pmin(simdata1[, 2], simdata1[, 3])
@@ -47,6 +46,6 @@ for(itr in 1 : nsim){
 
     lsimresp1[[itr]] <- simresp1
     lsimnresp1[[itr]] <- simdata1
-    lcovm[[itr]] <- covm
-    save(covm, simresp1, file = paste("./simdata/sim", paste(l1, l2, l3, a, b1, b2, b3, sep = ""),  itr, sep = "_"))
+    lcovm[[itr]] <- cbind(covm)
+#    save(covm, simresp1, file = paste("./simdata/sim", paste(l1, l2, l3, a,  sep = ""),  itr, sep = "_"))
 }
