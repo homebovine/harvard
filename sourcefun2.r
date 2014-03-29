@@ -433,7 +433,7 @@ scoreobj2 <- function(theta, rtime, tol, beta1, beta2, beta3, vl1, vl2, vl3, res
         }
         }
     if(ini == 1){
-        partlike <- wrapstha(theta, beta1, beta2, beta3, vl1, vl2, vl3, resp, cov, n, p)#  margpartial(theta, beta1, beta2, beta3, vl1, vl2, vl3, resp, cov, n, p, cov1, cov2, cov3)
+        partlike <- mglk#wrapstha(theta, beta1, beta2, beta3, vl1, vl2, vl3, resp, cov, n, p)#  margpartial(theta, beta1, beta2, beta3, vl1, vl2, vl3, resp, cov, n, p, cov1, cov2, cov3)
     }else{
         return(list(vl1, vl2, vl3, beta1, beta2, beta3, i))
         }
@@ -639,7 +639,7 @@ simCpRsk <- function(n, p, theta,  lambda1, lambda2, lambda3, kappa, beta1, beta
     d1 <- simdata1[, 1] < simdata1[, 2]&simdata1[, 1] < simdata1[, 3]
     d2 <- simdata1[, 2] < simdata1[, 3]
     y2 <- pmin(simdata1[, 2], simdata1[, 3])
-    y1 <- simdata1[, 1]
+    y1 <- pmin(simdata1[, 1], y2)
     simresp1 <- cbind(y1, d1, y2, d2)
     colnames(simresp1) <- c("y1", "d1", "y2", "d2")
     return(cbind(simresp1, covm))
@@ -661,3 +661,7 @@ FrqID <- function(survData, startValues,  stheta, wtheta, hessian = F,  miter = 
     }
     return(res)
 }
+plot.iniFrqID <- function (object){
+    plot(object[, 2] ~ object[, 1], type = "l", xlab = "theta values", ylab = "score functions")
+}
+
