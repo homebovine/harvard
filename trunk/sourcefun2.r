@@ -528,14 +528,14 @@ estreal <- function(bb, vtheta, altheta,  resp, cov, hessian, rtime, tol, verbos
      broot0 <- c(rep(0, 3 * p), -0.5)
      
      parasall <- sapply(1 : n, getA, theta,   beta1, beta2, beta3, vl1, vl2, vl3, resp, cov, n, p)
-     temp <- try(uniroot(scoreobj2, vtheta, rtime, tol,   beta1, beta2, beta3, vl1, vl2, vl3, resp, cov,  n, p, m, f, g, lvl1, lvl2, lvl3, parasall, cov1, cov2, cov3, 1, verbose))
-     if(class(temp) == "try-error"){
-         temp <- try(uniroot(scoreobj2, altheta, rtime, tol,   beta1, beta2, beta3, vl1, vl2, vl3, resp, cov,  n, p, m, f, g, lvl1, lvl2, lvl3, parasall, cov1, cov2, cov3, 1, verbose))
-         if(class(temp) == "try-error"){
+     temp <- optim((vtheta[1] + vtheta[2])/2, scoreobj2, gr = NULL, vtheta, rtime, tol, beta1, beta2, beta3, vl1, vl2, vl3, resp, cov, n, p, m, f, g, lvl1, lvl2, lvl3, parasall, cov1, cov2, cov3, 1, verbose, method = "L-BFGS-B", lower = vtheta[1], upper = vtheta[2], control = list(), hessian = FALSE)#try(uniroot(scoreobj2, vtheta, rtime, tol,   beta1, beta2, beta3, vl1, vl2, vl3, resp, cov,  n, p, m, f, g, lvl1, lvl2, lvl3, parasall, cov1, cov2, cov3, 1, verbose))
+     if(temp$convergence != 0){
+         temp <- try(optim((altheta[1] + altheta[2])/2, scoreobj2, gr = NULL, vtheta, rtime, tol, beta1, beta2, beta3, vl1, vl2, vl3, resp, cov, n, p, m, f, g, lvl1, lvl2, lvl3, parasall, cov1, cov2, cov3, 1, verbose, method = "L-BFGS-B", lower = altheta[1], upper = altheta[2], control = list(), hessian = FALSE))#try(uniroot(scoreobj2, altheta, rtime, tol,   beta1, beta2, beta3, vl1, vl2, vl3, resp, cov,  n, p, m, f, g, lvl1, lvl2, lvl3, parasall, cov1, cov2, cov3, 1, verbose))
+         if(temp$convergence != 0){
              return(list(rep(NA, 3 * p + 1), temp))
              }
          }
-     theta  <- temp$root
+     theta  <- temp$par
      res <- scoreobj2(theta, rtime, tol, beta1, beta2, beta3, vl1, vl2, vl3, resp, cov, n, p, m, f, g, lvl1, lvl2, lvl3, parasall, cov1, cov2, cov3, 0, verbose)
      vl1 <- res[[1]]
      vl2 <- res[[2]]
@@ -665,7 +665,7 @@ FrqID <- function(survData, startValues,  stheta, wtheta, hessian = F,  miter = 
 plot.iniFrqID <- function (object){
     plot(object[, 2] ~ object[, 1], type = "l", xlab = "theta values", ylab = "score functions")
 }
-realtemp <- FrqID( cbind(survData, covm[, 1]), rep(0, 3), c(0.01, 2), c(3.51, 3.9), tol = 1e-8, initial = T, step = 0.05,  verbose =2)
+realtemp <- FrqID( cbind(survData, covm[, 1]), rep(0, 3), c(0.06, 0.16), c(3.51, 3.9), tol = 1e-8, initial = T, step = 0.01,  verbose =2)
 pdf(file = "temp.pdf")
 plot(realtemp[, 2] ~realtemp[, 1], type= "l")
 dev.off()
