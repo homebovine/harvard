@@ -644,7 +644,7 @@ simCpRsk <- function(n, p, theta,  lambda1, lambda2, lambda3, kappa, beta1, beta
     colnames(simresp1) <- c("y1", "d1", "y2", "d2")
     return(cbind(simresp1, covm))
 }
-FrqID <- function(survData, startValues,  stheta, wtheta, hessian = F,  miter = 100, tol = 1e-4, initial = F, verbose){
+FrqID <- function(survData, startValues,  stheta, wtheta, hessian = F,  miter = 100, tol = 1e-4, initial = F, step = 0.01, verbose){
     y1 <- pmin(survData[, 1], survData[, 3])
     y2 <- survData[, 3]
     d1 <- survData[, 2]
@@ -655,7 +655,7 @@ FrqID <- function(survData, startValues,  stheta, wtheta, hessian = F,  miter = 
         res <- estreal(startValues, stheta, wtheta, resp, covmy,  hessian, miter, tol, verbose)
         class(res) <- "FrqID"
     }else{
-        stheta <- seq(stheta[1], stheta[2], 0.01)
+        stheta <- seq(stheta[1], stheta[2], step)
         res <- iniestreal(startValues, stheta, wtheta, resp, covmy,  hessian, miter, tol, verbose)
         class(res) <- "iniFrqID"
     }
@@ -664,4 +664,8 @@ FrqID <- function(survData, startValues,  stheta, wtheta, hessian = F,  miter = 
 plot.iniFrqID <- function (object){
     plot(object[, 2] ~ object[, 1], type = "l", xlab = "theta values", ylab = "score functions")
 }
+realtemp <- FrqID( cbind(survData, covm), rep(0, 9), c(2, 3), c(3.51, 3.9), tol = 1e-8, initial = T,  verbose =2)
+pdf(file = "temp.pdf")
+plot(realtemp[, 2] ~realtemp[, 1], type= "l")
+dev.off()
 
