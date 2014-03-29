@@ -371,7 +371,7 @@ comscore3 <- function( theta, beta1, beta2, beta3, vl1, vl2, vl3, resp, cov,  n,
    vl3 <- cbind(vl[ (m + f + 1): (m + f+ g)], vl3[, 2])
    crit <- margpartial(theta, beta1, beta2, beta3, vl1, vl2, vl3, resp, cov, n, p, cov1, cov2, cov3)
   
-   c(list(beta1, beta2, beta3, vl1, vl2, vl3, crit)) 
+   (list(beta1, beta2, beta3, vl1, vl2, vl3, crit)) 
     
 }
 
@@ -650,7 +650,8 @@ FrqID <- function(survData, startValues,  stheta, wtheta, hessian = F,  miter = 
     d1 <- survData[, 2]
     d2 <- survData[, 4]
     resp <- cbind(d1, d2, y1, y2)
-    covmy <- survData[, (5 : ncol(survData))]
+    np <- ncol(survData)
+    covmy <- matrix(survData[, (5 : np)], ncol =  np - 4)
     if(!initial){
         res <- estreal(startValues, stheta, wtheta, resp, covmy,  hessian, miter, tol, verbose)
         class(res) <- "FrqID"
@@ -664,7 +665,7 @@ FrqID <- function(survData, startValues,  stheta, wtheta, hessian = F,  miter = 
 plot.iniFrqID <- function (object){
     plot(object[, 2] ~ object[, 1], type = "l", xlab = "theta values", ylab = "score functions")
 }
-realtemp <- FrqID( cbind(survData, covm), rep(0, 9), c(2, 3), c(3.51, 3.9), tol = 1e-8, initial = T,  verbose =2)
+realtemp <- FrqID( cbind(survData, covm[, 1]), rep(0, 3), c(0.01, 2), c(3.51, 3.9), tol = 1e-8, initial = T, step = 0.05,  verbose =2)
 pdf(file = "temp.pdf")
 plot(realtemp[, 2] ~realtemp[, 1], type= "l")
 dev.off()
