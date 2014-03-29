@@ -374,18 +374,7 @@ comscore3 <- function( theta, beta1, beta2, beta3, vl1, vl2, vl3, resp, cov,  n,
    c(list(beta1, beta2, beta3, vl1, vl2, vl3, crit)) 
     
 }
-simCpRsk <- function(n, p, l1, l2, l3, a, b1, b2, b3, c1, c2, cen1, cen2){
-    covm <- matrix(runif(p * n, c1, c2), n, p) #covariance matrix 
-    simdata1 <- t(sapply(1 : n, simwei2, theta,  l1, l2, l3, b1, b2, b3, a, covm, cen1, cen2))
-    d1 <- simdata1[, 1] < simdata1[, 2]&simdata1[, 1] < simdata1[, 3]
-    d2 <- simdata1[, 2] < simdata1[, 3]
-    y2 <- pmin(simdata1[, 2], simdata1[, 3])
-    y1 <- pmin(simdata1[, 1], y2)
-    simresp1 <- cbind(d1, d2, y1, y2)
-    nsimresp1 <- simdata1
-    colnames(simresp1) <- c("d1", "d2", "y1", "y2")
-    return(simresp1, covm)
-}
+
 
 
 
@@ -642,6 +631,19 @@ iniestreal <- function(bb, vtheta, altheta,  resp, cov, hessian, rtime, tol, ver
      return(cbind(vtheta, temp)) 
  }
 
+simCpRsk <- function(n, p, theta,  lambda1, lambda2, lambda3, kappa, beta1, beta2, beta3, covm = NULL,  cen1, cen2){
+    if(is.null(covm)){
+        covm <- matrix(rnorm(p * n), n, p) #covariance matrix
+    }
+    simdata1 <- t(sapply(1 : n, simwei2, theta,  lambda1, lambda2, lambda3, beta1, beta2, beta3, kappa, covm, cen1, cen2))
+    d1 <- simdata1[, 1] < simdata1[, 2]&simdata1[, 1] < simdata1[, 3]
+    d2 <- simdata1[, 2] < simdata1[, 3]
+    y2 <- pmin(simdata1[, 2], simdata1[, 3])
+    y1 <- simdata1[, 1]
+    simresp1 <- cbind(y1, d1, y2, d2)
+    colnames(simresp1) <- c("y1", "d1", "y2", "d2")
+    return(cbind(simresp1, covm))
+}
 FrqID <- function(survData, startValues,  stheta, wtheta, hessian = F,  miter = 100, tol = 1e-4, initial = F, verbose){
     y1 <- pmin(survData[, 1], survData[, 3])
     y2 <- survData[, 3]
