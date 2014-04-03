@@ -345,7 +345,7 @@ margpartial1 <- function(theta, beta1, beta2, beta3, vl1, vl2, vl3, resp, cov, n
     logZ <- parasall[6, ]
     sumbb <- sum(matrix(cov1, ncol = p)%*%  matrix(beta1))  + sum(matrix(cov2, ncol = p)%*%  matrix(beta2))+ sum(matrix(cov3, ncol = p)%*%  matrix(beta3))
     B <- 1/theta + resp[, 1] + resp[, 2]  
-    sumbb + sum(log(vl)) + sum((resp[, 1] + resp[, 2]) * logZ) - sum(zVec * paras)
+  sum(log(dgamma(zVec, 1/theta, 1/theta)) +  sumbb + sum(log(vl)) + sum((resp[, 1] + resp[, 2]) * logZ) - sum(zVec * paras)
 }
 
 
@@ -449,7 +449,7 @@ scoreobj2 <- function(theta, rtime, tol, beta1, beta2, beta3, vl1, vl2, vl3, res
         }
         }
     if(ini == 1){
-        partlike <-   margpartial(theta, beta1, beta2, beta3, vl1, vl2, vl3, resp, cov, n, p, cov1, cov2, cov3)#wrapstha(theta, beta1, beta2, beta3, vl1, vl2, vl3, resp, cov, n, p)mglk##
+        partlike <- margpartial1(theta, beta1, beta2, beta3, vl1, vl2, vl3, resp, cov, n, p, cov1, cov2, cov3)## wrapstha(theta, beta1, beta2, beta3, vl1, vl2, vl3, resp, cov, n, p)^2#mglk###  ##
     }else{
         return(list(vl1, vl2, vl3, beta1, beta2, beta3, i))
         }
@@ -681,7 +681,7 @@ FrqID <- function(survData, startValues,  stheta, wtheta, hessian = F,  miter = 
 plot.iniFrqID <- function (object){
     plot(object[, 2] ~ object[, 1], type = "l", xlab = "theta values", ylab = "score functions")
 }
-realtemp <- FrqID( cbind(survData), rep(0, 3), c(0.6, 1.3), c(3.51, 3.9), tol = 1e-8, initial = T, step = 0.01,  verbose =2)
+realtemp <- FrqID( cbind(survData), rep(0, 3), c(0.63, 0.65), c(3.51, 3.9), tol = 1e-8, initial = T, step = 0.02,  verbose =2)
 pdf(file = "temp1.pdf")
 plot(realtemp[, 2] ~realtemp[, 1], type= "l")
 dev.off()
