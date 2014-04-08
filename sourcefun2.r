@@ -68,7 +68,7 @@ slvl3 <- function( b1, b2, b3, theta, vl1, vl2, vl3, resp, cov, n, parasall, p, 
     expb1 <- exp(cov %*% b1) * zVec
     expb2 <- exp(cov %*% b2) * zVec
     expb3 <- exp(cov %*% b3) * zVec 
-    
+   # browser()
     fvl <- function(j, lvl, vl,  expb, flg){
         
         a <- (sum(expb[lvl[[j]]]))
@@ -334,6 +334,9 @@ margpartial <- function(theta, beta1, beta2, beta3, vl1, vl2, vl3, resp, cov, n,
     sumbb <- sum(matrix(cov1, ncol = p)%*%  matrix(beta1))  + sum(matrix(cov2, ncol = p)%*%  matrix(beta2))+ sum(matrix(cov3, ncol = p)%*%  matrix(beta3))
     B <- 1/theta + resp[, 1] + resp[, 2]  
     sum(resp[, 1] * resp[, 2]) * log(theta + 1)  - sum(B * log(1 + theta* paras))+  sumbb + sum(log(vl))
+ #   browser()
+   # eta <- 1/theta
+    #log(prod(eta^eta /gamma(eta) * gamma(eta + resp[, 1] + resp[, 2])/ (eta + paras ) ^(eta + resp[, 1] + resp[, 2])))  + sum(log(vl)) + (sumbb)
 }
 
 
@@ -345,7 +348,7 @@ margpartial1 <- function(theta, beta1, beta2, beta3, vl1, vl2, vl3, resp, cov, n
     logZ <- parasall[6, ]
     sumbb <- sum(matrix(cov1, ncol = p)%*%  matrix(beta1))  + sum(matrix(cov2, ncol = p)%*%  matrix(beta2))+ sum(matrix(cov3, ncol = p)%*%  matrix(beta3))
     B <- 1/theta + resp[, 1] + resp[, 2]  
-  sum(log(dgamma(zVec, 1/theta, 1/theta)) +  sumbb + sum(log(vl)) + sum((resp[, 1] + resp[, 2]) * logZ) - sum(zVec * paras)
+  sum(log(dgamma(zVec, 1/theta, 1/theta))) +  sumbb + sum(log(vl)) + sum((resp[, 1] + resp[, 2]) * log(zVec)) - sum(zVec * paras)
 }
 
 
@@ -362,14 +365,14 @@ comscore1 <- function(vlbb, vl1, vl2, vl3, resp, cov,  n, p, m, f, g, lvl1, lvl2
     vl1[, 1] <- (vlbb[1 :m ])
     vl2[, 1] <- (vlbb[(m + 1) : (m + f) ])
     vl3[, 1] <- (vlbb[(m + f + 1) : (m + f + g) ])
-    beta1 <- vlbb[(m + f + g + 1) : (m + f + g + p) ]
+    beta1 <- vlbb[( m + f + g+ 1) : (m + f + g + p) ]
     beta2 <- vlbb[(m + f + g + p + 1) : (m + f + g + 2* p) ]
     beta3 <- vlbb[(m + f + g + 2 * p + 1) : (m + f + g + 3 * p)]
     theta <- (vlbb[m + f + g + 3 * p + 1])
-    nobb <- scoremaxnobb(vl, resp, cov, beta1, beta2, beta3, theta, vl1, vl2, vl3, n, p, m, f, g, lvl1, lvl2, lvl3, parasall) 
-    novl <- wrapscoreindv(c(beta1, beta2, beta3), log(theta),  resp, cov, n, vl1, vl2, vl3, p, parasall)
+    nobb <- scoremaxnobb(log(vl), resp, cov, beta1, beta2, beta3, theta, vl1, vl2, vl3, n, p, m, f, g, lvl1, lvl2, lvl3, parasall) 
+    novl <- wrapscoreindv(c(beta1, beta2, beta3), theta, resp, cov,  n, vl1, vl2, vl3,  p, parasall)
     sth <- wrapstha(theta, beta1, beta2, beta3, vl1, vl2, vl3, resp, cov, n, p)
-    c(sth, novl, nobb) 
+    c(sth, novl,  nobb) 
     
 }
 
@@ -439,7 +442,7 @@ scoreobj2 <- function(theta, rtime, tol, beta1, beta2, beta3, vl1, vl2, vl3, res
         vl3 <- resbb[[6]]
         mglk <- resbb[[7]]
         if(verbose == 1){
-            print(paste("iter=", rtime, "reduction=", crit), sep = "")
+            print(paste("iter=", i, "reduction=", crit), sep = "")
         }else if(verbose == 2){
             print(paste("iter=", i, "reduction=", crit), sep = "")
             print(c(theta, beta1, beta2, beta3))
@@ -449,7 +452,13 @@ scoreobj2 <- function(theta, rtime, tol, beta1, beta2, beta3, vl1, vl2, vl3, res
         }
         }
     if(ini == 1){
-        partlike <- margpartial1(theta, beta1, beta2, beta3, vl1, vl2, vl3, resp, cov, n, p, cov1, cov2, cov3)## wrapstha(theta, beta1, beta2, beta3, vl1, vl2, vl3, resp, cov, n, p)^2#mglk###  ##
+        ## parasall <- sapply(1 : n, getA, theta,   beta1, beta2, beta3, vl1, vl2, vl3, resp, cov, n, p)
+        ## #browser()
+        ## hm <- jacobian(comscore1, c( beta1, beta2, beta3, (theta)), method = "simple", method.args= list(eps = 1e-8), vl1, vl2, vl3, resp, cov, n, p, m, f, g, lvl1, lvl2, lvl3, parasall)
+         scoret <- comscore1(c(vl1[, 1], vl2[, 1], vl3[, 1],  beta1, beta2, beta3, (theta)), vl1, vl2, vl3, resp, cov, n, p, m, f, g, lvl1, lvl2, lvl3, parasall)
+         effiscore <- sum(scoret^2)# (scoret[3 * p + 1] - hm[(3*p + 1), (3*p + 1)]^(-1) * (hm[(3*p + 1), (1 :3*p)]) %*%scoret[1:(3*p)])^2
+        ## effiscore <- (scoret[3 * p + 1] - hm[(3*p + 1), (3*p + 1)]^(-1) * (hm[(3*p + 1), (1 :3*p)]) %*%scoret[1:(3*p)])^2
+        ##partlike <- margpartial(theta, beta1, beta2, beta3, vl1, vl2, vl3, resp, cov, n, p, cov1, cov2, cov3)## wrapstha(theta, beta1, beta2, beta3, vl1, vl2, vl3, resp, cov, n, p)^2#mglk###  ##
     }else{
         return(list(vl1, vl2, vl3, beta1, beta2, beta3, i))
         }
@@ -482,8 +491,8 @@ simwei2 <- function(i, t, l1, l2, l3, b1, b2, b3, a, cov, cen1, cen2){
     c(t1, t2, c)
 }
 
-estreal <- function(bb, vtheta, altheta,  resp, cov, hessian, rtime, tol, verbose){
-     p <- ncol(cov)
+estreal <- function(bb, vtheta, altheta,  resp, cov, hessian, rtime, tol, verbose, reltol){
+    p <- ncol(cov)
      n <- nrow(resp)
      resp[, 3] <- round(resp[, 3], 8)
      resp[, 4] <- round(resp[, 4], 8)
@@ -544,9 +553,9 @@ estreal <- function(bb, vtheta, altheta,  resp, cov, hessian, rtime, tol, verbos
      broot0 <- c(rep(0, 3 * p), -0.5)
      
      parasall <- sapply(1 : n, getA, theta,   beta1, beta2, beta3, vl1, vl2, vl3, resp, cov, n, p)
-     temp <- optim((vtheta[1] + vtheta[2])/2, scoreobj2, gr = NULL,  rtime, tol, beta1, beta2, beta3, vl1, vl2, vl3, resp, cov, n, p, m, f, g, lvl1, lvl2, lvl3, parasall, cov1, cov2, cov3, 1, verbose, method = "L-BFGS-B", lower = vtheta[1], upper = vtheta[2], control = list(fnscale = -1), hessian = FALSE)#try(uniroot(scoreobj2, vtheta, rtime, tol,   beta1, beta2, beta3, vl1, vl2, vl3, resp, cov,  n, p, m, f, g, lvl1, lvl2, lvl3, parasall, cov1, cov2, cov3, 1, verbose))
+     temp <- optim((vtheta[1] + vtheta[2])/2, scoreobj2, gr = NULL,  rtime, tol, beta1, beta2, beta3, vl1, vl2, vl3, resp, cov, n, p, m, f, g, lvl1, lvl2, lvl3, parasall, cov1, cov2, cov3, 1, verbose, method = "L-BFGS-B", lower = vtheta[1], upper = vtheta[2], control = list(fnscale = 1, reltol = reltol), hessian = FALSE)#try(uniroot(scoreobj2, vtheta, rtime, tol,   beta1, beta2, beta3, vl1, vl2, vl3, resp, cov,  n, p, m, f, g, lvl1, lvl2, lvl3, parasall, cov1, cov2, cov3, 1, verbose))
      if(temp$convergence != 0){
-         temp <- try(optim((altheta[1] + altheta[2])/2, scoreobj2, gr = NULL,  rtime, tol, beta1, beta2, beta3, vl1, vl2, vl3, resp, cov, n, p, m, f, g, lvl1, lvl2, lvl3, parasall, cov1, cov2, cov3, 1, verbose, method = "L-BFGS-B", lower = altheta[1], upper = altheta[2], control = list(fnscale = -1), hessian = FALSE))#try(uniroot(scoreobj2, altheta, rtime, tol,   beta1, beta2, beta3, vl1, vl2, vl3, resp, cov,  n, p, m, f, g, lvl1, lvl2, lvl3, parasall, cov1, cov2, cov3, 1, verbose))
+         temp <- try(optim((altheta[1] + altheta[2])/2, scoreobj2, gr = NULL,  rtime, tol, beta1, beta2, beta3, vl1, vl2, vl3, resp, cov, n, p, m, f, g, lvl1, lvl2, lvl3, parasall, cov1, cov2, cov3, 1, verbose, method = "L-BFGS-B", lower = altheta[1], upper = altheta[2], control = list(fnscale = 1, reltol = reltol), hessian = FALSE))#try(uniroot(scoreobj2, altheta, rtime, tol,   beta1, beta2, beta3, vl1, vl2, vl3, resp, cov,  n, p, m, f, g, lvl1, lvl2, lvl3, parasall, cov1, cov2, cov3, 1, verbose))
          if(temp$convergence != 0){
              return(list(rep(NA, 3 * p + 1), temp))
              }
@@ -640,7 +649,7 @@ iniestreal <- function(bb, vtheta, altheta,  resp, cov, hessian, rtime, tol, ver
      vl2[, 1] <- vl[ (m + 1): (m + f)]
      vl3[, 1] <- vl[ (m + f + 1): (m + f+ g)]
      broot <- bb
-     broot0 <- c(rep(0, 3 * p), -0.5)
+     #broot0 <- c(rep(0, 3 * p), -0.5)
      
      parasall <- sapply(1 : n, getA, theta,   beta1, beta2, beta3, vl1, vl2, vl3, resp, cov, n, p)
      temp <- sapply(vtheta, scoreobj2,  rtime, tol,   beta1, beta2, beta3, vl1, vl2, vl3, resp, cov,  n, p, m, f, g, lvl1, lvl2, lvl3, parasall, cov1, cov2, cov3, 1, verbose)
@@ -660,7 +669,10 @@ simCpRsk <- function(n, p, theta,  lambda1, lambda2, lambda3, kappa, beta1, beta
     colnames(simresp1) <- c("y1", "d1", "y2", "d2")
     return(cbind(simresp1, covm))
 }
-FrqID <- function(survData, startValues,  stheta, wtheta, hessian = F,  miter = 100, tol = 1e-4, initial = F, step = 0.01, verbose){
+FrqID <- function(survData, startValues,  stheta, wtheta, hessian = F,  miter = 100, tol = 1e-4, reltol = NULL, initial = F, step = 0.01, verbose){
+    if(is.null(reltol)){
+        reltol = tol
+    }
     y1 <- pmin(survData[, 1], survData[, 3])
     y2 <- survData[, 3]
     d1 <- survData[, 2]
@@ -669,7 +681,7 @@ FrqID <- function(survData, startValues,  stheta, wtheta, hessian = F,  miter = 
     np <- ncol(survData)
     covmy <- matrix(survData[, (5 : np)], ncol =  np - 4)
     if(!initial){
-        res <- estreal(startValues, stheta, wtheta, resp, covmy,  hessian, miter, tol, verbose)
+        res <- estreal(startValues, stheta, wtheta, resp, covmy,  hessian, miter, tol, verbose, reltol)
         class(res) <- "FrqID"
     }else{
         stheta <- seq(stheta[1], stheta[2], step)
@@ -681,7 +693,17 @@ FrqID <- function(survData, startValues,  stheta, wtheta, hessian = F,  miter = 
 plot.iniFrqID <- function (object){
     plot(object[, 2] ~ object[, 1], type = "l", xlab = "theta values", ylab = "score functions")
 }
-realtemp <- FrqID( cbind(survData), rep(0, 3), c(0.63, 0.65), c(3.51, 3.9), tol = 1e-8, initial = T, step = 0.02,  verbose =2)
+simu <- function(itr){
+    simCpRsk(250, p = 1, theta = 1, lambda1 = 2, lambda2 = 1, lambda3 = 0.5, kappa = 2.5, beta1 = 0.5, beta2 = 0.1, beta3 = 0.3, covm = NULL, 2.5, 3)
+}
+analysis <- function(itr){
+    survData <- lsurvData[[itr]]
+    FrqID( cbind(survData), rep(0, 3), c(0.4, 1.5), c(3.51, 3.9), tol = 1e-8, initial = F, step = 0.02,  verbose =1)[[1]]
+}
+
+lsurvData <- lapply(1 : nsim, simu)#simCpRsk(250, p = 1, theta = 1, lambda1 = 1, lambda2 = 1, lambda3 = 1, kappa = 2, beta1 = 0.5, beta2 = 0.2, beta3 = 0.3, covm = NULL, 2.5, 3)
+lrealtemp <- mclapply(1:nsim, analysis, mc.cores = 10)
+realtemp <- FrqID( cbind(lsurvData[[2]]), rep(0, 3), c(0.4, 1.5), c(3.51, 3.9), tol = 1e-8, initial = F, step = 0.02,  verbose =2)
 pdf(file = "temp1.pdf")
 plot(realtemp[, 2] ~realtemp[, 1], type= "l")
 dev.off()
