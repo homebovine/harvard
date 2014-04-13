@@ -452,13 +452,7 @@ scoreobj2 <- function(theta, rtime, tol, beta1, beta2, beta3, vl1, vl2, vl3, res
         }
         }
     if(ini == 1){
-        ## parasall <- sapply(1 : n, getA, theta,   beta1, beta2, beta3, vl1, vl2, vl3, resp, cov, n, p)
-        ## #browser()
-        ## hm <- jacobian(comscore1, c( beta1, beta2, beta3, (theta)), method = "simple", method.args= list(eps = 1e-8), vl1, vl2, vl3, resp, cov, n, p, m, f, g, lvl1, lvl2, lvl3, parasall)
-         scoret <- comscore1(c(vl1[, 1], vl2[, 1], vl3[, 1],  beta1, beta2, beta3, (theta)), vl1, vl2, vl3, resp, cov, n, p, m, f, g, lvl1, lvl2, lvl3, parasall)
-         effiscore <- sum(scoret^2)# (scoret[3 * p + 1] - hm[(3*p + 1), (3*p + 1)]^(-1) * (hm[(3*p + 1), (1 :3*p)]) %*%scoret[1:(3*p)])^2
-        ## effiscore <- (scoret[3 * p + 1] - hm[(3*p + 1), (3*p + 1)]^(-1) * (hm[(3*p + 1), (1 :3*p)]) %*%scoret[1:(3*p)])^2
-        ##partlike <- margpartial(theta, beta1, beta2, beta3, vl1, vl2, vl3, resp, cov, n, p, cov1, cov2, cov3)## wrapstha(theta, beta1, beta2, beta3, vl1, vl2, vl3, resp, cov, n, p)^2#mglk###  ##
+         partlike <- -mglk#-margpartial(theta, beta1, beta2, beta3, vl1, vl2, vl3, resp, cov, n, p, cov1, cov2, cov3)## wrapstha(theta, beta1, beta2, beta3, vl1, vl2, vl3, resp, cov, n, p)^2#mglk###  ##
     }else{
         return(list(vl1, vl2, vl3, beta1, beta2, beta3, i))
         }
@@ -491,71 +485,71 @@ simwei2 <- function(i, t, l1, l2, l3, b1, b2, b3, a, cov, cen1, cen2){
     c(t1, t2, c)
 }
 
-estreal <- function(bb, vtheta, altheta,  resp, cov, hessian, rtime, tol, verbose, reltol){
+estreal <- function(bb, vtheta, altheta,  resp, cov, hessian, rtime, tol, verbose, factr){
     p <- ncol(cov)
-     n <- nrow(resp)
-     resp[, 3] <- round(resp[, 3], 8)
-     resp[, 4] <- round(resp[, 4], 8)
-     colnames(resp) <- c("d1", "d2", "y1", "y2")
-     beta1 <- bb[1 : p]
-     beta2 <- bb[(p + 1): (2 * p)]
-     beta3 <- bb[(2 * p + 1): (3 * p)]
-     nth <- length(vtheta)
-     theta <- mean(vtheta)
-     d1 <- resp[, 1]
-     d2 <- resp[, 2]
-     y1 <- resp[, 3]
-     y2 <- resp[, 4]
-     ind1 <- which(d1 == 1 )
-     ind2 <- which((d1 == 0) & (d2 == 1))
-     ind3 <- which((d1 ==1) & (d2 == 1))
-     subgix1 <- (d1 == 0)
-     respsub1 <- resp[subgix1, ]
-     respsub2 <- resp[ind1, ]
-     surv1 <- (coxph(Surv(resp[, "y1"], resp[, "d1"]) ~ ., as.data.frame(cov)))
-     surv2 <- (coxph(Surv(respsub1[, "y2"], respsub1[, "d2"]) ~., as.data.frame(cov[subgix1, ] )))
-     surv3 <- (coxph(Surv(respsub2[, "y2"], respsub2[, "d2"]) ~., as.data.frame(cov[ind1, ])))
-     bz10 <- basehaz(surv1)
-     bz20 <- basehaz(surv2)
-     bz30 <- basehaz(surv3)
-     ixbz1 <- which(c(bz10[1, 1], diff(bz10[, 1])) != 0) 
-     ixbz2 <- which(c(bz20[1, 1], diff(bz20[, 1])) != 0)
-     ixbz3 <- which(c(bz30[1, 1], diff(bz30[, 1])) != 0) 
-     bz1 <-  bz10[ixbz1, ]
-     bz2 <-  bz20[ixbz2, ]
-     bz3 <-  bz30[ixbz3, ]
-     bz1[, 1] <- c(bz1[1, 1], diff(bz1[, 1]))
-     bz2[, 1] <- c(bz2[1, 1], diff(bz2[, 1]))
-     bz3[, 1] <- c(bz3[1, 1], diff(bz3[, 1]))
-     #browser()
-     vl10 <- bz1
-     vl20 <- bz2
-     vl30 <- bz3
-     m <- nrow(vl10)
-     f <- nrow(vl20)
-     g <- nrow(vl30)
-     n <- nrow(resp)
-     vl1 <- vl10
-     vl2 <- vl20
-     vl3 <- vl30
-     cov1 <- cov[ind1, ]
-     cov2 <- cov[ind2, ]
-     cov3 <- cov[ind3, ]
-     lvl1 <- lapply(1 : m, funcvl, vl1, 1, resp)
-     lvl2 <- lapply(1 : f, funcvl, vl2, 2, resp)
-     lvl3 <- lapply(1 : g, funcvl, vl3, 3, resp)
-     vl <- c((vl10[, 1]), (vl20[, 1]), (vl30[, 1]))
- 
-     vl1[, 1] <- vl[1 : m]
-     vl2[, 1] <- vl[ (m + 1): (m + f)]
-     vl3[, 1] <- vl[ (m + f + 1): (m + f+ g)]
-     broot <- bb
-     broot0 <- c(rep(0, 3 * p), -0.5)
-     
-     parasall <- sapply(1 : n, getA, theta,   beta1, beta2, beta3, vl1, vl2, vl3, resp, cov, n, p)
-     temp <- optim((vtheta[1] + vtheta[2])/2, scoreobj2, gr = NULL,  rtime, tol, beta1, beta2, beta3, vl1, vl2, vl3, resp, cov, n, p, m, f, g, lvl1, lvl2, lvl3, parasall, cov1, cov2, cov3, 1, verbose, method = "L-BFGS-B", lower = vtheta[1], upper = vtheta[2], control = list(fnscale = 1, reltol = reltol), hessian = FALSE)#try(uniroot(scoreobj2, vtheta, rtime, tol,   beta1, beta2, beta3, vl1, vl2, vl3, resp, cov,  n, p, m, f, g, lvl1, lvl2, lvl3, parasall, cov1, cov2, cov3, 1, verbose))
+    n <- nrow(resp)
+    resp[, 3] <- round(resp[, 3], 8)
+    resp[, 4] <- round(resp[, 4], 8)
+    colnames(resp) <- c("d1", "d2", "y1", "y2")
+    beta1 <- bb[1 : p]
+    beta2 <- bb[(p + 1): (2 * p)]
+    beta3 <- bb[(2 * p + 1): (3 * p)]
+    nth <- length(vtheta)
+    theta <- mean(vtheta)
+    d1 <- resp[, 1]
+    d2 <- resp[, 2]
+    y1 <- resp[, 3]
+    y2 <- resp[, 4]
+    ind1 <- which(d1 == 1 )
+    ind2 <- which((d1 == 0) & (d2 == 1))
+    ind3 <- which((d1 ==1) & (d2 == 1))
+    subgix1 <- (d1 == 0)
+    respsub1 <- resp[subgix1, ]
+    respsub2 <- resp[ind1, ]
+    surv1 <- (coxph(Surv(resp[, "y1"], resp[, "d1"]) ~ ., as.data.frame(cov)))
+    surv2 <- (coxph(Surv(respsub1[, "y2"], respsub1[, "d2"]) ~., as.data.frame(cov[subgix1, ] )))
+    surv3 <- (coxph(Surv(respsub2[, "y2"], respsub2[, "d2"]) ~., as.data.frame(cov[ind1, ])))
+    bz10 <- basehaz(surv1)
+    bz20 <- basehaz(surv2)
+    bz30 <- basehaz(surv3)
+    ixbz1 <- which(c(bz10[1, 1], diff(bz10[, 1])) != 0) 
+    ixbz2 <- which(c(bz20[1, 1], diff(bz20[, 1])) != 0)
+    ixbz3 <- which(c(bz30[1, 1], diff(bz30[, 1])) != 0) 
+    bz1 <-  bz10[ixbz1, ]
+    bz2 <-  bz20[ixbz2, ]
+    bz3 <-  bz30[ixbz3, ]
+    bz1[, 1] <- c(bz1[1, 1], diff(bz1[, 1]))
+    bz2[, 1] <- c(bz2[1, 1], diff(bz2[, 1]))
+    bz3[, 1] <- c(bz3[1, 1], diff(bz3[, 1]))
+                                        #browser()
+    vl10 <- bz1
+    vl20 <- bz2
+    vl30 <- bz3
+    m <- nrow(vl10)
+    f <- nrow(vl20)
+    g <- nrow(vl30)
+    n <- nrow(resp)
+    vl1 <- vl10
+    vl2 <- vl20
+    vl3 <- vl30
+    cov1 <- cov[ind1, ]
+    cov2 <- cov[ind2, ]
+    cov3 <- cov[ind3, ]
+    lvl1 <- lapply(1 : m, funcvl, vl1, 1, resp)
+    lvl2 <- lapply(1 : f, funcvl, vl2, 2, resp)
+    lvl3 <- lapply(1 : g, funcvl, vl3, 3, resp)
+    vl <- c((vl10[, 1]), (vl20[, 1]), (vl30[, 1]))
+    
+    vl1[, 1] <- vl[1 : m]
+    vl2[, 1] <- vl[ (m + 1): (m + f)]
+    vl3[, 1] <- vl[ (m + f + 1): (m + f+ g)]
+    broot <- bb
+    broot0 <- c(rep(0, 3 * p), -0.5)
+    
+    parasall <- sapply(1 : n, getA, theta,   beta1, beta2, beta3, vl1, vl2, vl3, resp, cov, n, p)
+    temp <- optim((vtheta[1] + vtheta[2])/2, scoreobj2, gr = NULL,  rtime, tol, beta1, beta2, beta3, vl1, vl2, vl3, resp, cov, n, p, m, f, g, lvl1, lvl2, lvl3, parasall, cov1, cov2, cov3, 1, verbose, method = "L-BFGS-B", lower = vtheta[1], upper = vtheta[2], control = list(fnscale = 1, factr = factr), hessian = FALSE)#try(uniroot(scoreobj2, vtheta, rtime, tol,   beta1, beta2, beta3, vl1, vl2, vl3, resp, cov,  n, p, m, f, g, lvl1, lvl2, lvl3, parasall, cov1, cov2, cov3, 1, verbose))
      if(temp$convergence != 0){
-         temp <- try(optim((altheta[1] + altheta[2])/2, scoreobj2, gr = NULL,  rtime, tol, beta1, beta2, beta3, vl1, vl2, vl3, resp, cov, n, p, m, f, g, lvl1, lvl2, lvl3, parasall, cov1, cov2, cov3, 1, verbose, method = "L-BFGS-B", lower = altheta[1], upper = altheta[2], control = list(fnscale = 1, reltol = reltol), hessian = FALSE))#try(uniroot(scoreobj2, altheta, rtime, tol,   beta1, beta2, beta3, vl1, vl2, vl3, resp, cov,  n, p, m, f, g, lvl1, lvl2, lvl3, parasall, cov1, cov2, cov3, 1, verbose))
+         temp <- try(optim((altheta[1] + altheta[2])/2, scoreobj2, gr = NULL,  rtime, tol, beta1, beta2, beta3, vl1, vl2, vl3, resp, cov, n, p, m, f, g, lvl1, lvl2, lvl3, parasall, cov1, cov2, cov3, 1, verbose, method = "L-BFGS-B", lower = altheta[1], upper = altheta[2], control = list(fnscale = 1, factr = factr), hessian = FALSE))#try(uniroot(scoreobj2, altheta, rtime, tol,   beta1, beta2, beta3, vl1, vl2, vl3, resp, cov,  n, p, m, f, g, lvl1, lvl2, lvl3, parasall, cov1, cov2, cov3, 1, verbose))
          if(temp$convergence != 0){
              return(list(rep(NA, 3 * p + 1), temp))
              }
@@ -571,6 +565,7 @@ estreal <- function(bb, vtheta, altheta,  resp, cov, hessian, rtime, tol, verbos
      miter <- res[[7]]
      #browser()
      if(hessian){
+
          hm <- try(jacobian(comscore1, c(c(vl1[, 1], vl2[, 1], vl3[, 1]), beta1, beta2, beta3, (theta)), method = "simple", method.args= list(eps = 1e-8), vl1, vl2, vl3, resp, cov, n, p, m, f, g, lvl1, lvl2, lvl3, parasall))
          if(class(hm) == "try-error"){
              print(hm)
@@ -669,9 +664,9 @@ simCpRsk <- function(n, p, theta,  lambda1, lambda2, lambda3, kappa, beta1, beta
     colnames(simresp1) <- c("y1", "d1", "y2", "d2")
     return(cbind(simresp1, covm))
 }
-FrqID <- function(survData, startValues,  stheta, wtheta, hessian = F,  miter = 100, tol = 1e-4, reltol = NULL, initial = F, step = 0.01, verbose){
-    if(is.null(reltol)){
-        reltol = tol
+FrqID <- function(survData, startValues,  stheta, wtheta, hessian = F,  miter = 100, tol = 1e-4, factr = NULL, initial = F, step = 0.01, verbose){
+    if(is.null(factr)){
+        factr <- tol
     }
     y1 <- pmin(survData[, 1], survData[, 3])
     y2 <- survData[, 3]
@@ -681,7 +676,7 @@ FrqID <- function(survData, startValues,  stheta, wtheta, hessian = F,  miter = 
     np <- ncol(survData)
     covmy <- matrix(survData[, (5 : np)], ncol =  np - 4)
     if(!initial){
-        res <- estreal(startValues, stheta, wtheta, resp, covmy,  hessian, miter, tol, verbose, reltol)
+        res <- estreal(startValues, stheta, wtheta, resp, covmy,  hessian, miter, tol, verbose, factr)
         class(res) <- "FrqID"
     }else{
         stheta <- seq(stheta[1], stheta[2], step)
@@ -694,16 +689,20 @@ plot.iniFrqID <- function (object){
     plot(object[, 2] ~ object[, 1], type = "l", xlab = "theta values", ylab = "score functions")
 }
 simu <- function(itr){
-    simCpRsk(250, p = 1, theta = 1, lambda1 = 2, lambda2 = 1, lambda3 = 0.5, kappa = 2.5, beta1 = 0.5, beta2 = 0.1, beta3 = 0.3, covm = NULL, 2.5, 3)
+    simCpRsk(1000, p = 1, theta = 1, lambda1 = 2, lambda2 = 1, lambda3 = 0.5, kappa = 2.5, beta1 = 0.5, beta2 = 0.1, beta3 = 0.3, covm = NULL, 2.5, 3)
 }
 analysis <- function(itr){
     survData <- lsurvData[[itr]]
-    FrqID( cbind(survData), rep(0, 3), c(0.4, 1.5), c(3.51, 3.9), tol = 1e-8, initial = F, step = 0.02,  verbose =1)[[1]]
+    FrqID( cbind(survData), rep(0, 3), c(0.4, 1.5), c(3.51, 3.9), tol = 1e-6, factr  = NULL, initial = F, step = 0.02,  verbose =1)[[1]]
+}
+evaltheta <- function(theta){
+    FrqID( cbind(lsurvData[[1]]), rep(0, 3), c(theta, theta), c(3.51, 3.9), tol = 1e-6, factr = NULL, initial = T, step = 0.02,  verbose =2)
 }
 
 lsurvData <- lapply(1 : nsim, simu)#simCpRsk(250, p = 1, theta = 1, lambda1 = 1, lambda2 = 1, lambda3 = 1, kappa = 2, beta1 = 0.5, beta2 = 0.2, beta3 = 0.3, covm = NULL, 2.5, 3)
+nrealtemp <- mclapply(seq(0.89, 0.95, 0.005), evaltheta, mc.cores = 10)
 lrealtemp <- mclapply(1:nsim, analysis, mc.cores = 10)
-realtemp <- FrqID( cbind(lsurvData[[2]]), rep(0, 3), c(0.4, 1.5), c(3.51, 3.9), tol = 1e-8, initial = F, step = 0.02,  verbose =2)
+realtemp <- FrqID( cbind(lsurvData[[2]]), rep(0, 3), c(0.95, 1.2), c(3.51, 3.9), tol = 1e-6, factr = NULL, initial = F, step = 0.02,  verbose =2)
 pdf(file = "temp1.pdf")
 plot(realtemp[, 2] ~realtemp[, 1], type= "l")
 dev.off()
