@@ -452,13 +452,18 @@ scoreobj2 <- function(theta, rtime, tol, beta1, beta2, beta3, vl1, vl2, vl3, res
         }
         }
     if(ini == 1){
-         partlike <- -mglk#-margpartial(theta, beta1, beta2, beta3, vl1, vl2, vl3, resp, cov, n, p, cov1, cov2, cov3)## wrapstha(theta, beta1, beta2, beta3, vl1, vl2, vl3, resp, cov, n, p)^2#mglk###  ##
+        partlike <- -mglk#-margpartial(theta, beta1, beta2, beta3, vl1, vl2, vl3, resp, cov, n, p, cov1, cov2, cov3)## wrapstha(theta, beta1, beta2, beta3, vl1, vl2, vl3, resp, cov, n, p)^2#mglk###  ##
+    }else if(ini == 2){
+        #browser()
+        res <- c(beta1, beta2, beta3,  theta, i, mglk)
+        attributes(res) <- list("vl1" = vl1, "vl2" = vl2, "vl3" = vl3)
+        return(res)
     }else{
-        return(list(vl1, vl2, vl3, beta1, beta2, beta3, i))
-        }
+        return(list(vl1, vl2, vl3, beta1, beta2, beta3, i, mglk))
+    }
 
         
-    }
+}
 
 simeval <- function(sitr){
    res <-  try(estreal(rep(0, 3 * p), c(0.2, 1.8), c(0.1, 2),  lsimresp1[[sitr]], lcovm[[sitr]], FALSE, 100, 1e-5)[[1]])
@@ -585,7 +590,7 @@ estreal <- function(bb, vtheta, altheta,  resp, cov, hessian, rtime, tol, verbos
  }
 
 
-iniestreal <- function(bb, vtheta, altheta,  resp, cov, hessian, rtime, tol, verbose){
+iniestreal <- function(vtheta, bb,  resp, cov, hessian, rtime, tol, verbose){
      p <- ncol(cov)
      n <- nrow(resp)
      resp[, 3] <- round(resp[, 3], 8)
@@ -595,7 +600,7 @@ iniestreal <- function(bb, vtheta, altheta,  resp, cov, hessian, rtime, tol, ver
      beta2 <- bb[(p + 1): (2 * p)]
      beta3 <- bb[(2 * p + 1): (3 * p)]
      nth <- length(vtheta)
-     theta <- mean(vtheta)
+     theta <- (vtheta)
      d1 <- resp[, 1]
      d2 <- resp[, 2]
      y1 <- resp[, 3]
@@ -647,8 +652,8 @@ iniestreal <- function(bb, vtheta, altheta,  resp, cov, hessian, rtime, tol, ver
      #broot0 <- c(rep(0, 3 * p), -0.5)
      
      parasall <- sapply(1 : n, getA, theta,   beta1, beta2, beta3, vl1, vl2, vl3, resp, cov, n, p)
-     temp <- sapply(vtheta, scoreobj2,  rtime, tol,   beta1, beta2, beta3, vl1, vl2, vl3, resp, cov,  n, p, m, f, g, lvl1, lvl2, lvl3, parasall, cov1, cov2, cov3, 1, verbose)
-     return(cbind(vtheta, temp)) 
+     temp <- scoreobj2(theta,   rtime, tol,   beta1, beta2, beta3, vl1, vl2, vl3, resp, cov,  n, p, m, f, g, lvl1, lvl2, lvl3, parasall, cov1, cov2, cov3, 2, verbose)
+     return(temp) 
  }
 
 simCpRsk <- function(n, p, theta,  lambda1, lambda2, lambda3, kappa, beta1, beta2, beta3, covm = NULL,  cen1, cen2){
@@ -664,7 +669,7 @@ simCpRsk <- function(n, p, theta,  lambda1, lambda2, lambda3, kappa, beta1, beta
     colnames(simresp1) <- c("y1", "d1", "y2", "d2")
     return(cbind(simresp1, covm))
 }
-FrqID <- function(survData, startValues,  stheta, wtheta, hessian = F,  miter = 100, tol = 1e-4, factr = NULL, initial = F, step = 0.01, verbose){
+FrqID <- function(survData, startValues,  stheta, wtheta, hessian = F,  miter = 100, tol = 1e-4, factr = NULL, initial = F, step = 0.01, ncores = detectCores(),  verbose){
     if(is.null(factr)){
         factr <- tol
     }
@@ -680,7 +685,13 @@ FrqID <- function(survData, startValues,  stheta, wtheta, hessian = F,  miter = 
         class(res) <- "FrqID"
     }else{
         stheta <- seq(stheta[1], stheta[2], step)
-        res <- iniestreal(startValues, stheta, wtheta, resp, covmy,  hessian, miter, tol, verbose)
+        res1 <- mclapply(stheta, iniestreal,  startValues,  resp, covmy,  hessian, miter, tol, verbose, mc.cores = ncores, mc.allow.recursive = FALSE)
+
+        mres <- do.call(rbind, res1)
+        nc <- ncol(mres)
+        ix <- which(mres[, nc] == max(mres[, nc]))
+        res <- res1[[ix]]
+        attributes(res) <- list("alres" = res1)
         class(res) <- "iniFrqID"
     }
     return(res)
@@ -689,11 +700,11 @@ plot.iniFrqID <- function (object){
     plot(object[, 2] ~ object[, 1], type = "l", xlab = "theta values", ylab = "score functions")
 }
 simu <- function(itr){
-    simCpRsk(1000, p = 1, theta = 1, lambda1 = 2, lambda2 = 1, lambda3 = 0.5, kappa = 2.5, beta1 = 0.5, beta2 = 0.1, beta3 = 0.3, covm = NULL, 2.5, 3)
+    simCpRsk(5000, p = 1, theta = 1, lambda1 = 1, lambda2 = 1, lambda3 = 0.5, kappa = 2.5, beta1 = 0.5, beta2 = 0.1, beta3 = 0.3, covm = NULL, 2.5, 3)
 }
 analysis <- function(itr){
     survData <- lsurvData[[itr]]
-    FrqID( cbind(survData), rep(0, 3), c(0.4, 1.5), c(3.51, 3.9), tol = 1e-6, factr  = NULL, initial = F, step = 0.02,  verbose =1)[[1]]
+    FrqID( cbind(survData), rep(0, 3), c(0.70, 1.3), c(3.51, 3.9), tol = 1e-6, factr  = NULL, initial = T, step = 0.02, ncores = 10,  verbose =1)
 }
 evaltheta <- function(theta){
     FrqID( cbind(lsurvData[[1]]), rep(0, 3), c(theta, theta), c(3.51, 3.9), tol = 1e-6, factr = NULL, initial = T, step = 0.02,  verbose =2)
@@ -702,7 +713,7 @@ evaltheta <- function(theta){
 lsurvData <- lapply(1 : nsim, simu)#simCpRsk(250, p = 1, theta = 1, lambda1 = 1, lambda2 = 1, lambda3 = 1, kappa = 2, beta1 = 0.5, beta2 = 0.2, beta3 = 0.3, covm = NULL, 2.5, 3)
 nrealtemp <- mclapply(seq(0.89, 0.95, 0.005), evaltheta, mc.cores = 10)
 lrealtemp <- mclapply(1:nsim, analysis, mc.cores = 10)
-realtemp <- FrqID( cbind(lsurvData[[2]]), rep(0, 3), c(0.95, 1.2), c(3.51, 3.9), tol = 1e-6, factr = NULL, initial = F, step = 0.02,  verbose =2)
+realtemp <- FrqID( cbind(lsurvData[[1]]), rep(0, 3), c(0.87, 0.89), c(3.51, 3.9), tol = 1e-6, factr = NULL, initial = T, step = 0.005,  ncores = 10,   verbose =2)
 pdf(file = "temp1.pdf")
 plot(realtemp[, 2] ~realtemp[, 1], type= "l")
 dev.off()
