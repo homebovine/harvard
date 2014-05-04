@@ -536,24 +536,26 @@ FrqID <- function(survData, startValues,  stheta,   miter = 100, tol = 1e-4, ltr
 }
 
 summary.FrqID<- function(object, hessian = F){
-    object = object$res
-    vl1 <- attributes(object)$vl1
-    vl2 <- attributes(object)$vl2
-    vl3 <- attributes(object)$vl3
-    p <- attributes(object)$p
-    beta1 <- object[1 : p]
-    beta2 <- object[(p + 1) : (2* p)]
-    beta3 <- object[(2 * p + 1) : (3* p)]
-    theta  <- object[3 * p + 1]
-    resp <- attributes(object)$resp
-    cov <- attributes(object)$cov
-    n <- attributes(object)$n
-    m <- attributes(object)$m
-    f <- attributes(object)$f
-    g <- attributes(object)$g
-    lvl1 <- attributes(object)$lvl1
-    lvl2 <- attributes(object)$lvl2
-    lvl3 <- attributes(object)$lvl3
+    object1 = object$res
+    vl1 <- attributes(object1)$vl1
+    vl2 <- attributes(object1)$vl2
+    vl3 <- attributes(object1)$vl3
+    p <- attributes(object1)$p
+    beta1 <- object1[1 : p]
+    beta2 <- object1[(p + 1) : (2* p)]
+    beta3 <- object1[(2 * p + 1) : (3* p)]
+    theta  <- object1[3 * p + 1]
+    resp <- attributes(object1)$resp
+    cov <- attributes(object1)$cov
+    n <- attributes(object1)$n
+    m <- attributes(object1)$m
+    f <- attributes(object1)$f
+    g <- attributes(object1)$g
+    lvl1 <- attributes(object1)$lvl1
+    lvl2 <- attributes(object1)$lvl2
+    lvl3 <- attributes(object1)$lvl3
+    object2 <- object$fullres
+    fullres <- do.call(rbind, object2)
     if(hessian){
         
         hm <- try(jacobian(comscore1, c(c(vl1[, 1], vl2[, 1], vl3[, 1]), beta1, beta2, beta3, (theta)), method = "simple", method.args= list(eps = 1e-8), vl1, vl2, vl3, resp, cov, n, p, m, f, g, lvl1, lvl2, lvl3))
@@ -563,7 +565,7 @@ summary.FrqID<- function(object, hessian = F){
     }else{
         hm = NULL
     }
-    return(list("beta1" = beta1, "beta2" = beta2, "beta3" = beta3, "theta" = theta, "hessian" = hm, "maxit" = object[3 * p + 2], "likelihood" = object[3 * p + 3]))
+    return(list("beta1" = beta1, "beta2" = beta2, "beta3" = beta3, "theta" = theta, "hessian" = hm, "maxit" = object[3 * p + 2], "likelihood" = object[3 * p + 3], "fullresult" = fullres))
 }
 plot.FrqID <- function(object, ...){
     object = object$fullres
