@@ -498,7 +498,8 @@ simCpRsk <- function(n, p, theta,  lambda1, lambda2, lambda3, kappa, beta1, beta
     y1 <- pmin(simdata1[, 1], y2)
     simresp1 <- cbind(y1, d1, y2, d2)
     colnames(simresp1) <- c("y1", "d1", "y2", "d2")
-    return(cbind(simresp1, covm))
+    survData = cbind(simresp1, covm)
+    return(survData)
 }
 
 FrqID <- function(survData, startValues,  stheta,   miter = 100, tol = 1e-4, ltr = F, step = 0.01, ncores = detectCores(),  verbose){
