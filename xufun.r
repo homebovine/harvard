@@ -566,29 +566,10 @@ summary.FrqID<- function(object, hessian = F){
     }else{
         hm = NULL
     }
-    return(list("beta1" = beta1, "beta2" = beta2, "beta3" = beta3, "theta" = theta, "hessian" = hm, "maxit" = object[3 * p + 2], "likelihood" = object[3 * p + 3], "fullresult" = fullres))
+    return(list("beta1" = beta1, "beta2" = beta2, "beta3" = beta3, "theta" = theta, "hessian" = hm, "maxit" = object1[3 * p + 2], "likelihood" = object1[3 * p + 3], "fullresult" = fullres))
 }
 plot.FrqID <- function(object, ...){
     object = object$fullres
     res <- do.call(rbind, object)
     plot(res[, ncol(res)] ~ res[, ncol(res) - 2], ...)
 }
-simu <- function(itr){
-    simCpRsk(250, p = 1, theta = 1, lambda1 = 2, lambda2 = 1, lambda3 = 0.5, kappa = 2.5, beta1 = 0.5, beta2 = 0.1, beta3 = 0.3, covm = NULL, 2.5, 3)
-}
-analysis <- function(itr){
-    survData <- lsurvData[[itr]]
-    FrqID( cbind(survData), rep(0, 3), c(0.70, 1.3), tol = 1e-6,  initial = T, step = 0.02, ncores = 10,  verbose =1)
-}
-evaltheta <- function(theta){
-    FrqID( cbind(lsurvData[[1]]), rep(0, 3), c(theta, theta), tol = 1e-6,   step = 0.02,  verbose =2)
-}
-
-lsurvData <- lapply(1 : nsim, simu)#simCpRsk(250, p = 1, theta = 1, lambda1 = 1, lambda2 = 1, lambda3 = 1, kappa = 2, beta1 = 0.5, beta2 = 0.2, beta3 = 0.3, covm = NULL, 2.5, 3)
-nrealtemp <- mclapply(seq(0.89, 0.95, 0.005), evaltheta, mc.cores = 10)
-lrealtemp <- mclapply(1:nsim, analysis, mc.cores = 10)
-realtemp <- FrqID( cbind(lsurvData[[1]][1:250, ]), rep(0, 3), c(0.87, 1.1), tol = 1e-6,  ltr = F, step = 0.02,  ncores = 10,   verbose =2)
-pdf(file = "temp1.pdf")
-plot(realtemp[, 2] ~realtemp[, 1], type= "l")
-dev.off()
-
