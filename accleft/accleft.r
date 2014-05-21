@@ -417,6 +417,6 @@ vtg <- cbind(vta, vtb)
 #theta <- c(2.3013619,   2.1056873,   2.2956241,   1.0000000,   1.0000000,   1.0000000,  -0.8729327,  -1.2757368,  -1.2168885)
 #estm(theta, resp, covm, n, p)
 vt <- cbind(runif(100, 0, 1), runif(100, 0, 1))
-mean(score(vt, covm[1], vg[1], theta))
+apply(score(vt, theta, covm[1], vg[1]), 2, mean)
 vegas (2, 1, singlelikelihood, covm[1], vg[1], theta, lower = c(0.01, 0.01), upper = c(0.99,  0.99), abs.tol = 0.01)$value
-adaptIntegrate(singlescore, c(0.01, 0.01), c(0.99,  0.99),  covm[1], vg[1], theta,  tol = 1e-05, fDim = 6, maxEval = 0, absError=0, doChecking=FALSE)
+adaptIntegrate(singlescore, c(0.01, 0.01), c(0.99,  0.99),  theta, covm[1], vg[1],   tol = 1e-05, fDim = 6, maxEval = 0, absError=0, doChecking=FALSE)
