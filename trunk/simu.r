@@ -40,12 +40,11 @@ for(itr in 1 : nsim){
     d2 <- simdata1[, 2] < simdata1[, 3]
     y2 <- pmin(simdata1[, 2], simdata1[, 3])
     y1 <- pmin(simdata1[, 1], y2)
-    simresp1 <- cbind(d1, d2, y1, y2)
-    nsimresp1 <- simdata1
-    colnames(simresp1) <- c("d1", "d2", "y1", "y2")
+    simresp1 <- cbind(simdata1[, 1], d1, y2, d2)
+    colnames(simresp1) <- c("t1", "d1", "t2", "d2")
 
     lsimresp1[[itr]] <- simresp1
-    lsimnresp1[[itr]] <- simdata1
+   
     lcovm[[itr]] <- cbind(covm)
 #    save(covm, simresp1, file = paste("./simdata/sim", paste(l1, l2, l3, a,  sep = ""),  itr, sep = "_"))
 }
