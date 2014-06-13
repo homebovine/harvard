@@ -69,9 +69,6 @@ score <- function(vt, theta, x, g, v= 1e-5){
     kappa1 <- abs(theta[1])
     kappa2 <- abs(theta[2])
     kappa3 <- abs(theta[3])
-    alpha1 <- theta[4]
-    alpha2 <- theta[5]
-    alpha3 <- theta[6]
     beta1 <- theta[7 : (6 + p)]
     beta2 <- theta[(7 + p) : (6 + 2 * p)]
     beta3 <- theta[(7 + 2* p) : (6 + 3 * p)]
