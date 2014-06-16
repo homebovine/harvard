@@ -25,4 +25,4 @@ simall <- function(itr, cen1, cen2){
     save(survData, file = filename)
     return(survData)
 }
-lsurvData <- lapply(1 : 1000, simall, 3, 5)
+lsurvData <- lapply(1 : 1000, simall, 1, 1.5)
