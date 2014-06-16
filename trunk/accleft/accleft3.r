@@ -1,8 +1,8 @@
-library(R2Cuba)
+#library(R2Cuba)
 library(MASS)
 library(BB)
 library(survival)
-library(pracma)
+#library(pracma)
 library(parallel)
 hzd1 <- function(kappa1,  beta1,  t, x, g){
     g * exp((trans1(t)-t(beta1) %*% x)/kappa1) * 1/t * 1/kappa1
