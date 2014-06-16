@@ -1,8 +1,7 @@
 source("accleft3.r")
 set.seed(2014)
 m = 25
-m1 = 100
-theta <- c(0.5, 0.5, 0.5,   -1.2,  -1,   -1.1)
+theta <- c(0.5, 0.5, 0.5, -0.6,    -0.3,   -0.5)
 q <- length(theta) 
 mA <- matrix(NA, m, m)
 mb <- matrix(NA, q, m)
@@ -22,7 +21,8 @@ mx <- matrix(c(0, 1), ncol = p)
 simall <- function(itr, cen1, cen2){
     set.seed(itr + 2014)
     survData <- do.call(rbind, lapply(1:n, simuRsk, n, p,     theta, cen1, cen2))
-    filename <- paste("./simdata/simu", itr, n, p, sep = "_")
+    filename <- paste("./simdata/simu",  itr, n, p, m,  sep = "_")
     save(survData, file = filename)
+    return(survData)
 }
 lsurvData <- lapply(1 : 1000, simall, 3, 5)
