@@ -5,7 +5,7 @@ theta <- c(0.5, 0.5, 0.5, -0.6,    -0.3,   -0.5)
 q <- length(theta) 
 mA <- matrix(NA, m, m)
 mb <- matrix(NA, q, m)
-n <- 100
+n <- 500
 
 p <- 1
 ij <- as.matrix(expand.grid(1 : m, 1 : m))
