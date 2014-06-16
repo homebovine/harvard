@@ -14,6 +14,8 @@ nu <- 0.5
 #ij <- ij[ij[, 1] >= ij[, 2], ]
 ng <- 1500
 up = 20
+cen1 <- 1
+cen2 <- 1.5
 mx <- matrix(c(0, 1), ncol = p)
 ##survData <- do.call(rbind, lapply(1:n, simuRsk, n, p,  theta, 1, 3))
 ##survData0 <- do.call(rbind, lapply(1:n, simuRsk1, n, p,nu,  theta0, 300, 400))
@@ -21,8 +23,8 @@ mx <- matrix(c(0, 1), ncol = p)
 simall <- function(itr, cen1, cen2){
     set.seed(itr + 2014)
     survData <- do.call(rbind, lapply(1:n, simuRsk, n, p,     theta, cen1, cen2))
-    filename <- paste("./simdata/simu",  itr, n, p, m,  sep = "_")
+    filename <- paste("./simdata/simu",  itr, n, p, m,  cen1, cen2, sep = "_")
     save(survData, file = filename)
     return(survData)
 }
-lsurvData <- lapply(1 : 1000, simall, 1, 1.5)
+lsurvData <- lapply(1 : 1000, simall, cen1, cen2)

@@ -13,12 +13,14 @@ p <- 1
 ij <- as.matrix(expand.grid(1 : m, 1 : m))
 nu1 <- 0.5
 nu <- 0.5
+cen1 <- 1
+cen2 <- 1.5
 #ij <- ij[ij[, 1] >= ij[, 2], ]
 ng <- 1500
 up = 20
 mx <- matrix(c(0, 1), ncol = p)
 sRoot <- function(itr){
-    filename <- paste("./simdata/simu", itr, n, p, m, sep = "_")
+    filename <- paste("./simdata/simu", itr, n, p, m, cen1, cen2, sep = "_")
     load(filename)
     #cx <<- gaussLegendre(ng, quantile(as.vector(survData[, c(1)]), 0), quantile(as.vector(survData[, c(1)]), 1))
     #cx <<- gaussLegendre(ng, 0.01, 20)
@@ -45,9 +47,9 @@ sRoot <- function(itr){
     
 
     res <- try(dfsane(theta, estm, method = 3, control = list(tol = 1.e-5, noimp = 20, maxit = 200), quiet = FALSE, resp,survData[,  1:4],  covm, n, p, rep(min(resp[, 1] /2), n))$par)
-    save(res, file = paste("./result/res", itr, n, p, sep = "_"))
+    save(res, file = paste("./result/res", itr, n, p, cen1, cen2, sep = "_"))
     return(res)
 }
 tsRoot <- function(itr) try(sRoot(itr))
 res <- mclapply(sta:end, tsRoot, mc.cores = 15)
-save(res, file = paste("./result/res", sta, n, p, m, sep = "_"))
+save(res, file = paste("./result/res", sta, n, p, m, cen1, cen2, sep = "_"))
