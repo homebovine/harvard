@@ -6,7 +6,7 @@ theta <- c(0.5, 0.5, 0.5, -0.6,    -0.3,   -0.5)
 q <- length(theta) 
 mA <- matrix(NA, m, m)
 mb <- matrix(NA, q, m)
-n <- 500
+n <- 100
 sta <- 1
 end <- sta + 99
 p <- 1
