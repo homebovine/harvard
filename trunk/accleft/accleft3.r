@@ -447,7 +447,7 @@ estm <- function(theta, resp, survData, covm, n, p, mv = rep(1e-5, n)){
 
 simuRsk <- function(i, n, p,  theta,  cen1, cen2 ,covm = NULL){
     if(is.null(covm)){
-        covm <-  matrix(c(1,  rnorm(1, 0, 1)), p, 1 )#matrix(1, p, 1)#
+        covm <-  matrix(c(1,  rnorm(1, 0, 0.3)), p, 1 )#matrix(1, p, 1)#
     }
     kappa1 <- (abs(theta[1]) )
     kappa2 <- (abs(theta[2]) )
@@ -702,7 +702,7 @@ sRoot <- function(itr){
     resp <- survData[, 1:4]
     colnames(resp) <- c("y1", "d1", "y2", "d2")
     covm <- matrix(survData[, 5 : (4+ p)], n, p)
-    covm1 <<- matrix(cbind(rep(1, ng), rnorm(ng, 0, 1)), ncol = p)#matrix(1, ng, p)#
+    covm1 <<- matrix(cbind(rep(1, ng), rnorm(ng, 0, 0.3)), ncol = p)#matrix(1, ng, p)#
     XY <<- simuRsk3(ng, p, nu, theta, 300, 400, covm1)#do.call(rbind, lapply(1 :ng, simuRsk2, ng,  p, nu,  theta,  300, 400 , covm1))
     dnom <<- likelihood2(XY, covm1, theta)
     ht <<- sum(resp[, "d1"] == 1)^(-2/15) * bw.nrd0(log(resp[resp[, "d1"] == 1, "y1"]))
