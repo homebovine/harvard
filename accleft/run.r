@@ -51,5 +51,5 @@ sRoot <- function(itr){
     return(res)
 }
 tsRoot <- function(itr) try(sRoot(itr))
-res <- mclapply(sta:end, tsRoot, mc.cores = 15)
+res <- mclapply(sta:end, tsRoot, mc.cores = 32)
 save(res, file = paste("./result/res", sta, n, p, m, cen1, cen2, sep = "_"))
