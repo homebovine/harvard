@@ -456,7 +456,7 @@ simuRsk <- function(i, n, p,  theta,  cen1, cen2 ,covm = NULL){
     beta2 <- theta[(4 + p) : (3 + 2 * p)]
     beta3 <- theta[(4 + 2* p) : (3 + 3 * p)]
     x <- covm
-    g <- rlnorm(1, 0, 0.5)#rgamma(1, 1/nu1, scale = nu1)  # 
+    g <- rlnorm(1, 0, 1.5)#rgamma(1, 1/nu1, scale = nu1)  # 
     lb1 <- g * exp((- t(beta1)%*%x)/kappa1)
     lb2 <- g * exp((- t(beta2)%*%x)/kappa2)
     lb3 <- g * exp((- t(beta3)%*%x)/kappa3)
@@ -676,8 +676,8 @@ n <- 1000
 
 p <- 2
 ij <- as.matrix(expand.grid(1 : m, 1 : m))
-nu1 <- 0.5
-nu <- 0.5
+nu1 <- 1.5
+nu <- 1.5
 #ij <- ij[ij[, 1] >= ij[, 2], ]
 ng <- 1500
 up = 20
