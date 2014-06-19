@@ -456,7 +456,7 @@ simuRsk <- function(i, n, p,  theta,  cen1, cen2 ,covm = NULL){
     beta2 <- theta[(4 + p) : (3 + 2 * p)]
     beta3 <- theta[(4 + 2* p) : (3 + 3 * p)]
     x <- covm
-    g <- rlnorm(1, 0, 1.5)#rgamma(1, 1/nu1, scale = nu1)  # 
+    g <- rlnorm(1, 0, 0.5)#rgamma(1, 1/nu1, scale = nu1)  # 
     lb1 <- g * exp((- t(beta1)%*%x)/kappa1)
     lb2 <- g * exp((- t(beta2)%*%x)/kappa2)
     lb3 <- g * exp((- t(beta3)%*%x)/kappa3)
@@ -672,12 +672,12 @@ theta <- c(0.5, 0.5, 0.5, -0.6,  -1.0,   -0.3, -1.2,   -0.5, -1.1)
 q <- length(theta) 
 mA <- matrix(NA, m, m)
 mb <- matrix(NA, q, m)
-n <- 1000
+n <- 500
 
 p <- 2
 ij <- as.matrix(expand.grid(1 : m, 1 : m))
-nu1 <- 1.5
-nu <- 1.5
+nu1 <- 0.5
+nu <- 0.5
 #ij <- ij[ij[, 1] >= ij[, 2], ]
 ng <- 1500
 up = 20
@@ -707,15 +707,17 @@ sRoot <- function(itr){
     dnom <<- likelihood2(XY, covm1, theta)
     ht <<- sum(resp[, "d1"] == 1)^(-2/15) * bw.nrd0(log(resp[resp[, "d1"] == 1, "y1"]))
     hx <<- n ^ (-2/15) * apply(covm[, -1, drop = F], 2, bw.nrd0)
-    vg <<- seq(min(lsurvData[[itr]][, q  - 1]), max(lsurvData[[itr]][, q - 1]), length.out = m+1)#qgamma(seq(0.000001, 0.99999999999999, length.out = m + 1), 1/nu, 1/nu)
-    vg1 <<- qgamma(seq(0.00000001, 0.99999999999, length.out = m1 + 1), 1/nu, 1/nu)
+    vg <<- qlnorm(seq(0.001, 0.999, length.out = m + 1), 0, 0.5)#seq(min(lsurvData[[itr]][, 5 + p]), max(lsurvData[[itr]][, 5 + p]), length.out = m+1)#qgamma(seq(0.000001, 0.99999999999999, length.out = m + 1), 1/nu, 1/nu)
+#    vg1 <<- qgamma(seq(0.00000001, 0.99999999999, length.out = m1 + 1), 1/nu, 1/nu)
     
 
-    res <- try(dfsane(theta, estm, method = 3, control = list(tol = 1.e-5, noimp = 20, maxit = 200), quiet = FALSE, resp,survData[,  1:4],  covm, n, p, rep(min(resp[, 1] /2), n))$par)
+    res <- try(dfsane(theta, estm, method = 3, control = list(tol = 1.e-5, noimp = 100, maxit = 200), quiet = FALSE, resp,survData[,  1:4],  covm, n, p, rep(min(resp[, 1] /2), n)))
+    print(res$message)
+    return(res$par)
 }
 tsRoot <- function(itr) try(sRoot(itr))
 #spg(theta, estm1, gr = NULL,  project = NULL, lower = c(rep(0, 3), rep(-Inf, 3 * p)), upper = rep(Inf, 3 * p), method = 3, projectArgs= NULL, control = list(ftol = 1.e-3 ), quiet = FALSE, resp,survData[,  1:4],  covm, n, p, rep(min(resp[, 1] /2), n))$par
-#res <- mclapply(1:100, tsRoot, mc.cores = 15)
+#res <- mclapply(1:10, tsRoot, mc.cores = 15)
 
 #multiroot(estm, c(rep(1, 6), rep(-0.5, 3)), maxiter = 100,  rtol = 1e-6, atol = 1e-8, ctol = 1e-8,useFortran = TRUE, positive = FALSE,jacfunc = NULL, jactype = "fullint", verbose = FALSE, bandup = 1, banddown = 1,resp,survData[, 1:4],  covm, n, p)
 
