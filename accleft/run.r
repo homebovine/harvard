@@ -42,7 +42,7 @@ sRoot <- function(itr){
     dnom <<- likelihood2(XY, covm1, theta)
     ht <<- sum(resp[, "d1"] == 1)^(-2/15) * bw.nrd0(log(resp[resp[, "d1"] == 1, "y1"]))
     hx <<- n ^ (-2/15) * apply(covm[, -1, drop = F], 2, bw.nrd0)
-    vg <<- seq(min(survData[, 6]), max(survData[, 6]), length.out = m+1)#qgamma(seq(0.000001, 0.99999999999999, length.out = m + 1), 1/nu, 1/nu)
+    vg <<- qlnorm(seq(0.001, 0.999, length.out = m + 1), 0, 0.5)#seq(min(lsurvData[[itr]][, 5 + p]), max(lsurvData[[itr]][, 5 + p]), length.out = m+1)#qgamma(seq(0.000001, 0.99999999999999, length.out = m + 1), 1/nu, 1/nu)
     #vg1 <<- qgamma(seq(0.00000001, 0.99999999999, length.out = m1 + 1), 1/nu, 1/nu)
     
 
