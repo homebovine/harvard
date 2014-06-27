@@ -153,8 +153,7 @@ likelihood2 <- function(vt,    x,  theta, v=1e-5){
     y2 <-  t2
     y1 <- pmin(t1, t2)
     likelihood <- eval(lkhd.intg)
-    #if(sum(is.nan(likelihood)) > 0)
-    #    browser()
+    
     likelihood[is.nan(likelihood)] <- 0
     return(likelihood)
 }
@@ -179,8 +178,7 @@ likelihood <- function(vt,   x, g,  theta, v=1e-5){
     y1 <- pmin(t1, t2)
     likelihood <- eval(clkhd.intg)
 
-    #if(sum(is.nan(likelihood)) > 0)
-     #   browser()
+
     likelihood[is.nan(likelihood)] <- 0
     return(likelihood)
 }
@@ -239,13 +237,11 @@ Amatx <- function(ij, vg, vq, theta,  v = 0){
     A <- function(mvt){
         vt <- mvt[, 1:2]
         x <- mvt[, 3:ncol(mvt)]
-        #dnom <- (apply((sapply(1 : m, dm, vg, vt, x,   theta, v)), 1, sum) + 1e-200)
-        #dnom <<- likelihood1(vt,   x, theta0, v)
-#        likelihood(vt,  x, vg[j],  theta, v)* vq1[j] *  likelihood(vt,  x, vg[i], theta, v)/dnom
+  
         lintg(vg[j], vg[j + 1], vt, x,  theta, v ) * likelihood(vt,  x, vg[i], theta, v)/dnom
     }
     
-    Aij <- my2d1(A, cbind(XY, covm1), weight, 1)#my2d(A, mgrid, 1)# + integrate(A1, min(cy$x), max(cy$x))$value
+    Aij <- my2d1(A, cbind(XY, covm1), weight, 1)
     mA[i, j] <- Aij
     mA <<- mA
     if(i == j){
@@ -262,10 +258,8 @@ Amatx <- function(ij, vg, vq, theta,  v = 0){
         }
         
         
-        bi <- my2d1(b, cbind(XY, covm1), weight, q)#my2d(b, mgrid,  q)# + adaptIntegrate(b1, min(cy$x), max(cy$x), fDim = p)$integral
-        #if(sum(is.nan(bi)) > 0){
-         #   browser()
-        #}
+        bi <- my2d1(b, cbind(XY, covm1), weight, q)
+        
         bi[is.nan(bi)] <- 0
         mb[, i] <<- bi
     }
@@ -354,7 +348,7 @@ missingscore <- function(i, theta, missresp, cmptresp, mn,   p, misscovm, cmptco
             nr <- nrow(cmptscore[ix,, drop  = F ])
             #missscore <- try(apply(diag(as.numeric(kert(y1, cmptresp[ix, "y1"],  ht)), nr, nr) %*% diag(as.numeric(kerx(x, cmptcovm[ix,  , drop = F], hx)), nr, nr) %*% diag(cendis[ix], nr, nr) %*%cmptscore[ix, , drop  = F ] , 2, sum) / max(sum( kert(y1, cmptresp[ix, "y1"], ht) * kerx(x, cmptcovm[ix, , drop = F], hx) * cendis[ix] ),  1e-200))
             #missscore <- try(apply( diag(as.numeric(kerx(x, cmptcovm[ix,  , drop = F], hx)), nr, nr) %*% diag(cendis[ix], nr, nr) %*%cmptscore[ix, , drop  = F ] , 2, sum) / max(sum( kerx(x, cmptcovm[ix, , drop = F], hx) * cendis[ix] ),  1e-200))
-            missscore <- try(apply(diag(as.numeric(kert(y1, cmptresp[ix, "y1"],  ht)), nr, nr)  %*% diag(cendis[ix], nr, nr) %*%cmptscore[ix, , drop  = F ] , 2, sum) / max(sum( kert(y1, cmptresp[ix, "y1"], ht)  * cendis[ix] ),  1e-200))
+            missscore <- try(apply( diag(cendis[ix], nr, nr) %*%cmptscore[ix, , drop  = F ] , 2, sum) / max(sum( cendis[ix] ),  1e-200))
             
         }
         else
@@ -554,7 +548,7 @@ simuRsk3 <- function( n, p, nu,  theta,  cen1, cen2 ,covm = NULL){
     t12[!ix, 1] <-   ((u^(-nu ) - 1) / (nu * (lb1[!ix] + lb2[!ix])))^(1/a1)
     u <- runif(n - n1)
     t12[!ix, 2] <-  ((u^(- nu / (1 + nu)) * ( 1 + nu * lb1[!ix] * t12[!ix, 1] ^ a1 + nu * lb2[!ix] * t12[!ix, 1]^a2) - ( 1 + nu * lb1[!ix] * t12[!ix, 1] ^ a1 + nu * lb2[!ix] * t12[!ix, 1]^a2 - nu * lb3[!ix] * t12[!ix, 1] ^ a3))/ (nu * lb3[!ix]))^ (1/a3)
-    
+    #t12[, 1] = pmin(t12[, 1], t12[, 2]) 
     
     return(t12)
 }
@@ -666,56 +660,47 @@ evalestm <- function(itr){
 
 
 set.seed(2014)
-m = 25
+m = 27
 m1 = 100
 theta <- c(0.5, 0.5, 0.5, -0.6,    -0.3,   -0.5)
 q <- length(theta) 
 mA <- matrix(NA, m, m)
 mb <- matrix(NA, q, m)
-n <- 1000
+n <- 750
 
 p <- 1
 ij <- as.matrix(expand.grid(1 : m, 1 : m))
 nu1 <- 0.5
-nu <- 0.5
+nu <- 1.5
 #ij <- ij[ij[, 1] >= ij[, 2], ]
-ng <- 1500
+ng <- 2000
 up = 20
 mx <- matrix(c(0, 1), ncol = p)
 #survData <- do.call(rbind, lapply(1:n, simuRsk, n, p,  theta, 1, 3))
 #survData0 <- do.call(rbind, lapply(1:n, simuRsk1, n, p,nu,  theta0, 300, 400))
-#lsurvData <- lapply(1 : 100, simall, 3, 5)
+#lsurvData <- lapply(1 : 1, simall, 300, 500)
+covm1 <<- matrix(1, ng, p)#matrix(cbind(rep(1, ng), rnorm(ng, 0, 1)), ncol = p)
+    
+    
+weight <<- rep(1/ng, ng)    
+vg1 <<- qgamma(seq(0.00000001, 0.99999999999, length.out = m1 + 1), 1/nu, 1/nu)
 sRoot <- function(itr){
     survData <- lsurvData[[itr]]
-    #cx <<- gaussLegendre(ng, quantile(as.vector(survData[, c(1)]), 0), quantile(as.vector(survData[, c(1)]), 1))
-    #cx <<- gaussLegendre(ng, 0.01, 20)
-    #x <<- cx$x
-    #wx <<- cx$w
-    #cy <<- gaussLegendre(ng, quantile(as.vector(survData[, c( 3)]), 0), quantile(as.vector(survData[, c( 3)]), 1))
-    #cy <<- gaussLegendre(ng, 0.01, 20)
-    #y <<- cy$x
-    #wy <<- cy$w
-    #mgrid <<- meshgrid(x, y)
-    #cbind(runif(ng, 0, up), runif(ng, 0, up))
-    
-    weight <<- rep(1/ng, ng)
     resp <- survData[, 1:4]
     colnames(resp) <- c("y1", "d1", "y2", "d2")
     covm <- matrix(survData[, 5 : (4+ p)], n, p)
-    covm1 <<- matrix(1, ng, p)#matrix(cbind(rep(1, ng), rnorm(ng, 0, 1)), ncol = p)
-    XY <<- simuRsk3(ng, p, nu, theta, 300, 400, covm1)#do.call(rbind, lapply(1 :ng, simuRsk2, ng,  p, nu,  theta,  300, 400 , covm1))
-    dnom <<- likelihood2(XY, covm1, theta)
     ht <<- sum(resp[, "d1"] == 1)^(-2/15) * bw.nrd0(log(resp[resp[, "d1"] == 1, "y1"]))
     hx <<- n ^ (-2/15) * apply(covm[, -1, drop = F], 2, bw.nrd0)
-    vg <<- seq(min(lsurvData[[itr]][, 6]), max(lsurvData[[itr]][, 6]), length.out = m+1)#qgamma(seq(0.000001, 0.99999999999999, length.out = m + 1), 1/nu, 1/nu)
-    vg1 <<- qgamma(seq(0.00000001, 0.99999999999, length.out = m1 + 1), 1/nu, 1/nu)
-    
-
-    res <- try(dfsane(theta, estm, method = 3, control = list(tol = 1.e-5, noimp = 20, maxit = 200), quiet = FALSE, resp,survData[,  1:4],  covm, n, p, rep(min(resp[, 1] /2), n))$par)
+    XY <<- simuRsk3(ng, p, nu, theta, 300, 400, covm1)
+    dnom <<- likelihood2(XY, covm1, theta)
+    vg <<-  qlnorm(seq(0.001, 0.999, length.out = m + 1), 0, 1.5)#quantile(lsurvData[[itr]][, 5 + p], seq(0.001, 0.999, length.out= m + 1))#seq(min(lsurvData[[itr]][, 5 + p]), max(lsurvData[[itr]][, 5 + p]), length.out = m+1)
+    res <- try(dfsane(theta, estm, method = 3, control = list(tol = 1.e-5, noimp = 20, maxit = 200), quiet = FALSE, resp,survData[,  1:4],  covm, n, p, rep(min(resp[, 1] /2), n)))
+    print(res$convergence)
+    return(c(res$par, res$residual))
 }
 tsRoot <- function(itr) try(sRoot(itr))
 #spg(theta, estm1, gr = NULL,  project = NULL, lower = c(rep(0, 3), rep(-Inf, 3 * p)), upper = rep(Inf, 3 * p), method = 3, projectArgs= NULL, control = list(ftol = 1.e-3 ), quiet = FALSE, resp,survData[,  1:4],  covm, n, p, rep(min(resp[, 1] /2), n))$par
-#res <- mclapply(1:100, tsRoot, mc.cores = 15)
+#res <- mclapply(1:10, tsRoot, mc.cores = 15)
 
 #multiroot(estm, c(rep(1, 6), rep(-0.5, 3)), maxiter = 100,  rtol = 1e-6, atol = 1e-8, ctol = 1e-8,useFortran = TRUE, positive = FALSE,jacfunc = NULL, jactype = "fullint", verbose = FALSE, bandup = 1, banddown = 1,resp,survData[, 1:4],  covm, n, p)
 
@@ -752,13 +737,13 @@ vsinglescore <-  function(vt, orgt, theta, x, g, v= 1e-5){
     derivlike <-  attributes(eval(dllgk.intg1))$gradient
     derivlike[is.nan(derivlike)] <- 0
     #browser()
-    score <- cbind( derivlike[, 4 : 7], diag(derivlike[, 1]) %*% matrix(x, ncol = p), diag(derivlike[, 2]) %*% matrix(x, ncol = p), diag(derivlike[, 3]) %*% matrix(x, ncol = p))
+    score <- cbind( derivlike[, 4 : 6], diag(derivlike[, 1]) %*% matrix(x, ncol = p), diag(derivlike[, 2]) %*% matrix(x, ncol = p), diag(derivlike[, 3]) %*% matrix(x, ncol = p), derivlike[, 7])
 }
 estm2 <- function(theta, resp, survData, covm,  n, p){
     theta <- theta
     apply(( vsinglescore(resp[, c(1, 3)], survData[, c(1, 3)], theta, covm, survData[, 5+ p])), 2,  sum)
 }
-#lsurvData <- lapply(1 : 100, simall, 300, 500)
+#lsurvData <- lapply(1 : 1000, simall, 300, 500)
 evalestm <- function(itr){
     survData <- lsurvData[[itr]]
     resp <- survData[, 1:4]
