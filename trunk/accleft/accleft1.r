@@ -384,7 +384,7 @@ simuRsk <- function(i, n, p,  theta,  cen1, cen2 ,covm = NULL){
     beta2 <- theta[(4 + p) : (3 + 2 * p)]
     beta3 <- theta[(4 + 2* p) : (3 + 3 * p)]
     x <- covm
-    g <- rlnorm(1, 0, 1)  
+    g <- rlnorm(1, 0, 0.5)  
     lb1 <- exp((- t(beta1)%*%x - log(g))/kappa1)
     lb2 <- exp((- t(beta2)%*%x - log(g))/kappa2)
     lb3 <- exp((- t(beta3)%*%x - log(g))/kappa3)
@@ -489,7 +489,7 @@ evalestm <- function(itr){
     covm <- matrix(survData[, 5 : (4+ p)], n, p)
     ht <- n^(-1/3) * bw.nrd0(resp[resp[, "d1"] == 1, "y1"])
     hx <- n ^ (-1/3) * apply(covm[, -1, drop = F], 2, bw.nrd0)
-    vg <- quantile(survData[, 5 + p], seq(0, 1, length.out = m))
+b    vg <- quantile(survData[, 5 + p], seq(0, 1, length.out = m))
     vq <- dlnorm(vg, 0, 1) /sum(dlnorm(vg, 0, 1) )
     dfsane(theta, estm, method = 2, control = list(tol = 1.e-3, noimp = 10 ), quiet = FALSE, resp,survData[,  1:4],  covm, n, p, rep(min(resp[, 1] /2), n))$par
 }
