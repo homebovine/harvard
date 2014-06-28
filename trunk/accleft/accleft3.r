@@ -58,9 +58,9 @@ trans3 <- function(t){
 
 
 
-clkhd.intg <- expression((g * exp((log(y1)-b1x)/kappa1 ) * 1/y1 * 1/kappa1 ) ^ d1* (g * exp((log(y1)-b2x)/kappa2 ) * 1/y1 * 1/kappa2 ) ^ (1 - d1) * (g * exp((log(y2)-b3x)/kappa3 ) * 1/y2 * 1/kappa3 ) ^ d1 * exp(-  g * (exp((log(y1)-b1x)/kappa1 ) +  exp((log(y1)-b2x)/kappa2 ) + d1 * (exp((log(y2)-b3x)/kappa3 ) - exp((log(y1)-b3x)/kappa3 ))  )) )#* dbinom(x, 1, 0.8)
+clkhd.intg <- expression((g * exp((log(y1)-b1x)/kappa1 ) * 1/y1 * 1/kappa1 ) ^ d1* (g * exp((log(y1)-b2x)/kappa2 ) * 1/y1 * 1/kappa2 ) ^ (1 - d1) * (g * exp((log(y2)-b3x)/kappa3 ) * 1/y2 * 1/kappa3 ) ^ d1 * exp(-  g * (exp((log(y1)-b1x)/kappa1 ) +  exp((log(y1)-b2x)/kappa2 ) + d1 * (exp((log(y2)-b3x)/kappa3 ) - exp((log(y1)-b3x)/kappa3 ))  )) * dnorm(x1, 0, 0.3))
 
-lkhd.intg <- expression((exp((log(y1)-b1x)/kappa1 ) * 1/y1 * 1/kappa1 ) ^ d1* (exp((log(y1)-b2x)/kappa2 ) * 1/y1 * 1/kappa2 ) ^ (1 - d1) * (exp((log(y2)-b3x)/kappa3 ) * 1/y2 * 1/kappa3 ) ^ d1 * (1 + nu) ^ d1 * (1 + nu *  (exp((log(y1)-b1x)/kappa1 ) +  exp((log(y1)-b2x)/kappa2 ) + d1 * (exp((log(y2)-b3x)/kappa3 ) - exp((log(y1)-b3x)/kappa3 ))  )) ^ (-d1 - 1 - 1/ nu ) )#* dbinom(x, 1, 0.8)
+lkhd.intg <- expression((exp((log(y1)-b1x)/kappa1 ) * 1/y1 * 1/kappa1 ) ^ d1* (exp((log(y1)-b2x)/kappa2 ) * 1/y1 * 1/kappa2 ) ^ (1 - d1) * (exp((log(y2)-b3x)/kappa3 ) * 1/y2 * 1/kappa3 ) ^ d1 * (1 + nu) ^ d1 * (1 + nu *  (exp((log(y1)-b1x)/kappa1 ) +  exp((log(y1)-b2x)/kappa2 ) + d1 * (exp((log(y2)-b3x)/kappa3 ) - exp((log(y1)-b3x)/kappa3 ))  )) ^ (-d1 - 1 - 1/ nu ) * dnorm(x1, 0, 0.3))
 
 llgk.intg <- expression((((log(y1)-b1x)/kappa1 ) +log(1/y1) + log (1/kappa1 ))  *  d1 +  (((log(y1)-b2x)/kappa2 ) +  log(1/y1) + log(1/kappa2 )) * (1 - d1) + (((log(y2)-b3x)/kappa3 ) + log(1/y2) + log(1/kappa3 )) * d1 +  log(1 + nu) * d1 +  log(1 + nu *  (exp((log(y1)-b1x)/kappa1 ) +  exp((log(y1)-b2x)/kappa2 ) + d1 * (exp((log(y2)-b3x)/kappa3 ) - exp((log(y1)-b3x)/kappa3 )))  ) * (-d1 - 1 - 1/ nu ))
 
@@ -115,6 +115,7 @@ singlescore <- function(vt,   theta, x,  v= 1e-5){
 likelihood1 <- function(vt,    x,  theta, v=1e-5){
     vt <- matrix(vt, ncol = 2)
     x <- matrix(x, nrow = p)
+    x1 <- x[, -1]
     kappa1 <- (theta[1])
     kappa2 <- (theta[2])
     kappa3 <- (theta[3])
@@ -138,6 +139,7 @@ likelihood1 <- function(vt,    x,  theta, v=1e-5){
 likelihood2 <- function(vt,    x,  theta, v=1e-5){
     vt <- matrix(vt, ncol = 2)
     x <- matrix(x, ncol = p)
+    x1 <- x[, -1]
     kappa1 <- (theta[1])
     kappa2 <- (theta[2])
     kappa3 <- (theta[3])
@@ -163,6 +165,7 @@ likelihood <- function(vt,   x, g,  theta, v=1e-5){
    
     vt <- matrix(vt, ncol = 2)
     x <- matrix(x, ncol = p)
+    x1 <- x[, -1]
     kappa1 <- (theta[1])
     kappa2 <- (theta[2])
     kappa3 <- (theta[3])
@@ -188,16 +191,16 @@ likelihood <- function(vt,   x, g,  theta, v=1e-5){
 lintg  <- function(lg, ug, vt,   x,   theta, v=1e-5){
    
     vt <- matrix(vt, ncol = 2)
-    
+    x <- matrix(x, ncol = p)
     kappa1 <- (theta[1])
     kappa2 <- (theta[2])
     kappa3 <- (theta[3])
     beta1 <- theta[4 : (3 + p)]
     beta2 <- theta[(4 + p) : (3 + 2 * p)]
     beta3 <- theta[(4 + 2* p) : (3 + 3 * p)]
-    b1x <- matrix(x, ncol = p) %*% beta1
-    b2x <- matrix(x, ncol = p) %*% beta2
-    b3x <- matrix(x, ncol = p) %*% beta3
+    b1x <- x %*% beta1
+    b2x <- x %*% beta2
+    b3x <- x %*% beta3
     t1 <- (vt[, 1])
     t2 <- (vt[, 2])
     d1 <-  as.numeric(t1 < t2)
@@ -352,7 +355,7 @@ missingscore <- function(i, theta, missresp, cmptresp, mn,   p, misscovm, cmptco
         ix <- cmptresp[, "y2"] >= cn & cmptresp[, "y1"] < cn
         if(sum(ix) > 0){
             nr <- nrow(cmptscore[ix,, drop  = F ])
-            missscore <- try(apply(diag(as.numeric(kert(y1, cmptresp[ix, "y1"],  ht)), nr, nr) %*% diag(as.numeric(kerx(x, cmptcovm[ix,  -1, drop = F], hx)), nr, nr) %*% diag(cendis[ix], nr, nr) %*%cmptscore[ix, , drop  = F ] , 2, sum) / max(sum( kert(y1, cmptresp[ix, "y1"], ht) * kerx(x, cmptcovm[ix, -1, drop = F], hx) * cendis[ix] ),  1e-200))
+            missscore <- try(apply( diag(as.numeric(kerx(x, cmptcovm[ix,  -1, drop = F], hx)), nr, nr) %*% diag(cendis[ix], nr, nr) %*%cmptscore[ix, , drop  = F ] , 2, sum) / max(sum( kerx(x, cmptcovm[ix, -1, drop = F], hx) * cendis[ix] ),  1e-200))
             #missscore <- try(apply( diag(as.numeric(kerx(x, cmptcovm[ix,  , drop = F], hx)), nr, nr) %*% diag(cendis[ix], nr, nr) %*%cmptscore[ix, , drop  = F ] , 2, sum) / max(sum( kerx(x, cmptcovm[ix, , drop = F], hx) * cendis[ix] ),  1e-200))
             #missscore <- try(apply(diag(as.numeric(kert(y1, cmptresp[ix, "y1"],  ht)), nr, nr)  %*% diag(cendis[ix], nr, nr) %*%cmptscore[ix, , drop  = F ] , 2, sum) / max(sum( kert(y1, cmptresp[ix, "y1"], ht)  * cendis[ix] ),  1e-200))
             
@@ -456,7 +459,7 @@ simuRsk <- function(i, n, p,  theta,  cen1, cen2 ,covm = NULL){
     beta2 <- theta[(4 + p) : (3 + 2 * p)]
     beta3 <- theta[(4 + 2* p) : (3 + 3 * p)]
     x <- covm
-    g <- rlnorm(1, 0, 1.5)#rgamma(1, 1/nu1, scale = nu1)  # 
+    g <- rlnorm(1, 0, 0.5)#rgamma(1, 1/nu1, scale = nu1)  # 
     lb1 <- g * exp((- t(beta1)%*%x)/kappa1)
     lb2 <- g * exp((- t(beta2)%*%x)/kappa2)
     lb3 <- g * exp((- t(beta3)%*%x)/kappa3)
@@ -672,12 +675,12 @@ theta <- c(0.5, 0.5, 0.5, -0.6,  -1.0,   -0.3, -1.2,   -0.5, -1.1)
 q <- length(theta) 
 mA <- matrix(NA, m, m)
 mb <- matrix(NA, q, m)
-n <- 100
+n <- 1000
 
 p <- 2
 ij <- as.matrix(expand.grid(1 : m, 1 : m))
 nu1 <- 0.5
-nu <- 1.5
+nu <- 0.5
 #ij <- ij[ij[, 1] >= ij[, 2], ]
 ng <- 1500
 up = 20
@@ -707,7 +710,7 @@ sRoot <- function(itr){
     dnom <<- likelihood2(XY, covm1, theta)
     ht <<- sum(resp[, "d1"] == 1)^(-2/15) * bw.nrd0(log(resp[resp[, "d1"] == 1, "y1"]))
     hx <<- n ^ (-2/15) * apply(covm[, -1, drop = F], 2, bw.nrd0)
-    vg <<- qlnorm(seq(0.001, 0.999, length.out = m + 1), 0, 1.5)#seq(min(lsurvData[[itr]][, 5 + p]), max(lsurvData[[itr]][, 5 + p]), length.out = m+1)#qgamma(seq(0.000001, 0.99999999999999, length.out = m + 1), 1/nu, 1/nu)
+    vg <<- seq(min(lsurvData[[itr]][, 5 + p]), max(lsurvData[[itr]][, 5 + p]), length.out = m+1)#qgamma(seq(0.000001, 0.99999999999999, length.out = m + 1), 1/nu, 1/nu)
 #    vg1 <<- qgamma(seq(0.00000001, 0.99999999999, length.out = m1 + 1), 1/nu, 1/nu)
     
 
@@ -717,7 +720,7 @@ sRoot <- function(itr){
 }
 tsRoot <- function(itr) try(sRoot(itr))
 #spg(theta, estm1, gr = NULL,  project = NULL, lower = c(rep(0, 3), rep(-Inf, 3 * p)), upper = rep(Inf, 3 * p), method = 3, projectArgs= NULL, control = list(ftol = 1.e-3 ), quiet = FALSE, resp,survData[,  1:4],  covm, n, p, rep(min(resp[, 1] /2), n))$par
-#res <- mclapply(1:20, tsRoot, mc.cores = 15)
+#res <- mclapply(1:10, tsRoot, mc.cores = 15)
 
 #multiroot(estm, c(rep(1, 6), rep(-0.5, 3)), maxiter = 100,  rtol = 1e-6, atol = 1e-8, ctol = 1e-8,useFortran = TRUE, positive = FALSE,jacfunc = NULL, jactype = "fullint", verbose = FALSE, bandup = 1, banddown = 1,resp,survData[, 1:4],  covm, n, p)
 
