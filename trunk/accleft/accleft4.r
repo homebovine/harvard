@@ -758,6 +758,6 @@ evalestm <- function(itr){
     dfsane(theta1, estm2, method = 2, control = list(tol = 1.e-7, noimp = 100 ), quiet = FALSE, resp, survData, covm,  n, p)$par
 }
 #res <- mclapply(1 : 1000, evalestm , mc.cores = 15)
-res750 <- do.call(rbind, res)
-theta1 <- c(theta, 0.5)
+#res750 <- do.call(rbind, res)
+#theta1 <- c(theta, 0.5)
 #estm2(theta1, resp, survData[, 1:4], covm, n, p)
