@@ -58,9 +58,9 @@ trans3 <- function(t){
 
 
 
-clkhd.intg <- expression((g * exp((log(y1)-b1x)/kappa1 ) * 1/y1 * 1/kappa1 ) ^ d1* (g * exp((log(y1)-b2x)/kappa2 ) * 1/y1 * 1/kappa2 ) ^ (1 - d1) * (g * exp((log(y2)-b3x)/kappa3 ) * 1/y2 * 1/kappa3 ) ^ d1 * exp(-  g * (exp((log(y1)-b1x)/kappa1 ) +  exp((log(y1)-b2x)/kappa2 ) + d1 * (exp((log(y2)-b3x)/kappa3 ) - exp((log(y1)-b3x)/kappa3 ))  )) * dnorm(x1, 0, 0.3))
+clkhd.intg <- expression((g * exp((log(y1)-b1x)/kappa1 ) * 1/y1 * 1/kappa1 ) ^ d1* (g * exp((log(y1)-b2x)/kappa2 ) * 1/y1 * 1/kappa2 ) ^ (1 - d1) * (g * exp((log(y2)-b3x)/kappa3 ) * 1/y2 * 1/kappa3 ) ^ d1 * exp(-  g * (exp((log(y1)-b1x)/kappa1 ) +  exp((log(y1)-b2x)/kappa2 ) + d1 * (exp((log(y2)-b3x)/kappa3 ) - exp((log(y1)-b3x)/kappa3 ))  )) )
 
-lkhd.intg <- expression((exp((log(y1)-b1x)/kappa1 ) * 1/y1 * 1/kappa1 ) ^ d1* (exp((log(y1)-b2x)/kappa2 ) * 1/y1 * 1/kappa2 ) ^ (1 - d1) * (exp((log(y2)-b3x)/kappa3 ) * 1/y2 * 1/kappa3 ) ^ d1 * (1 + nu) ^ d1 * (1 + nu *  (exp((log(y1)-b1x)/kappa1 ) +  exp((log(y1)-b2x)/kappa2 ) + d1 * (exp((log(y2)-b3x)/kappa3 ) - exp((log(y1)-b3x)/kappa3 ))  )) ^ (-d1 - 1 - 1/ nu ) * dnorm(x1, 0, 0.3))
+lkhd.intg <- expression((exp((log(y1)-b1x)/kappa1 ) * 1/y1 * 1/kappa1 ) ^ d1* (exp((log(y1)-b2x)/kappa2 ) * 1/y1 * 1/kappa2 ) ^ (1 - d1) * (exp((log(y2)-b3x)/kappa3 ) * 1/y2 * 1/kappa3 ) ^ d1 * (1 + nu) ^ d1 * (1 + nu *  (exp((log(y1)-b1x)/kappa1 ) +  exp((log(y1)-b2x)/kappa2 ) + d1 * (exp((log(y2)-b3x)/kappa3 ) - exp((log(y1)-b3x)/kappa3 ))  )) ^ (-d1 - 1 - 1/ nu ))
 
 llgk.intg <- expression((((log(y1)-b1x)/kappa1 ) +log(1/y1) + log (1/kappa1 ))  *  d1 +  (((log(y1)-b2x)/kappa2 ) +  log(1/y1) + log(1/kappa2 )) * (1 - d1) + (((log(y2)-b3x)/kappa3 ) + log(1/y2) + log(1/kappa3 )) * d1 +  log(1 + nu) * d1 +  log(1 + nu *  (exp((log(y1)-b1x)/kappa1 ) +  exp((log(y1)-b2x)/kappa2 ) + d1 * (exp((log(y2)-b3x)/kappa3 ) - exp((log(y1)-b3x)/kappa3 )))  ) * (-d1 - 1 - 1/ nu ))
 
@@ -675,14 +675,14 @@ theta <- c(0.5, 0.5, 0.5, -0.6,  -1.0,   -0.3, -1.2,   -0.5, -1.1)
 q <- length(theta) 
 mA <- matrix(NA, m, m)
 mb <- matrix(NA, q, m)
-n <- 100
+n <- 750
 
 p <- 2
 ij <- as.matrix(expand.grid(1 : m, 1 : m))
 nu1 <- 0.5
 nu <- 0.5
 #ij <- ij[ij[, 1] >= ij[, 2], ]
-ng <- 3000
+ng <- 1500
 up = 20
 mx <- matrix(c(0, 1), ncol = p)
 #survData <- do.call(rbind, lapply(1:n, simuRsk, n, p,  theta, 1, 3))
@@ -719,7 +719,7 @@ sRoot <- function(itr){
     return(c(res$par, res$residual))
 }
 tsRoot <- function(itr) try(sRoot(itr))
-#spg(theta, estm1, gr = NULL,  project = NULL, lower = c(rep(0, 3), rep(-Inf, 3 * p)), upper = rep(Inf, 3 * p), method = 3, projectArgs= NULL, control = list(ftol = 1.e-3 ), quiet = FALSE, resp,survData[,  1:4],  covm, n, p, rep(min(resp[, 1] /2), n))$par
+#spg(theta, estm1, gr = NULL,  project = NULL, lower = c(rep(0, 3), rep(-Inf, 3 * p)), upper = rep(Inf, 3 * p), method = 3, projectArgs= NULL, control = list(ftol = 1.e-3 ), quiet = FALSE, resp,survData[, d 1:4],  covm, n, p, rep(min(resp[, 1] /2), n))$par
 #res <- mclapply(1:10, tsRoot, mc.cores = 15)
 
 #multiroot(estm, c(rep(1, 6), rep(-0.5, 3)), maxiter = 100,  rtol = 1e-6, atol = 1e-8, ctol = 1e-8,useFortran = TRUE, positive = FALSE,jacfunc = NULL, jactype = "fullint", verbose = FALSE, bandup = 1, banddown = 1,resp,survData[, 1:4],  covm, n, p)
@@ -732,7 +732,7 @@ delike1 <- function(y1, y2, d1, b1x, b2x, b3x,  g, kappa1, kappa2, kappa3 ){
     dd3x <- -1/kappa3^2 * (d1) + ((- exp( (log(y2) - log(g) - b3x) / kappa3^2)) - (- exp( (log(y1) - log(g) - b3x) / kappa3^2))) * (-1/kappa3^2)
     dk1 <- (-2 * (log(y1)-b1x -log(g))/kappa1^3 + (-2/kappa1)) * d1 + (- exp( (log(y1) - log(g) - b1x) / kappa1^2)) * (-2 * (log(y1)-b1x -log(g))/kappa1^3)
     dk2 <- (-2 * (log(y1)-b2x -log(g))/kappa2^3 + (-2/kappa2)) * (1 - d1) + (- exp( (log(y1) - log(g) - b2x) / kappa2^2)) * (-2 * (log(y1)-b2x -log(g))/kappa2^3)
-    dk3 <- (-2 * (log(y2)-b3x -log(g))/kappa3^3 + (-2/kappa3)) * d1 + (- exp( (log(y2) - log(g) - b3x) / kappa3^2)) * (-2 * (log(y2)-b3x -log(g))/kappa3^3) - (- exp( (log(y1) - log(g) - b3x) / kappa3^2)) * (-2 * (log(y1)-b3x -log(g))/kappa3^3)
+    dk3 <- (-2 * (log(y2)-b3x -log(g))/kappa3^3 + (-2/kappa3)) * d1 + (- exp( (log(y2) - log(g) - b3x) / kappa3^2)) * (-2 * (log(y2)-b3x -log(g))/kappa3^2) - (- exp( (log(y1) - log(g) - b3x) / kappa3^2)) * (-2 * (log(y1)-b3x -log(g))/kappa3^2)
     return(cbind(dd1x, dd2x, dd3x, dk1 +  dk2+ dk3)) #
 }
 vsinglescore <-  function(vt, orgt, theta, x, g, v= 1e-5){
