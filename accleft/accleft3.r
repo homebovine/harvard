@@ -355,7 +355,7 @@ missingscore <- function(i, theta, missresp, cmptresp, mn,   p, misscovm, cmptco
         ix <- cmptresp[, "y2"] >= cn & cmptresp[, "y1"] < cn
         if(sum(ix) > 0){
             nr <- nrow(cmptscore[ix,, drop  = F ])
-            missscore <- try(apply( diag(as.numeric(kert(y1, cmptresp[ix, "y1"],  ht)), nr, nr)  %*% diag(as.numeric(kerx(x, cmptcovm[ix,  -1, drop = F], hx)), nr, nr) %*% diag(cendis[ix], nr, nr) %*%cmptscore[ix, , drop  = F ] , 2, sum) / max(sum( kert(y1, cmptresp[ix, "y1"], ht) * kerx(x, cmptcovm[ix, -1, drop = F], hx) * cendis[ix] ),  1e-200))
+            missscore <- try(apply( diag(as.numeric(kerx(x, cmptcovm[ix,  -1, drop = F], hx)), nr, nr) %*% diag(cendis[ix], nr, nr) %*%cmptscore[ix, , drop  = F ] , 2, sum) / max(sum( kerx(x, cmptcovm[ix, -1, drop = F], hx) * cendis[ix] ),  1e-200))
             #missscore <- try(apply( diag(as.numeric(kerx(x, cmptcovm[ix,  , drop = F], hx)), nr, nr) %*% diag(cendis[ix], nr, nr) %*%cmptscore[ix, , drop  = F ] , 2, sum) / max(sum( kerx(x, cmptcovm[ix, , drop = F], hx) * cendis[ix] ),  1e-200))
             #missscore <- try(apply(diag(as.numeric(kert(y1, cmptresp[ix, "y1"],  ht)), nr, nr)  %*% diag(cendis[ix], nr, nr) %*%cmptscore[ix, , drop  = F ] , 2, sum) / max(sum( kert(y1, cmptresp[ix, "y1"], ht)  * cendis[ix] ),  1e-200))
             
@@ -779,5 +779,5 @@ evalestm <- function(itr){
 
 #res <- mclapply(1 : 1000, evalestm, mc.cores = 15)
 #res750 <- do.call(rbind, res)
-#theta1 <- c(theta, 0.5)
+theta1 <- c(theta, 0.5)
 #estm2(theta1, resp, survData[, 1:4], covm, n, p)
