@@ -450,7 +450,9 @@ simuRsk <- function(i, n, p,  theta,  cen1, cen2 ,covm = NULL){
     beta2 <- theta[(4 + p) : (3 + 2 * p)]
     beta3 <- theta[(4 + 2* p) : (3 + 3 * p)]
     x <- covm
-    g <- rlnorm(1, 0, 0.5)#rgamma(1, 1/nu1, scale = nu1)  # 
+    r1 <- rbinom(1, 1, 0.6)
+    
+    g <- r1 * rlnorm(1, 0, 0.75) + (1 - r1) * rweibull(1, 2, scale = 2)#rgamma(1, 1/nu1, scale = nu1)  # 
     lb1 <- g * exp((- t(beta1)%*%x)/kappa1)
     lb2 <- g * exp((- t(beta2)%*%x)/kappa2)
     lb3 <- g * exp((- t(beta3)%*%x)/kappa3)
@@ -693,7 +695,7 @@ sRoot <- function(itr){
     hx <<- n ^ (-2/15) * apply(covm[, -1, drop = F], 2, bw.nrd0)
     XY <<- simuRsk3(ng, p, nu, theta, 300, 400, covm1)
     dnom <<- likelihood2(XY, covm1, theta)
-    vg <<-  qlnorm(seq(0.001, 0.999, length.out = m + 1), 0, 1.5)#quantile(lsurvData[[itr]][, 5 + p], seq(0.001, 0.999, length.out= m + 1))#seq(min(lsurvData[[itr]][, 5 + p]), max(lsurvData[[itr]][, 5 + p]), length.out = m+1)
+    vg <<- seq(min(lsurvData[[itr]][, 5 + p]), max(lsurvData[[itr]][, 5 + p]), length.out = m+1)# quantile(lsurvData[[itr]][, 5 + p], seq(0.001, 0.999, length.out= m + 1))##qlnorm(seq(0.001, 0.999, length.out = m + 1), 0, 1.5)#
     res <- try(dfsane(theta, estm, method = 3, control = list(tol = 1.e-5, noimp = 20, maxit = 200), quiet = FALSE, resp,survData[,  1:4],  covm, n, p, rep(min(resp[, 1] /2), n)))
     print(res$convergence)
     return(c(res$par, res$residual))
@@ -743,7 +745,7 @@ estm2 <- function(theta, resp, survData, covm,  n, p){
     theta <- theta
     apply(( vsinglescore(resp[, c(1, 3)], survData[, c(1, 3)], theta, covm, survData[, 5+ p])), 2,  sum)
 }
-#lsurvData <- lapply(1 : 1000, simall, 300, 500)
+#lsurvData <- mclapply(1 : 1000, simall, 300, 500, mc.cores = 15)
 evalestm <- function(itr){
     survData <- lsurvData[[itr]]
     resp <- survData[, 1:4]
@@ -755,6 +757,7 @@ evalestm <- function(itr){
     vq <- dlnorm(vg, 0, 1) /sum(dlnorm(vg, 0, 1) )
     dfsane(theta1, estm2, method = 2, control = list(tol = 1.e-7, noimp = 100 ), quiet = FALSE, resp, survData, covm,  n, p)$par
 }
-#res <- lapply(1 : 100, evalestm )
+#res <- mclapply(1 : 1000, evalestm , mc.cores = 15)
+res750 <- do.call(rbind, res)
 theta1 <- c(theta, 0.5)
 #estm2(theta1, resp, survData[, 1:4], covm, n, p)
