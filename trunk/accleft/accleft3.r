@@ -778,6 +778,6 @@ evalestm <- function(itr){
 }
 
 #res <- mclapply(1 : 1000, evalestm, mc.cores = 15)
-res750 <- do.call(rbind, res)
-theta1 <- c(theta, 0.5)
+#res750 <- do.call(rbind, res)
+#theta1 <- c(theta, 0.5)
 #estm2(theta1, resp, survData[, 1:4], covm, n, p)
