@@ -355,7 +355,7 @@ missingscore <- function(i, theta, missresp, cmptresp, mn,   p, misscovm, cmptco
         ix <- cmptresp[, "y2"] >= cn & cmptresp[, "y1"] < cn
         if(sum(ix) > 0){
             nr <- nrow(cmptscore[ix,, drop  = F ])
-            missscore <- try(apply( diag(as.numeric(kerx(x, cmptcovm[ix,  -1, drop = F], hx)), nr, nr) %*% diag(cendis[ix], nr, nr) %*%cmptscore[ix, , drop  = F ] , 2, sum) / max(sum( kerx(x, cmptcovm[ix, -1, drop = F], hx) * cendis[ix] ),  1e-200))
+            missscore <- try(apply( diag(as.numeric(kert(y1, cmptresp[ix, "y1"],  ht)), nr, nr)  %*% diag(as.numeric(kerx(x, cmptcovm[ix,  -1, drop = F], hx)), nr, nr) %*% diag(cendis[ix], nr, nr) %*%cmptscore[ix, , drop  = F ] , 2, sum) / max(sum( kert(y1, cmptresp[ix, "y1"], ht) * kerx(x, cmptcovm[ix, -1, drop = F], hx) * cendis[ix] ),  1e-200))
             #missscore <- try(apply( diag(as.numeric(kerx(x, cmptcovm[ix,  , drop = F], hx)), nr, nr) %*% diag(cendis[ix], nr, nr) %*%cmptscore[ix, , drop  = F ] , 2, sum) / max(sum( kerx(x, cmptcovm[ix, , drop = F], hx) * cendis[ix] ),  1e-200))
             #missscore <- try(apply(diag(as.numeric(kert(y1, cmptresp[ix, "y1"],  ht)), nr, nr)  %*% diag(cendis[ix], nr, nr) %*%cmptscore[ix, , drop  = F ] , 2, sum) / max(sum( kert(y1, cmptresp[ix, "y1"], ht)  * cendis[ix] ),  1e-200))
             
@@ -675,19 +675,19 @@ theta <- c(0.5, 0.5, 0.5, -0.6,  -1.0,   -0.3, -1.2,   -0.5, -1.1)
 q <- length(theta) 
 mA <- matrix(NA, m, m)
 mb <- matrix(NA, q, m)
-n <- 1000
+n <- 100
 
 p <- 2
 ij <- as.matrix(expand.grid(1 : m, 1 : m))
 nu1 <- 0.5
 nu <- 0.5
 #ij <- ij[ij[, 1] >= ij[, 2], ]
-ng <- 1500
+ng <- 3000
 up = 20
 mx <- matrix(c(0, 1), ncol = p)
 #survData <- do.call(rbind, lapply(1:n, simuRsk, n, p,  theta, 1, 3))
 #survData0 <- do.call(rbind, lapply(1:n, simuRsk1, n, p,nu,  theta0, 300, 400))
-#lsurvData <- lapply(1 : 100, simall, 300,400)
+#lsurvData <- lapply(1 : 100, simall, 1, 1.5)
 sRoot <- function(itr){
     survData <- lsurvData[[itr]]
     #cx <<- gaussLegendre(ng, quantile(as.vector(survData[, c(1)]), 0), quantile(as.vector(survData[, c(1)]), 1))
@@ -757,13 +757,14 @@ vsinglescore <-  function(vt, orgt, theta, x, g, v= 1e-5){
     derivlike <-  attributes(eval(dllgk.intg1))$gradient
     derivlike[is.nan(derivlike)] <- 0
     #browser()
-    score <- cbind( derivlike[, 4 : 7], diag(derivlike[, 1]) %*% matrix(x, ncol = p), diag(derivlike[, 2]) %*% matrix(x, ncol = p), diag(derivlike[, 3]) %*% matrix(x, ncol = p))
+    score <- cbind( derivlike[, 4 : 6], diag(derivlike[, 1]) %*% matrix(x, ncol = p), diag(derivlike[, 2]) %*% matrix(x, ncol = p), diag(derivlike[, 3]) %*% matrix(x, ncol = p), derivlike[, 7])
 }
 estm2 <- function(theta, resp, survData, covm,  n, p){
     theta <- theta
     apply(( vsinglescore(resp[, c(1, 3)], survData[, c(1, 3)], theta, covm, survData[, 5+ p])), 2,  sum)
 }
-#lsurvData <- lapply(1 : 100, simall, 300, 500)
+n <- 750
+#lsurvData <- lapply(1 : 1000, simall, 300, 500)
 evalestm <- function(itr){
     survData <- lsurvData[[itr]]
     resp <- survData[, 1:4]
@@ -775,6 +776,8 @@ evalestm <- function(itr){
     vq <- dlnorm(vg, 0, 1) /sum(dlnorm(vg, 0, 1) )
     dfsane(theta1, estm2, method = 2, control = list(tol = 1.e-7, noimp = 100 ), quiet = FALSE, resp, survData, covm,  n, p)$par
 }
-#res <- lapply(1 : 100, evalestm )
+
+#res <- mclapply(1 : 1000, evalestm, mc.cores = 15)
+res750 <- do.call(rbind, res)
 theta1 <- c(theta, 0.5)
 #estm2(theta1, resp, survData[, 1:4], covm, n, p)
