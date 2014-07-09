@@ -64,10 +64,10 @@ lkhd.intg <- expression((exp((log(y1)-b1x)/kappa1 ) * 1/y1 * 1/kappa1 ) ^ d1* (e
 
 llgk.intg <- expression((((log(y1)-b1x)/kappa1 ) +log(1/y1) + log (1/kappa1 ))  *  d1 +  (((log(y1)-b2x)/kappa2 ) +  log(1/y1) + log(1/kappa2 )) * (1 - d1) + (((log(y2)-b3x)/kappa3 ) + log(1/y2) + log(1/kappa3 )) * d1 +  log(1 + nu) * d1 +  log(1 + nu *  (exp((log(y1)-b1x)/kappa1 ) +  exp((log(y1)-b2x)/kappa2 ) + d1 * (exp((log(y2)-b3x)/kappa3 ) - exp((log(y1)-b3x)/kappa3 )))  ) * (-d1 - 1 - 1/ nu ))
 
-
+llgk.intg1 <- expression((((log(y1)-b1x)/kappa1 ) +log(1/y1) + log (1/kappa1 ))  *  d1 +  (((log(y1)-b2x)/kappa2 ) +  log(1/y1) + log(1/kappa2 )) * ((1 - d1) * d2) + (((log(y2)-b3x)/kappa3 ) + log(1/y2) + log(1/kappa3 )) * (d1*d2) +  log(1 + nu) * (d1 * d2) +  log(1 + nu *  (exp((log(y1)-b1x)/kappa1 ) +  exp((log(y1)-b2x)/kappa2 ) + d1 * (exp((log(y2)-b3x)/kappa3 ) - exp((log(y1)-b3x)/kappa3 )))  ) * (-d1 - d2 - 1/ nu ))
 
 dllgk.intg <- deriv(llgk.intg,  c("b1x", "b2x", "b3x", "kappa1", "kappa2", "kappa3"))
-dllgk.intg1 <- deriv(llgk.intg,  c("b1x", "b2x", "b3x", "kappa1", "kappa2", "kappa3", "nu"))
+dllgk.intg1 <- deriv(llgk.intg1,  c("b1x", "b2x", "b3x", "kappa1", "kappa2", "kappa3", "nu"))
 score <- function(vt,  theta, x, v= 1e-5){
     vt <- matrix(vt, ncol = 2)
     x <- matrix(x, ncol = p)
@@ -717,7 +717,10 @@ delike1 <- function(y1, y2, d1, b1x, b2x, b3x,  g, kappa1, kappa2, kappa3 ){
     dk3 <- (-2 * (log(y2)-b3x -log(g))/kappa3^3 + (-2/kappa3)) * d1 + (- exp( (log(y2) - log(g) - b3x) / kappa3^2)) * (-2 * (log(y2)-b3x -log(g))/kappa3^3) - (- exp( (log(y1) - log(g) - b3x) / kappa3^2)) * (-2 * (log(y1)-b3x -log(g))/kappa3^3)
     return(cbind(dd1x, dd2x, dd3x, dk1 +  dk2+ dk3)) #
 }
-vsinglescore <-  function(vt, orgt, theta, x, g, v= 1e-5){
+vsinglescore <-  function(resp, orgt, theta, x, g, v= 1e-5){
+    vt <- resp[, c(1, 3)]
+    d2 <- resp[, 4]
+    d1 <- resp[, 2]
     vt1 <- vt
     vt11 <- vt1[, 1]
     vt12 <- vt1[, 2]
@@ -732,7 +735,8 @@ vsinglescore <-  function(vt, orgt, theta, x, g, v= 1e-5){
     b1x <- x %*% beta1
     b2x <- x %*% beta2
     b3x <- x %*% beta3
-    d1 <- as.numeric(vt[, 1] < vt[, 2])
+    #d1 <- as.numeric(vt[, 1] < vt[, 2])
+    
     y1 <- pmin(vt[, 1], vt[, 2])
     y2 <- vt[, 2]
     
@@ -743,9 +747,9 @@ vsinglescore <-  function(vt, orgt, theta, x, g, v= 1e-5){
 }
 estm2 <- function(theta, resp, survData, covm,  n, p){
     theta <- theta
-    apply(( vsinglescore(resp[, c(1, 3)], survData[, c(1, 3)], theta, covm, survData[, 5+ p])), 2,  sum)
+    apply(( vsinglescore(resp, survData[, c(1, 3)], theta, covm, survData[, 5+ p])), 2,  sum)
 }
-#lsurvData <- mclapply(1 : 1000, simall, 300, 500, mc.cores = 15)
+#lsurvData <- mclapply(1 : 1000, simall,0.5, 1.5, mc.cores = 15)
 evalestm <- function(itr){
     survData <- lsurvData[[itr]]
     resp <- survData[, 1:4]
@@ -758,6 +762,28 @@ evalestm <- function(itr){
     dfsane(theta1, estm2, method = 2, control = list(tol = 1.e-7, noimp = 100 ), quiet = FALSE, resp, survData, covm,  n, p)$par
 }
 #res <- mclapply(1 : 1000, evalestm , mc.cores = 15)
-#res750 <- do.call(rbind, res)
+                                        #res1008 <- do.call(rbind, res)
 #theta1 <- c(theta, 0.5)
 #estm2(theta1, resp, survData[, 1:4], covm, n, p)
+res100 <- res1008
+res250 <- res2508
+res500 <- res5008
+res750 <- res7508
+mean100 <- round(apply(res100[, 1:q], 2, median), 3)
+mean250 <- round(apply(res250[, 1:q], 2, median), 3)
+mean500 <- round(apply(res500[, 1:q], 2, median), 3)
+mean750 <- round(apply(res750[, 1:q],  2, median), 3)
+#mean1000 <- apply(res1000, 2, median)
+sd100 <- round(apply(res100[, 1:q], 2, mad), 3)
+sd250 <- round(apply(res250[, 1:q], 2, mad), 3)
+sd500 <- round(apply(res500[, 1:q], 2, mad), 3)
+sd750 <- round(apply(res750[, 1:q], 2, mad), 3)
+
+
+mse100 <- round((mean100[1:q] - theta)^2 + sd100[1:q] ^2, 4)
+mse250 <- round((mean250[1:q]-theta)^2 + sd250[1:q] ^2, 4)
+mse500 <- round((mean500[1:q] - theta)^2 + sd500[1:q] ^2, 4)
+mse750 <- round((mean750[1:q] - theta)^2 + sd750[1:q] ^2, 4)
+
+res <- cbind(mean100, sd100, mse100, mean250, sd250, mse250, mean500, sd500, mse500)
+pres <- apply(res, 1, paste, collapse = "&")
