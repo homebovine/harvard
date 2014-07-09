@@ -64,10 +64,10 @@ lkhd.intg <- expression((exp((log(y1)-b1x)/kappa1 ) * 1/y1 * 1/kappa1 ) ^ d1* (e
 
 llgk.intg <- expression((((log(y1)-b1x)/kappa1 ) +log(1/y1) + log (1/kappa1 ))  *  d1 +  (((log(y1)-b2x)/kappa2 ) +  log(1/y1) + log(1/kappa2 )) * (1 - d1) + (((log(y2)-b3x)/kappa3 ) + log(1/y2) + log(1/kappa3 )) * d1 +  log(1 + nu) * d1 +  log(1 + nu *  (exp((log(y1)-b1x)/kappa1 ) +  exp((log(y1)-b2x)/kappa2 ) + d1 * (exp((log(y2)-b3x)/kappa3 ) - exp((log(y1)-b3x)/kappa3 )))  ) * (-d1 - 1 - 1/ nu ))
 
-
+llgk.intg1 <- expression((((log(y1)-b1x)/kappa1 ) +log(1/y1) + log (1/kappa1 ))  *  d1 +  (((log(y1)-b2x)/kappa2 ) +  log(1/y1) + log(1/kappa2 )) * ((1 - d1) * d2) + (((log(y2)-b3x)/kappa3 ) + log(1/y2) + log(1/kappa3 )) * (d1*d2) +  log(1 + nu) * (d1 * d2) +  log(1 + nu *  (exp((log(y1)-b1x)/kappa1 ) +  exp((log(y1)-b2x)/kappa2 ) + d1 * (exp((log(y2)-b3x)/kappa3 ) - exp((log(y1)-b3x)/kappa3 )))  ) * (-d1 - d2 - 1/ nu ))
 
 dllgk.intg <- deriv(llgk.intg,  c("b1x", "b2x", "b3x", "kappa1", "kappa2", "kappa3"))
-dllgk.intg1 <- deriv(llgk.intg,  c("b1x", "b2x", "b3x", "kappa1", "kappa2", "kappa3", "nu"))
+dllgk.intg1 <- deriv(llgk.intg1,  c("b1x", "b2x", "b3x", "kappa1", "kappa2", "kappa3", "nu"))
 score <- function(vt,  theta, x, v= 1e-5){
     vt <- matrix(vt, ncol = 2)
     x <- matrix(x, ncol = p)
@@ -459,7 +459,10 @@ simuRsk <- function(i, n, p,  theta,  cen1, cen2 ,covm = NULL){
     beta2 <- theta[(4 + p) : (3 + 2 * p)]
     beta3 <- theta[(4 + 2* p) : (3 + 3 * p)]
     x <- covm
-    g <- rlnorm(1, 0, 0.5)#rgamma(1, 1/nu1, scale = nu1)  # 
+    r1 <- rbinom(1, 1, 0.6)
+    
+    g <- r1 * rlnorm(1, 0, 0.75) + (1 - r1) * rweibull(1, 2, scale = 2)#rgamma(1, 1/nu1, scale = nu1)  
+   
     lb1 <- g * exp((- t(beta1)%*%x)/kappa1)
     lb2 <- g * exp((- t(beta2)%*%x)/kappa2)
     lb3 <- g * exp((- t(beta3)%*%x)/kappa3)
@@ -735,7 +738,10 @@ delike1 <- function(y1, y2, d1, b1x, b2x, b3x,  g, kappa1, kappa2, kappa3 ){
     dk3 <- (-2 * (log(y2)-b3x -log(g))/kappa3^3 + (-2/kappa3)) * d1 + (- exp( (log(y2) - log(g) - b3x) / kappa3^2)) * (-2 * (log(y2)-b3x -log(g))/kappa3^2) - (- exp( (log(y1) - log(g) - b3x) / kappa3^2)) * (-2 * (log(y1)-b3x -log(g))/kappa3^2)
     return(cbind(dd1x, dd2x, dd3x, dk1 +  dk2+ dk3)) #
 }
-vsinglescore <-  function(vt, orgt, theta, x, g, v= 1e-5){
+vsinglescore <-  function(resp, orgt, theta, x, g, v= 1e-5){
+    vt <- resp[, c(1, 3)]
+    d2 <- resp[, 4]
+    d1 <- resp[, 2]
     vt1 <- vt
     vt11 <- vt1[, 1]
     vt12 <- vt1[, 2]
@@ -761,10 +767,10 @@ vsinglescore <-  function(vt, orgt, theta, x, g, v= 1e-5){
 }
 estm2 <- function(theta, resp, survData, covm,  n, p){
     theta <- theta
-    apply(( vsinglescore(resp[, c(1, 3)], survData[, c(1, 3)], theta, covm, survData[, 5+ p])), 2,  sum)
+    apply(( vsinglescore(resp, survData[, c(1, 3)], theta, covm, survData[, 5+ p])), 2,  sum)
 }
 n <- 750
-#lsurvData <- lapply(1 : 1000, simall, 300, 500)
+#lsurvData <- mclapply(1 : 1000, simall,0.5, 1.5, mc.cores = 15)
 evalestm <- function(itr){
     survData <- lsurvData[[itr]]
     resp <- survData[, 1:4]
