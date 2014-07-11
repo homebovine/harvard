@@ -450,7 +450,7 @@ estm <- function(theta, resp, survData, covm, n, p, mv = rep(1e-5, n)){
 
 simuRsk <- function(i, n, p,  theta,  cen1, cen2 ,covm = NULL){
     if(is.null(covm)){
-        covm <-  matrix(c(1,  rnorm(1, 0, 0.3)), p, 1 )#matrix(1, p, 1)#
+        covm <-  matrix(c(1,  rgamma(1, 0.3, 0.3)), p, 1 )#matrix(1, p, 1)#
     }
     kappa1 <- (abs(theta[1]) )
     kappa2 <- (abs(theta[2]) )
@@ -674,7 +674,7 @@ evalestm <- function(itr){
 set.seed(2014)
 m = 25
 m1 = 100
-theta <- c(0.5, 0.5, 0.5, -0.6,  -1.0,   -0.3, -1.2,   -0.5, -1.1)
+theta <- c(0.5, 0.5, 0.5, -0.5,  -1.2,   -0.3, -1.0,   -0.5, -1.1)
 q <- length(theta) 
 mA <- matrix(NA, m, m)
 mb <- matrix(NA, q, m)
@@ -690,7 +690,7 @@ up = 20
 mx <- matrix(c(0, 1), ncol = p)
 #survData <- do.call(rbind, lapply(1:n, simuRsk, n, p,  theta, 1, 3))
 #survData0 <- do.call(rbind, lapply(1:n, simuRsk1, n, p,nu,  theta0, 300, 400))
-#lsurvData <- lapply(1 : 100, simall, 1, 1.5)
+#lsurvData <- lapply(1 : 100, simall, 0.8, 1.35)
 sRoot <- function(itr){
     survData <- lsurvData[[itr]]
     #cx <<- gaussLegendre(ng, quantile(as.vector(survData[, c(1)]), 0), quantile(as.vector(survData[, c(1)]), 1))
@@ -708,12 +708,12 @@ sRoot <- function(itr){
     resp <- survData[, 1:4]
     colnames(resp) <- c("y1", "d1", "y2", "d2")
     covm <- matrix(survData[, 5 : (4+ p)], n, p)
-    covm1 <<- matrix(cbind(rep(1, ng), rnorm(ng, 0, 0.3)), ncol = p)#matrix(1, ng, p)#
+    covm1 <<- matrix(cbind(rep(1, ng), rgamma(ng, 0.3, 0.3)), ncol = p)#matrix(1, ng, p)#
     XY <<- simuRsk3(ng, p, nu, theta, 300, 400, covm1)#do.call(rbind, lapply(1 :ng, simuRsk2, ng,  p, nu,  theta,  300, 400 , covm1))
     dnom <<- likelihood2(XY, covm1, theta)
     ht <<- sum(resp[, "d1"] == 1)^(-2/15) * bw.nrd0(log(resp[resp[, "d1"] == 1, "y1"]))
     hx <<- n ^ (-2/15) * apply(covm[, -1, drop = F], 2, bw.nrd0)
-    vg <<- seq(min(lsurvData[[itr]][, 5 + p]), max(lsurvData[[itr]][, 5 + p]), length.out = m+1)#qgamma(seq(0.000001, 0.99999999999999, length.out = m + 1), 1/nu, 1/nu)
+    vg <<- seq(min(lsurvData[[itr]][, 5 + p]), quantile(lsurvData[[itr]][, 5 + p], 0.95), length.out = m+1)#qgamma(seq(0.000001, 0.99999999999999, length.out = m + 1), 1/nu, 1/nu)
 #    vg1 <<- qgamma(seq(0.00000001, 0.99999999999, length.out = m1 + 1), 1/nu, 1/nu)
     
 
@@ -721,6 +721,11 @@ sRoot <- function(itr){
     print(res$convergence)
     return(c(res$par, res$residual))
 }
+getsimdata <- function(itr){
+        
+            apply(lsurvData[[itr]][, c(2, 4)], 2, sum)/750
+        }
+#eventrate <- apply(do.call(rbind, lapply(1:100, getsimdata)), 2, mean)
 tsRoot <- function(itr) try(sRoot(itr))
 #spg(theta, estm1, gr = NULL,  project = NULL, lower = c(rep(0, 3), rep(-Inf, 3 * p)), upper = rep(Inf, 3 * p), method = 3, projectArgs= NULL, control = list(ftol = 1.e-3 ), quiet = FALSE, resp,survData[, d 1:4],  covm, n, p, rep(min(resp[, 1] /2), n))$par
 #res <- mclapply(1:10, tsRoot, mc.cores = 15)
@@ -770,7 +775,7 @@ estm2 <- function(theta, resp, survData, covm,  n, p){
     apply(( vsinglescore(resp, survData[, c(1, 3)], theta, covm, survData[, 5+ p])), 2,  sum)
 }
 n <- 750
-#lsurvData <- mclapply(1 : 1000, simall,0.5, 1.5, mc.cores = 15)
+#lsurvData <- mclapply(1 : 1000, simall,300, 400, mc.cores = 15)
 evalestm <- function(itr){
     survData <- lsurvData[[itr]]
     resp <- survData[, 1:4]
