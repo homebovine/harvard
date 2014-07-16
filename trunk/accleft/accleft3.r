@@ -355,7 +355,7 @@ missingscore <- function(i, theta, missresp, cmptresp, mn,   p, misscovm, cmptco
         ix <- cmptresp[, "y2"] >= cn & cmptresp[, "y1"] < cn
         if(sum(ix) > 0){
             nr <- nrow(cmptscore[ix,, drop  = F ])
-            missscore <- try(apply( diag(as.numeric(kerx(x, cmptcovm[ix,  -1, drop = F], hx)), nr, nr) %*% diag(cendis[ix], nr, nr) %*%cmptscore[ix, , drop  = F ] , 2, sum) / max(sum( kerx(x, cmptcovm[ix, -1, drop = F], hx) * cendis[ix] ),  1e-200))
+            missscore <- try(apply( diag(as.numeric(kerdis(x, cmptcovm[ix,  -1, drop = F], hx)), nr, nr) %*% diag(cendis[ix], nr, nr) %*%cmptscore[ix, , drop  = F ] , 2, sum) / max(sum( kerx(x, cmptcovm[ix, -1, drop = F], hx) * cendis[ix] ),  1e-200))
             #missscore <- try(apply( diag(as.numeric(kerx(x, cmptcovm[ix,  , drop = F], hx)), nr, nr) %*% diag(cendis[ix], nr, nr) %*%cmptscore[ix, , drop  = F ] , 2, sum) / max(sum( kerx(x, cmptcovm[ix, , drop = F], hx) * cendis[ix] ),  1e-200))
             #missscore <- try(apply(diag(as.numeric(kert(y1, cmptresp[ix, "y1"],  ht)), nr, nr)  %*% diag(cendis[ix], nr, nr) %*%cmptscore[ix, , drop  = F ] , 2, sum) / max(sum( kert(y1, cmptresp[ix, "y1"], ht)  * cendis[ix] ),  1e-200))
             
@@ -369,7 +369,7 @@ missingscore <- function(i, theta, missresp, cmptresp, mn,   p, misscovm, cmptco
         ix <- cmptresp[, "y1"] >= cn
         if(sum(ix) > 0){
             nr <- nrow(cmptscore[ix,, drop  = F ])
-            missscore <- try(apply( diag(as.numeric(kerx(x, cmptcovm[ix, -1, drop = F ], hx)), nr, nr) %*% diag(cendis[ix], nr, nr)%*%  cmptscore[ix, , drop = F] , 2, sum) / (max(sum(   kerx(x, cmptcovm[ix, -1, drop =  F], hx) * cendis[ix]), 1e-200) ))
+            missscore <- try(apply( diag(as.numeric(kerdis(x, cmptcovm[ix, -1, drop = F ], hx)), nr, nr) %*% diag(cendis[ix], nr, nr)%*%  cmptscore[ix, , drop = F] , 2, sum) / (max(sum(   kerx(x, cmptcovm[ix, -1, drop =  F], hx) * cendis[ix]), 1e-200) ))
             #missscore <- try(apply( diag(cendis[ix], nr, nr)%*%  cmptscore[ix, , drop = F] , 2, sum) / (max(sum(    cendis[ix]), 1e-200) ))
             }
         else
@@ -450,7 +450,7 @@ estm <- function(theta, resp, survData, covm, n, p, mv = rep(1e-5, n)){
 
 simuRsk <- function(i, n, p,  theta,  cen1, cen2 ,covm = NULL){
     if(is.null(covm)){
-        covm <-  matrix(c(1,  rgamma(1, 0.3, 0.3)), p, 1 )#matrix(1, p, 1)#
+        covm <-  matrix(c(1,  rbinom(1, 1, 0.6)), p, 1 )#matrix(1, p, 1)#
     }
     kappa1 <- (abs(theta[1]) )
     kappa2 <- (abs(theta[2]) )
@@ -459,9 +459,9 @@ simuRsk <- function(i, n, p,  theta,  cen1, cen2 ,covm = NULL){
     beta2 <- theta[(4 + p) : (3 + 2 * p)]
     beta3 <- theta[(4 + 2* p) : (3 + 3 * p)]
     x <- covm
-    r1 <- rbinom(1, 1, 0.6)
     
-    g <- r1 * rlnorm(1, 0, 0.75) + (1 - r1) * rweibull(1, 2, scale = 2)#rgamma(1, 1/nu1, scale = nu1)  
+    
+    g <- x[2] * rlnorm(1, 0, 0.75) + (1 - x[2]) * rweibull(1, 2, scale = 2)#rgamma(1, 1/nu1, scale = nu1)  
    
     lb1 <- g * exp((- t(beta1)%*%x)/kappa1)
     lb2 <- g * exp((- t(beta2)%*%x)/kappa2)
@@ -615,6 +615,12 @@ kerx <- function(x1, vx2, h){
     h <- matrix(rep(h, nrow(vx2)), ncol = p-1, byrow = T)
     apply(dnorm((vx2 - x1)/h), 1, prod)
 }
+kerdis <- function(x1, vx2, h){
+    vx2 <- matrix(vx2, ncol = p-1 )
+    x1 <- matrix(rep(x1, nrow(vx2)), ncol = p-1, byrow = T)
+    h <- matrix(rep(h, nrow(vx2)), ncol = p-1, byrow = T)
+    abs(1 - (x1 - vx2))
+}
 
 
 
@@ -688,33 +694,22 @@ nu <- 0.5
 ng <- 1500
 up = 20
 mx <- matrix(c(0, 1), ncol = p)
-#survData <- do.call(rbind, lapply(1:n, simuRsk, n, p,  theta, 1, 3))
-#survData0 <- do.call(rbind, lapply(1:n, simuRsk1, n, p,nu,  theta0, 300, 400))
-#lsurvData <- lapply(1 : 100, simall, 0.8, 1.35)
+
+#lsurvData <- lapply(1 : 100, simall, 300, 400)
 sRoot <- function(itr){
     survData <- lsurvData[[itr]]
-    #cx <<- gaussLegendre(ng, quantile(as.vector(survData[, c(1)]), 0), quantile(as.vector(survData[, c(1)]), 1))
-    #cx <<- gaussLegendre(ng, 0.01, 20)
-    #x <<- cx$x
-    #wx <<- cx$w
-    #cy <<- gaussLegendre(ng, quantile(as.vector(survData[, c( 3)]), 0), quantile(as.vector(survData[, c( 3)]), 1))
-    #cy <<- gaussLegendre(ng, 0.01, 20)
-    #y <<- cy$x
-    #wy <<- cy$w
-    #mgrid <<- meshgrid(x, y)
-    #cbind(runif(ng, 0, up), runif(ng, 0, up))
+    
     
     weight <<- rep(1/ng, ng)
     resp <- survData[, 1:4]
     colnames(resp) <- c("y1", "d1", "y2", "d2")
     covm <- matrix(survData[, 5 : (4+ p)], n, p)
-    covm1 <<- matrix(cbind(rep(1, ng), rgamma(ng, 0.3, 0.3)), ncol = p)#matrix(1, ng, p)#
+    covm1 <<- matrix(cbind(rep(1, ng), rbinom(ng, 1, 0.6)), ncol = p)#matrix(1, ng, p)#
     XY <<- simuRsk3(ng, p, nu, theta, 300, 400, covm1)#do.call(rbind, lapply(1 :ng, simuRsk2, ng,  p, nu,  theta,  300, 400 , covm1))
     dnom <<- likelihood2(XY, covm1, theta)
     ht <<- sum(resp[, "d1"] == 1)^(-2/15) * bw.nrd0(log(resp[resp[, "d1"] == 1, "y1"]))
     hx <<- n ^ (-2/15) * apply(covm[, -1, drop = F], 2, bw.nrd0)
-    vg <<- seq(min(lsurvData[[itr]][, 5 + p]), quantile(lsurvData[[itr]][, 5 + p], 0.95), length.out = m+1)#qgamma(seq(0.000001, 0.99999999999999, length.out = m + 1), 1/nu, 1/nu)
-#    vg1 <<- qgamma(seq(0.00000001, 0.99999999999, length.out = m1 + 1), 1/nu, 1/nu)
+    vg <<- seq(min(lsurvData[[itr]][, 5 + p]), quantile(lsurvData[[itr]][, 5 + p], 0.95), length.out = m+1)
     
 
     res <- try(dfsane(theta, estm, method = 3, control = list(tol = 1.e-5, noimp = 20, maxit = 200), quiet = FALSE, resp,survData[,  1:4],  covm, n, p, rep(min(resp[, 1] /2), n)))
@@ -774,21 +769,21 @@ estm2 <- function(theta, resp, survData, covm,  n, p){
     theta <- theta
     apply(( vsinglescore(resp, survData[, c(1, 3)], theta, covm, survData[, 5+ p])), 2,  sum)
 }
-n <- 750
-#lsurvData <- mclapply(1 : 1000, simall,300, 400, mc.cores = 15)
+n <- 100
+#lsurvData <- mclapply(1 : 1000, simall,0.3, 1.35, mc.cores = 15)
 evalestm <- function(itr){
     survData <- lsurvData[[itr]]
     resp <- survData[, 1:4]
     colnames(resp) <- c("y1", "d1", "y2", "d2")
     covm <- matrix(survData[, 5 : (4+ p)], n, p)
-    ht <- n^(-2/15) * bw.nrd0(resp[resp[, "d1"] == 1, "y1"])
-    hx <- n ^ (-2/15) * apply(covm[, , drop = F], 2, bw.nrd0)
+    #ht <- n^(-2/15) * bw.nrd0(resp[resp[, "d1"] == 1, "y1"])
+    #hx <- n ^ (-2/15) * apply(covm[, , drop = F], 2, bw.nrd0)
     vg <- quantile(survData[, 5 + p], seq(0, 1, length.out = m))
     vq <- dlnorm(vg, 0, 1) /sum(dlnorm(vg, 0, 1) )
     dfsane(theta1, estm2, method = 2, control = list(tol = 1.e-7, noimp = 100 ), quiet = FALSE, resp, survData, covm,  n, p)$par
 }
 
-#res <- mclapply(1 : 1000, evalestm, mc.cores = 15)
-#res750 <- do.call(rbind, res)
+                                        #res <- mclapply(1 : 1000, evalestm, mc.cores = 15)
+#res1008 <- do.call(rbind, res)
 theta1 <- c(theta, 0.5)
 #estm2(theta1, resp, survData[, 1:4], covm, n, p)
