@@ -765,25 +765,25 @@ evalestm <- function(itr){
                                         #res1008 <- do.call(rbind, res)
 #theta1 <- c(theta, 0.5)
 #estm2(theta1, resp, survData[, 1:4], covm, n, p)
-res100 <- res1008
-res250 <- res2508
-res500 <- res5008
-res750 <- res7508
-mean100 <- round(apply(res100[, 1:q], 2, median), 3)
-mean250 <- round(apply(res250[, 1:q], 2, median), 3)
-mean500 <- round(apply(res500[, 1:q], 2, median), 3)
-mean750 <- round(apply(res750[, 1:q],  2, median), 3)
-#mean1000 <- apply(res1000, 2, median)
-sd100 <- round(apply(res100[, 1:q], 2, mad), 3)
-sd250 <- round(apply(res250[, 1:q], 2, mad), 3)
-sd500 <- round(apply(res500[, 1:q], 2, mad), 3)
-sd750 <- round(apply(res750[, 1:q], 2, mad), 3)
+## res100 <- res1008
+## res250 <- res2508
+## res500 <- res5008
+## res750 <- res7508
+## mean100 <- round(apply(res100[, 1:q], 2, median), 3)
+## mean250 <- round(apply(res250[, 1:q], 2, median), 3)
+## mean500 <- round(apply(res500[, 1:q], 2, median), 3)
+## mean750 <- round(apply(res750[, 1:q],  2, median), 3)
+## #mean1000 <- apply(res1000, 2, median)
+## sd100 <- round(apply(res100[, 1:q], 2, mad), 3)
+## sd250 <- round(apply(res250[, 1:q], 2, mad), 3)
+## sd500 <- round(apply(res500[, 1:q], 2, mad), 3)
+## sd750 <- round(apply(res750[, 1:q], 2, mad), 3)
 
 
-mse100 <- round((mean100[1:q] - theta)^2 + sd100[1:q] ^2, 4)
-mse250 <- round((mean250[1:q]-theta)^2 + sd250[1:q] ^2, 4)
-mse500 <- round((mean500[1:q] - theta)^2 + sd500[1:q] ^2, 4)
-mse750 <- round((mean750[1:q] - theta)^2 + sd750[1:q] ^2, 4)
+## mse100 <- round((mean100[1:q] - theta)^2 + sd100[1:q] ^2, 4)
+## mse250 <- round((mean250[1:q]-theta)^2 + sd250[1:q] ^2, 4)
+## mse500 <- round((mean500[1:q] - theta)^2 + sd500[1:q] ^2, 4)
+## mse750 <- round((mean750[1:q] - theta)^2 + sd750[1:q] ^2, 4)
 
-res <- cbind(mean100, sd100, mse100, mean250, sd250, mse250, mean500, sd500, mse500)
-pres <- apply(res, 1, paste, collapse = "&")
+## res <- cbind(mean100, sd100, mse100, mean250, sd250, mse250, mean500, sd500, mse500)
+## pres <- apply(res, 1, paste, collapse = "&")
