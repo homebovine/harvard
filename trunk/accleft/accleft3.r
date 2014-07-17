@@ -459,6 +459,7 @@ simuRsk <- function(i, n, p,  theta,  cen1, cen2 ,covm = NULL){
     beta2 <- theta[(4 + p) : (3 + 2 * p)]
     beta3 <- theta[(4 + 2* p) : (3 + 3 * p)]
     x <- covm
+    r1 <- x[2] <dg 
     
     
     g <- x[2] * rlnorm(1, 0, 0.75) + (1 - x[2]) * rweibull(1, 2, scale = 2)#rgamma(1, 1/nu1, scale = nu1)  
@@ -694,8 +695,10 @@ nu <- 0.5
 ng <- 1500
 up = 20
 mx <- matrix(c(0, 1), ncol = p)
-
-#lsurvData <- lapply(1 : 100, simall, 300, 400)
+dg <- dgamma(0.6, 0.3, 0.3)
+#survData <- do.call(rbind, lapply(1:n, simuRsk, n, p,  theta, 1, 3))
+#survData0 <- do.call(rbind, lapply(1:n, simuRsk1, n, p,nu,  theta0, 300, 400))
+#lsurvData <- lapply(1 : 100, simall, 0.8, 1.35)
 sRoot <- function(itr){
     survData <- lsurvData[[itr]]
     
