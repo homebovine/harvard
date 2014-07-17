@@ -662,7 +662,7 @@ evalestm <- function(itr){
 
 
 set.seed(2014)
-m = 27
+m = 25
 m1 = 100
 theta <- c(0.5, 0.5, 0.5, -0.6,    -0.3,   -0.5)
 q <- length(theta) 
@@ -673,14 +673,14 @@ n <- 750
 p <- 1
 ij <- as.matrix(expand.grid(1 : m, 1 : m))
 nu1 <- 0.5
-nu <- 1.5
+nu <- 0.87
 #ij <- ij[ij[, 1] >= ij[, 2], ]
-ng <- 2000
+ng <- 1500
 up = 20
 mx <- matrix(c(0, 1), ncol = p)
 #survData <- do.call(rbind, lapply(1:n, simuRsk, n, p,  theta, 1, 3))
 #survData0 <- do.call(rbind, lapply(1:n, simuRsk1, n, p,nu,  theta0, 300, 400))
-#lsurvData <- lapply(1 : 1, simall, 300, 500)
+#lsurvData <- lapply(1 : 100, simall, 300, 500)
 covm1 <<- matrix(1, ng, p)#matrix(cbind(rep(1, ng), rnorm(ng, 0, 1)), ncol = p)
     
     
@@ -695,7 +695,7 @@ sRoot <- function(itr){
     hx <<- n ^ (-2/15) * apply(covm[, -1, drop = F], 2, bw.nrd0)
     XY <<- simuRsk3(ng, p, nu, theta, 300, 400, covm1)
     dnom <<- likelihood2(XY, covm1, theta)
-    vg <<- seq(min(lsurvData[[itr]][, 5 + p]), max(lsurvData[[itr]][, 5 + p]), length.out = m+1)# quantile(lsurvData[[itr]][, 5 + p], seq(0.001, 0.999, length.out= m + 1))##qlnorm(seq(0.001, 0.999, length.out = m + 1), 0, 1.5)#
+    vg <<- seq(min(lsurvData[[itr]][, 5 + p]), quantile(lsurvData[[itr]][, 5 + p], 1), length.out = m+1)# quantile(lsurvData[[itr]][, 5 + p], seq(0.001, 0.999, length.out= m + 1))##qlnorm(seq(0.001, 0.999, length.out = m + 1), 0, 1.5)#
     res <- try(dfsane(theta, estm, method = 3, control = list(tol = 1.e-5, noimp = 20, maxit = 200), quiet = FALSE, resp,survData[,  1:4],  covm, n, p, rep(min(resp[, 1] /2), n)))
     print(res$convergence)
     return(c(res$par, res$residual))
