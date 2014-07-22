@@ -1,4 +1,5 @@
-#library(R2Cuba)
+
+                                        #library(R2Cuba)
 library(MASS)
 library(BB)
 library(survival)
@@ -58,18 +59,21 @@ trans3 <- function(t){
 
 
 
-clkhd.intg <- expression((g * exp((log(y1)-b1x)/kappa1 ) * 1/y1 * 1/kappa1 ) ^ d1* (g * exp((log(y1)-b2x)/kappa2 ) * 1/y1 * 1/kappa2 ) ^ (1 - d1) * (g * exp((log(y2)-b3x)/kappa3 ) * 1/y2 * 1/kappa3 ) ^ d1 * exp(-  g * (exp((log(y1)-b1x)/kappa1 ) +  exp((log(y1)-b2x)/kappa2 ) + d1 * (exp((log(y2)-b3x)/kappa3 ) - exp((log(y1)-b3x)/kappa3 ))  )) )#* dbinom(x, 1, 0.8)
+clkhd.intg <- expression((g * exp((log(y1)-b1x)/kappa1 ) * 1/y1 * 1/kappa1 ) ^ d1* (g * exp((log(y1)-b2x)/kappa2 ) * 1/y1 * 1/kappa2 ) ^ ((1 - d1) * d2) * (g * exp((log(y2)-b3x)/kappa3 ) * 1/y2 * 1/kappa3 ) ^ (d1*d2) * exp(-  g * (exp((log(y1)-b1x)/kappa1 ) +  exp((log(y1)-b2x)/kappa2 ) + d1 * (exp((log(y2)-b3x)/kappa3 ) - exp((log(y1)-b3x)/kappa3 ))  )) )#* dbinom(x, 1, 0.8)
 
-lkhd.intg <- expression((exp((log(y1)-b1x)/kappa1 ) * 1/y1 * 1/kappa1 ) ^ d1* (exp((log(y1)-b2x)/kappa2 ) * 1/y1 * 1/kappa2 ) ^ (1 - d1) * (exp((log(y2)-b3x)/kappa3 ) * 1/y2 * 1/kappa3 ) ^ d1 * (1 + nu) ^ d1 * (1 + nu *  (exp((log(y1)-b1x)/kappa1 ) +  exp((log(y1)-b2x)/kappa2 ) + d1 * (exp((log(y2)-b3x)/kappa3 ) - exp((log(y1)-b3x)/kappa3 ))  )) ^ (-d1 - 1 - 1/ nu ) )#* dbinom(x, 1, 0.8)
+cllgk.intg <- expression((log(g) +  ((log(y1)-b1x)/kappa1 ) + log( 1/y1) + log( 1/kappa1) ) *  d1 +  (log(g) + ((log(y1)-b2x)/kappa2 ) + log( 1/y1) + log(1/kappa2) ) * ((1 - d1) * d2) + (log(g) + ((log(y2)-b3x)/kappa3 ) +log(1/y2) + log(1/kappa3) ) * (d1*d2) + (-  g * (exp((log(y1)-b1x)/kappa1 ) +  exp((log(y1)-b2x)/kappa2 ) + d1 * (exp((log(y2)-b3x)/kappa3 ) - exp((log(y1)-b3x)/kappa3 ))  )) )#* dbinom(x, 1, 0.8)
 
-llgk.intg <- expression((((log(y1)-b1x)/kappa1 ) +log(1/y1) + log (1/kappa1 ))  *  d1 +  (((log(y1)-b2x)/kappa2 ) +  log(1/y1) + log(1/kappa2 )) * (1 - d1) + (((log(y2)-b3x)/kappa3 ) + log(1/y2) + log(1/kappa3 )) * d1 +  log(1 + nu) * d1 +  log(1 + nu *  (exp((log(y1)-b1x)/kappa1 ) +  exp((log(y1)-b2x)/kappa2 ) + d1 * (exp((log(y2)-b3x)/kappa3 ) - exp((log(y1)-b3x)/kappa3 )))  ) * (-d1 - 1 - 1/ nu ))
+lkhd.intg <- expression((exp((log(y1)-b1x)/kappa1 ) * 1/y1 * 1/kappa1 ) ^ d1* (exp((log(y1)-b2x)/kappa2 ) * 1/y1 * 1/kappa2 ) ^ ((1 - d1) *d2)* (exp((log(y2)-b3x)/kappa3 ) * 1/y2 * 1/kappa3 ) ^ (d1*d2) * (1 + nu) ^ (d1*d2) * (1 + nu *  (exp((log(y1)-b1x)/kappa1 ) +  exp((log(y1)-b2x)/kappa2 ) + d1 * (exp((log(y2)-b3x)/kappa3 ) - exp((log(y1)-b3x)/kappa3 ))  )) ^ (-d1 - d2 - 1/ nu ) )#* dbinom(x, 1, 0.8)
+
+llgk.intg <- expression((((log(y1)-b1x)/kappa1 ) +log(1/y1) + log (1/kappa1 ))  *  d1 +  (((log(y1)-b2x)/kappa2 ) +  log(1/y1) + log(1/kappa2 )) * ((1 - d1)* d2) + (((log(y2)-b3x)/kappa3 ) + log(1/y2) + log(1/kappa3 )) * (d1 * d2) +  log(1 + nu) * (d1 * d2) +  log(1 + nu *  (exp((log(y1)-b1x)/kappa1 ) +  exp((log(y1)-b2x)/kappa2 ) + d1 * (exp((log(y2)-b3x)/kappa3 ) - exp((log(y1)-b3x)/kappa3 )))  ) * (-d1 - d2 - 1/ nu ))
 
 llgk.intg1 <- expression((((log(y1)-b1x)/kappa1 ) +log(1/y1) + log (1/kappa1 ))  *  d1 +  (((log(y1)-b2x)/kappa2 ) +  log(1/y1) + log(1/kappa2 )) * ((1 - d1) * d2) + (((log(y2)-b3x)/kappa3 ) + log(1/y2) + log(1/kappa3 )) * (d1*d2) +  log(1 + nu) * (d1 * d2) +  log(1 + nu *  (exp((log(y1)-b1x)/kappa1 ) +  exp((log(y1)-b2x)/kappa2 ) + d1 * (exp((log(y2)-b3x)/kappa3 ) - exp((log(y1)-b3x)/kappa3 )))  ) * (-d1 - d2 - 1/ nu ))
 
 dllgk.intg <- deriv(llgk.intg,  c("b1x", "b2x", "b3x", "kappa1", "kappa2", "kappa3"))
+dcllgk.intg <- deriv(cllgk.intg,  c("b1x", "b2x", "b3x", "kappa1", "kappa2", "kappa3"))
 dllgk.intg1 <- deriv(llgk.intg1,  c("b1x", "b2x", "b3x", "kappa1", "kappa2", "kappa3", "nu"))
 score <- function(vt,  theta, x, v= 1e-5){
-    vt <- matrix(vt, ncol = 2)
+    vt <- matrix(vt, ncol = 3)
     x <- matrix(x, ncol = p)
     kappa1 <- (theta[1])
     kappa2 <- (theta[2])
@@ -80,9 +84,11 @@ score <- function(vt,  theta, x, v= 1e-5){
     b1x <- x %*% beta1#t(beta1)%*%x
     b2x <- x %*% beta2
     b3x <- x %*% beta3
-    d1 <- as.numeric(vt[, 1] < vt[, 2])
-    y1 <- pmin(vt[, 1], vt[, 2])
-    y2 <- vt[, 2]
+    d1 <- as.numeric(vt[, 1] < pmin(vt[, 2], vt[, 3]))
+    d2 <- as.numeric(vt[, 2] < vt[, 3])
+    y2 <- pmin(vt[, 2], vt[, 3])
+    y1 <- pmin(vt[, 1], y2)
+    
     
     derivlike <- attributes(eval(dllgk.intg))$gradient
     derivlike <- matrix(derivlike, ncol = 6)
@@ -92,51 +98,36 @@ score <- function(vt,  theta, x, v= 1e-5){
     score <- cbind( derivlike[, 4: ncol(derivlike), drop = F], diag(derivlike[, 1], l, l) %*% matrix(x, ncol = p), diag(derivlike[, 2], l, l) %*% matrix(x, ncol = p), diag(derivlike[, 3], l, l) %*% matrix(x, ncol = p))
 }
 
-singlescore <- function(vt,   theta, x,  v= 1e-5){
-    vt <- vt
+scoregvg <- function(vt, g,   theta, x, v= 1e-5){
+    vt <- matrix(vt, ncol = 3)
+    x <- matrix(x, ncol = p)
     kappa1 <- (theta[1])
     kappa2 <- (theta[2])
     kappa3 <- (theta[3])
     beta1 <- theta[4 : (3 + p)]
     beta2 <- theta[(4 + p) : (3 + 2 * p)]
     beta3 <- theta[(4 + 2* p) : (3 + 3 * p)]
-    b1x <- t(beta1)%*%x
-    b2x <- t(beta2)%*%x
-    b3x <- t(beta3)%*%x
-    d1 <- as.numeric(vt[1] < vt[2])
-    y1 <- pmin(vt[1], vt[2])
-    y2 <- vt[2]
-    
-    derivlike <- attributes(eval(dllgk.intg))$gradient
-    derivlike[is.nan(derivlike)] <- 0
-    #browser()
-    score <- c(derivlike[4: length(derivlike)], derivlike[1] * (x), derivlike[2] * x, derivlike[3] *  x )
-}
-likelihood1 <- function(vt,    x,  theta, v=1e-5){
-    vt <- matrix(vt, ncol = 2)
-    x <- matrix(x, nrow = p)
-    kappa1 <- (theta[1])
-    kappa2 <- (theta[2])
-    kappa3 <- (theta[3])
-    beta1 <- theta[4 : (3 + p)]
-    beta2 <- theta[(4 + p) : (3 + 2 * p)]
-    beta3 <- theta[(4 + 2* p) : (3 + 3 * p)]
-    b1x <- x %*% beta1
+    b1x <- x %*% beta1#t(beta1)%*%x
     b2x <- x %*% beta2
     b3x <- x %*% beta3
-    t1 <- vt[, 1]
-    t2 <- vt[, 2]
-    d1 <-  as.numeric(t1 < t2)
-    y2 <-  t2
-    y1 <- pmin(t1, t2)
-    likelihood <- eval(lkhd.intg)
-    #if(sum(is.nan(likelihood)) > 0)
-       # browser()
-    likelihood[is.nan(likelihood)] <- 0
-    return(likelihood)
+    d1 <- as.numeric(vt[, 1] < pmin(vt[, 2], vt[, 3]))
+    d2 <- as.numeric(vt[, 2] < vt[, 3])
+    y2 <- pmin(vt[, 2], vt[, 3])
+    y1 <- pmin(vt[, 1], y2)
+    
+    
+    derivlike <- attributes(eval(dcllgk.intg))$gradient
+    derivlike <- matrix(derivlike, ncol = 6)
+    derivlike[is.nan(derivlike)] <- 0
+    #browser()
+    l <- nrow(x)
+    score <- cbind( derivlike[, 4: ncol(derivlike), drop = F], diag(derivlike[, 1], l, l) %*% matrix(x, ncol = p), diag(derivlike[, 2], l, l) %*% matrix(x, ncol = p), diag(derivlike[, 3], l, l) %*% matrix(x, ncol = p))
 }
+
+
+
 likelihood2 <- function(vt,    x,  theta, v=1e-5){
-    vt <- matrix(vt, ncol = 2)
+    vt <- matrix(vt, ncol = 3)
     x <- matrix(x, ncol = p)
     kappa1 <- (theta[1])
     kappa2 <- (theta[2])
@@ -149,9 +140,10 @@ likelihood2 <- function(vt,    x,  theta, v=1e-5){
     b3x <- x %*% beta3
     t1 <- vt[, 1]
     t2 <- vt[, 2]
-    d1 <-  as.numeric(t1 < t2)
-    y2 <-  t2
-    y1 <- pmin(t1, t2)
+    d1 <- as.numeric(vt[, 1] < pmin(vt[, 2], vt[, 3]))
+    d2 <- as.numeric(vt[, 2] < vt[, 3])
+    y2 <- pmin(vt[, 2], vt[, 3])
+    y1 <- pmin(vt[, 1], y2)
     likelihood <- eval(lkhd.intg)
     
     likelihood[is.nan(likelihood)] <- 0
@@ -160,7 +152,7 @@ likelihood2 <- function(vt,    x,  theta, v=1e-5){
 
 likelihood <- function(vt,   x, g,  theta, v=1e-5){
    
-    vt <- matrix(vt, ncol = 2)
+    vt <- matrix(vt, ncol = 3)
     x <- matrix(x, ncol = p)
     kappa1 <- (theta[1])
     kappa2 <- (theta[2])
@@ -173,9 +165,10 @@ likelihood <- function(vt,   x, g,  theta, v=1e-5){
     b3x <- x %*% beta3
     t1 <- (vt[, 1])
     t2 <- (vt[, 2])
-    d1 <-  as.numeric(t1 < t2)
-    y2 <-  t2
-    y1 <- pmin(t1, t2)
+    d1 <- as.numeric(vt[, 1] < pmin(vt[, 2], vt[, 3]))
+    d2 <- as.numeric(vt[, 2] < vt[, 3])
+    y2 <- pmin(vt[, 2], vt[, 3])
+    y1 <- pmin(vt[, 1], y2)
     likelihood <- eval(clkhd.intg)
 
 
@@ -185,7 +178,7 @@ likelihood <- function(vt,   x, g,  theta, v=1e-5){
 
 lintg  <- function(lg, ug, vt,   x,   theta, v=1e-5){
    
-    vt <- matrix(vt, ncol = 2)
+    vt <- matrix(vt, ncol = 3)
     
     kappa1 <- (theta[1])
     kappa2 <- (theta[2])
@@ -198,10 +191,11 @@ lintg  <- function(lg, ug, vt,   x,   theta, v=1e-5){
     b3x <- matrix(x, ncol = p) %*% beta3
     t1 <- (vt[, 1])
     t2 <- (vt[, 2])
-    d1 <-  as.numeric(t1 < t2)
-    y2 <-  t2
-    y1 <- pmin(t1, t2)
-    a = 1/nu + d1 + 1
+    d1 <- as.numeric(vt[, 1] < pmin(vt[, 2], vt[, 3]))
+    d2 <- as.numeric(vt[, 2] < vt[, 3])
+    y2 <- pmin(vt[, 2], vt[, 3])
+    y1 <- pmin(vt[, 1], y2)
+    a = 1/nu + d1 + d2
     b = 1/nu +(exp((log(y1)-b1x)/kappa1 ) +  exp((log(y1)-b2x)/kappa2 ) + exp((log(y2)-b3x)/kappa3 ) - exp((log(y1)-b3x)/kappa3 ))
     res <-  try((pgamma(ug, a, b) - pgamma(lg, a, b)))#eval(lkhd.intg) *
     ## if(is.nan(res)){
@@ -210,8 +204,10 @@ lintg  <- function(lg, ug, vt,   x,   theta, v=1e-5){
     return(res)
     
 }
-singlelikelihood <- function(vt,  x, g,  theta, v=1e-5){
-    vt <- vt
+
+lkgvg <- function(g,  vt,   x,   theta, v=1e-5){
+   
+    vt <- matrix(vt, ncol = 3)
     
     kappa1 <- (theta[1])
     kappa2 <- (theta[2])
@@ -219,28 +215,29 @@ singlelikelihood <- function(vt,  x, g,  theta, v=1e-5){
     beta1 <- theta[4 : (3 + p)]
     beta2 <- theta[(4 + p) : (3 + 2 * p)]
     beta3 <- theta[(4 + 2* p) : (3 + 3 * p)]
+    b1x <- matrix(x, ncol = p) %*% beta1
+    b2x <- matrix(x, ncol = p) %*% beta2
+    b3x <- matrix(x, ncol = p) %*% beta3
+    t1 <- (vt[, 1])
+    t2 <- (vt[, 2])
+    d1 <- as.numeric(vt[, 1] < pmin(vt[, 2], vt[, 3]))
+    d2 <- as.numeric(vt[, 2] < vt[, 3])
+    y2 <- pmin(vt[, 2], vt[, 3])
+    y1 <- pmin(vt[, 1], y2)
+    res <- eval(clkhd.intg)
+    return(res)
     
-    t1 <- vt[1]
-    t2 <- vt[2]
-    d1 <-  as.numeric(t1 < t2)
-    y2 <-  t2
-    y1 <- pmin(t1, t2)
-    
-    likelihood <- hzd1(kappa1,   beta1,  y1, x, g)^(d1) * hzd2(kappa2,  beta2,  y1, x, g)^(1-d1) * hzd3(kappa3,  beta3,  y2, x, g)^d1 * exp(ngcumhzd1(kappa1,   beta1,  y1, x, g) + ngcumhzd2(kappa2,  beta2,  y1, x, g) + ngcumhzd3(kappa3,  beta3,  y2, x, g) - ngcumhzd3(kappa3,  beta3,  y1, x, g)   ) 
-    return(likelihood)
 }
+
 
 Amatx <- function(ij, vg, vq, theta,  v = 0){
     #print("A")
     i <- ij[1]
     j <- ij[2]
-    dm <- function(k, vg, vt, x, theta, v){
-        likelihood(vt, -log(1 - vt),  x, vg[k], theta, v)
-    }
-    #XY <<- do.call(rbind, lapply(1 :ng, simuRsk2, ng,  p,  theta,  300, 400 ,x, vg[i]))
+    
     A <- function(mvt){
-        vt <- mvt[, 1:2]
-        x <- mvt[, 3:ncol(mvt)]
+        vt <- mvt[, 1:3]
+        x <- mvt[, 4:ncol(mvt)]
   
         lintg(vg[j], vg[j + 1], vt, x,  theta, v ) * likelihood(vt,  x, vg[i], theta, v)/dnom
     }
@@ -256,9 +253,46 @@ Amatx <- function(ij, vg, vq, theta,  v = 0){
             likelihood(vt,  x, vg[k], theta, v)* vq[k]
         }
         b <- function(mvt){
-            vt <- mvt[, 1:2]
-            x <- mvt[, 3:ncol(mvt)]
+            vt <- mvt[, 1:3]
+            x <- mvt[, 4:ncol(mvt)]
             score( vt,  theta, x, v)   *  matrix(rep(likelihood(vt,  x, vg[i], theta, v), q), ncol = q)/ matrix(rep(dnom, q), ncol = q)
+        }
+        
+        
+        bi <- my2d1(b, cbind(XY, covm1), weight, q)
+        
+        bi[is.nan(bi)] <- 0
+        mb[, i] <<- bi
+    }
+    
+    
+    return(NULL)
+}
+
+Amatx1 <- function(ij, vg, vq, theta,  v = 0){
+    #print("A")
+    i <- ij[1]
+    j <- ij[2]
+
+    
+fi <- lkgvg(vg[i], XY, covm1, theta)
+    
+    A <- function(mvt){
+        vt <- mvt[, 1:3]
+        x <- mvt[, 4:ncol(mvt)]
+        lkgvg(vg[j], vt, x, theta) * vq[j]/ dnom * fi/dnom1
+    }
+    
+    Aij <- my2d1(A, cbind(XY, covm1), weight, 1)
+    mA[i, j] <- Aij
+    mA <<- mA
+    if(i == j){
+        
+        
+        b <- function(mvt){
+            vt <- mvt[, 1:3]
+            x <- mvt[, 4:ncol(mvt)]
+            sumscore / matrix(rep(dnom, q), ncol = q) * matrix(rep(fi, q), ncol = q) /matrix(rep(dnom1, q), ncol = q)
         }
         
         
@@ -274,39 +308,33 @@ Amatx <- function(ij, vg, vq, theta,  v = 0){
 
 projscore <- function(vg, vq,  theta, vt, orgt,  x, a, v= 0){
     num <- function(k, vg,  vt, orgt, x, theta, v){
-       ( a[, k]) *  lintg(vg[k], vg[k + 1], vt, x, theta, v)  
+       ( scoregvg(vt, vg[k], theta, x, v)- a[, k]) *  matrix(rep(lkgvg(vg[k], vt, x, theta, v), q), ncol = q) * vq[k]#lintg(vg[k], vg[k + 1], vt, x, theta, v)  
    }
-    dm <- function(k, vg, vt, orgt,  x, theta, v){
-        likelihood(vt,  x, vg[k], theta, v)* vq[k]
-    }
-    score(vt,  theta, x) - apply(sapply(1 : m, num, vg,  vt, orgt,  x,  theta, v), 1, sum)#/likelihood1(vt,  x, theta, v)
+    
+    dnom <- sum(sapply(1:m, dm, vg, vt, x, theta)) + 1e-6
+    apply(sapply(1 : m, num, vg,  vt, orgt,  x,  theta, v), 1, sum)/matrix(rep(dnom, q), ncol = q)
 }
 
 creata <- function( theta, cmptresp,  p,   cmptv){
-    apply(ij, 1,  Amatx, vg, vq, theta, v = cmptv[i])
+    apply(ij, 1,  Amatx1, vg, vq, theta, v = cmptv[i])
    # lapply(1 :m, bmatx, vg, vq, theta, mx[i,], v= cmptv[i])
     invA <- try(ginv(mA))
-    #if(class(invA) == "try-error"){
-      #  browser()
-    #}
+    
      a <- t(invA %*% t(mb))
-    ## myapprox <- function(rnum){
-    ##     approx(vg[1:m], a[rnum, ], vg1, rule = 2)$y
-    ## }
-#   do.call(rbind, lapply(1:q, myapprox))
+    
+
     
 }
 
 completescore <- function(i, theta, cmptresp,orgresp,  cn, p, ma,  cmptcovm, cmptv){
-    ## apply(ij, 1,  Amatx, vg, vq, theta, cmptcovm[i, ], v = cmptv[i])
-    ## lapply(1 :m, bmatx, vg, vq, theta, cmptcovm[i,], v= cmptv[i])
-    ## invA <- try(ginv(mA))
-    ## if(class(invA) == "try-error"){
-    ##     browser()
-    ## }
-    ## a <- t(invA %*% t(mb))
+    
     a <- ma
-    pjscore <-  projscore(vg, vq, theta, cmptresp[i,c("y1", "y2")], orgresp[i, c("y1", "y2")],  cmptcovm[i, ], a,  v = cmptv[i])
+    if(cmptresp[i,c("d2")] == 1){
+        centime <- cmptresp[i, "y2"] + 3
+    }else{
+        centime <- cmptresp[i, "y2"]
+    }
+    pjscore <-  projscore(vg, vq, theta, c(cmptresp[i,c("y1", "y2")], centime), orgresp[i, c("y1", "y2")],  cmptcovm[i, ], a,  v = cmptv[i])
     #if(is.nan(sum(pjscore))){
       #  browser()
     #}
@@ -315,31 +343,7 @@ completescore <- function(i, theta, cmptresp,orgresp,  cn, p, ma,  cmptcovm, cmp
     
 }
 
-completescore1 <- function(theta, cmptresp,orgresp,  cn, p,  cmptcovm, cmptv){
-    ## apply(ij, 1,  Amatx, vg, vq, theta, cmptcovm[i, ], v = cmptv[i])
-    ## lapply(1 :m, bmatx, vg, vq, theta, cmptcovm[i,], v= cmptv[i])
-    ## invA <- try(ginv(mA))
-    ## if(class(invA) == "try-error"){
-    ##     browser()
-    ## }
-    ## a <- t(invA %*% t(mb))
-    geta <- function(i){
-       R <- rbind(resp(1, n), cmptresp[, 1] - cmptresp[i, 1], cmptresp[, 3] - cmptresp[i, 3], cmptcovm - matrix(rep(cmptcovm[i, ], n), ncol = n))
-       kerall <- dnorm((log(cmptresp[, 1]) - log(cmptresp[i, 1])) / ht1) * dnorm((log(cmptresp[, 3]) - log(cmptresp[i, 3])) / ht2) * apply(dnorm((cmptcovm - matrix(rep(cmptcovm[i, ], n), ncol = n))/hx), 1, prod)
-       K  <-   diag(kerall)
-       ginv(R %*% K %*% t(R)) %*% R %*% K %*% score [1, ]
-   }
-    score <- score(cmptresp[, c(1, 3)], theta, cmptcovm)
-    a<- do.call(rbind, lapply(1: n, geta))
-    apply(score - a, 2, mean)
-    #pjscore <-  projscore(vg, vq, theta, cmptresp[i,c("y1", "y2")], orgresp[i, c("y1", "y2")],  cmptcovm[i, ], a,  v = cmptv[i])
-    #if(is.nan(sum(pjscore))){
-      #  browser()
-    #}
-    pjscore
-    
-    
-}
+
 missingscore <- function(i, theta, missresp, cmptresp, mn,   p, misscovm, cmptcovm, cmptscore, cendis, missv ){
     missresp <- matrix(missresp, ncol = 4)
     colnames(missresp) <- c("y1", "d1", "y2", "d2")
@@ -375,72 +379,26 @@ missingscore <- function(i, theta, missresp, cmptresp, mn,   p, misscovm, cmptco
     #}
     return(missscore)
 }
-estm1 <- function(theta, resp, survData, covm, n, p, mv = rep(1e-5, n)){
-    print(theta)
-    theta <- c(abs(theta[1 : 3]) , theta[4:q])
-    colnames(resp) <- c("y1", "d1", "y2", "d2")
-    colnames(survData) <- c("y1", "d1", "y2", "d2")
-    cmptix <- resp[, "d2"] == 1
-    covm <- matrix(covm, n, p)
-    cn <- sum(cmptix)
-    missix <- resp[, "d2"] == 0
-    mn <- sum(missix)
-    cmptresp <- resp[cmptix, ]
-    cmptcovm <- covm[cmptix, , drop = F]
-    cmptv <- mv[cmptix]
-    missresp <- resp[missix, ]
-    misscovm <- covm[missix, , drop = F]
-    missv <- mv[missix]
-    ma <<-  creata(theta, cmptresp,  p,   cmptv)
-    cmptscore <- do.call(rbind, lapply(1 : cn,completescore, theta, cmptresp, survData,  cn, p, ma,  cmptcovm, cmptv))
-#    browser()
-    if(mn  > 0){
-#        browser()
-        temp <- (summary(survfit(Surv(survData[, "y2"], 1 - survData[, "d2"] )~1), times= survData[, "y2"], extend=TRUE)$surv)
-        cendis <- pmax(temp, min(temp[temp>0]))^(-1)
-        missscore <- do.call(rbind, lapply(1 : mn, missingscore, theta, missresp, cmptresp, mn,  p, misscovm, cmptcovm, cmptscore, cendis[cmptix],   missv))
-    #browser()
-        score <- apply(rbind(cmptscore, missscore), 2, sum)
-        }else{
-            score <- apply((cmptscore), 2, sum)
-        }
-    score <- sum((score/n)^2)
-    
-    
-}
+
 estm <- function(theta, resp, survData, covm, n, p, mv = rep(1e-5, n)){
+    
     #print(theta)
     theta <- c(abs(theta[1 : 3])+ 0.01 , theta[4:q])
+    #dnom <<- apply(sapply(1:m, dm, vg, XY, covm1, theta), 1, sum) + 1e-6
+    #numerator  <- lapply(1:m, num, vg, XY, covm1, theta)
+    #sumscore <<- Reduce("+", numerator)
     colnames(resp) <- c("y1", "d1", "y2", "d2")
     colnames(survData) <- c("y1", "d1", "y2", "d2")
-    cmptix <- resp[, "d2"] == 1
+    cmptix <- 1:n
     
     covm <- matrix(covm, n, p)
-    cn <- sum(cmptix)
-    missix <- resp[, "d2"] == 0
-    mn <- sum(missix)
+    
     cmptresp <- resp[cmptix, ]
     cmptcovm <- covm[cmptix, , drop = F]
     cmptv <- mv[cmptix]
-    missresp <- resp[missix, ]
-    misscovm <- covm[missix, , drop = F]
-    missv <- mv[missix]
     ma <<- creata(theta, cmptresp,  p,   cmptv)
-    cmptscore <- do.call(rbind, lapply(1 : cn,completescore, theta, cmptresp, survData,  cn, p, ma,  cmptcovm, cmptv))
-#    browser()
-    if(mn  > 0){
-#        browser()
-        temp <- (summary(survfit(Surv(survData[, "y2"], 1 - survData[, "d2"] )~1), times= survData[, "y2"], extend=TRUE))
-        surv1 <- temp$surv
-        surv1[temp$time > max(resp[resp[, 4] == 0, 3])] <- 0.00001
-        cendis <<- surv1^(-1)#pmax(temp$surv[], min(temp[temp>0]))^(-1)
-        missscore <- do.call(rbind, lapply(1 : mn, missingscore, theta, missresp, cmptresp, mn,  p, misscovm, cmptcovm, cmptscore, cendis[cmptix],   missv))
-    #browser()
-        score <- apply(rbind(cmptscore, missscore), 2, sum)
-        }else{
-            score <- apply((cmptscore), 2, sum)
-        }
-    score <- score/n
+    cmptscore <- do.call(rbind, lapply(1 : n,completescore, theta, cmptresp, survData,  cn, p, ma,  cmptcovm, cmptv))
+    score <- apply(cmptscore, 2, sum)/n
     
     
 }
@@ -488,45 +446,10 @@ simuRsk <- function(i, n, p,  theta,  cen1, cen2 ,covm = NULL){
     return(c(simdata, covm, g, p1g2))
 }
 
-simuRsk2 <- function(i, n, p, nu,  theta,  cen1, cen2 ,covm = NULL){
-    
-    if(is.null(covm)){
-        covm <-  matrix(c( rbinom(1, 1, 0.8)), p, 1 )
-    }
-    kappa1 <- (abs(theta[1]) )
-    kappa2 <- (abs(theta[2]) )
-    kappa3 <- (abs(theta[3]) )
-    beta1 <- theta[4 : (3 + p)]
-    beta2 <- theta[(4 + p) : (3 + 2 * p)]
-    beta3 <- theta[(4 + 2* p) : (3 + 3 * p)]
-    x <- matrix(covm[i, ], ncol = p)
-#    g <- rgamma(1, 1/nu1, scale = nu1)  
-    lb1 <-  exp((- t(beta1)%*%x)/kappa1) #* 1/kappa1
-    lb2 <-  exp((- t(beta2)%*%x)/kappa2) #* 1/kappa2
-    lb3 <-  exp((- t(beta3)%*%x)/kappa3) #* 1/kappa3
-    a1 <- 1/kappa1
-    a2 <- 1/kappa2
-    a3 <- 1/kappa3
-    p1g2 <- lb2 /(lb1 + lb2)
-    r <- rbinom(1,  1, p1g2)
-    c <- runif(1, cen1, cen2)
-    if(r == 1){
-        u <- runif(1)
-        t2 <-   ((u^(-nu ) - 1) / (nu * (lb1 + lb2)))^(1/a2)
-        t1 = t2 + 3
-        
-    }else{
-        u <- runif(1)
-        t1 <-   ((u^(-nu ) - 1) / (nu * (lb1 + lb2)))^(1/a1)
-        u <- runif(1)
-        t2 <-  ((u^(- nu / (1 + nu)) * ( 1 + nu * lb1 * t1 ^ a1 + nu * lb2 * t1^a2) - ( 1 + nu * lb1 * t1 ^ a1 + nu * lb2 * t1^a2 - nu * lb3 * t1 ^ a3))/ (nu * lb3))^ (1/a3)
-    }
-    
-    return(c(t1, t2, x))
-}
+
 
 simuRsk3 <- function( n, p, nu,  theta,  cen1, cen2 ,covm = NULL){
-    t12 <- matrix(NA, n, 2)
+    t12 <- matrix(NA, n, 3)
    
     #covm <-  matrix(c( rbinom(n, 1, 0.8)), p, 1 )
     
@@ -550,67 +473,18 @@ simuRsk3 <- function( n, p, nu,  theta,  cen1, cen2 ,covm = NULL){
     u <- runif(n1)
     t12[ix, 2] <-   ((u^(-nu ) - 1) / (nu * (lb1[ix] + lb2[ix])))^(1/a2)
     t12[ix, 1] = t12[ix, 2] + 3
-        
+    c <- runif(n, cen1, cen2)    
     
     u <- runif(n - n1)
     t12[!ix, 1] <-   ((u^(-nu ) - 1) / (nu * (lb1[!ix] + lb2[!ix])))^(1/a1)
     u <- runif(n - n1)
     t12[!ix, 2] <-  ((u^(- nu / (1 + nu)) * ( 1 + nu * lb1[!ix] * t12[!ix, 1] ^ a1 + nu * lb2[!ix] * t12[!ix, 1]^a2) - ( 1 + nu * lb1[!ix] * t12[!ix, 1] ^ a1 + nu * lb2[!ix] * t12[!ix, 1]^a2 - nu * lb3[!ix] * t12[!ix, 1] ^ a3))/ (nu * lb3[!ix]))^ (1/a3)
-    #t12[, 1] = pmin(t12[, 1], t12[, 2]) 
+    t12[, 3] <- c
     
     return(t12)
 }
 
-simuRsk1 <- function(i, n, p, nu,  theta,  cen1, cen2 ,covm = NULL){
-    if(is.null(covm)){
-        covm <-  matrix(c( rbinom(1, 1, 0.8)), p, 1 )
-    }
-    kappa1 <- (abs(theta[1]) )
-    kappa2 <- (abs(theta[2]) )
-    kappa3 <- (abs(theta[3]) )
-    beta1 <- theta[4 : (3 + p)]
-    beta2 <- theta[(4 + p) : (3 + 2 * p)]
-    beta3 <- theta[(4 + 2* p) : (3 + 3 * p)]
-    x <- covm
-#    g <- rgamma(1, 1/nu1, scale = nu1)  
-    lb1 <-  exp((- t(beta1)%*%x)/kappa1) #* 1/kappa1
-    lb2 <-  exp((- t(beta2)%*%x)/kappa2) #* 1/kappa2
-    lb3 <-  exp((- t(beta3)%*%x)/kappa3) #* 1/kappa3
-    a1 <- 1/kappa1
-    a2 <- 1/kappa2
-    a3 <- 1/kappa3
-    p1g2 <- lb2 /(lb1 + lb2)
-    r <- rbinom(1,  1, p1g2)
-    c <- runif(1, cen1, cen2)
-    if(r == 1){
-        u <- runif(1)
-        t2 <-   ((u^(-nu ) - 1) / (nu * (lb1 + lb2)))^(1/a2)
-        t1 = t2 + 3
-        
-    }else{
-        u <- runif(1)
-        t1 <-   ((u^(-nu ) - 1) / (nu * (lb1 + lb2)))^(1/a1)
-        u <- runif(1)
-        t2 <-  ((u^(- nu / (1 + nu)) * ( 1 + nu * lb1 * t1 ^ a1 + nu * lb2 * t1^a2) - ( 1 + nu * lb1 * t1 ^ a1 + nu * lb2 * t1^a2 - nu * lb3 * t1 ^ a3))/ (nu * lb3))^ (1/a3)
-    }
-    y2 = min(t2, c)
-    y1 = min(t1, y2)
-    d1 <- as.numeric(t1 < y2)
-    d2 <- as.numeric(y2 < c)
-    simdata <- cbind(y1, d1, y2, d2)
-    colnames(simdata) <- c("y1", "d1", "y2", "d2")
-    return(c(simdata, covm,  p1g2))
-}
 
-kert <- function(t1, vt2, h){
-    dnorm((log(t1) - log(vt2))/h)
-}
-kerx <- function(x1, vx2, h){
-    vx2 <- matrix(vx2, ncol = p-1 )
-    x1 <- matrix(rep(x1, nrow(vx2)), ncol = p-1, byrow = T)
-    h <- matrix(rep(h, nrow(vx2)), ncol = p-1, byrow = T)
-    apply(dnorm((vx2 - x1)/h), 1, prod)
-}
 
 
 
@@ -679,30 +553,49 @@ n <- 750
 p <- 1
 ij <- as.matrix(expand.grid(1 : m, 1 : m))
 nu1 <- 0.5
-nu <- 0.87
+nu <- 0.5
+v <- var(do.call(rbind, lsurvData)[, 6])
+u <- mean(do.call(rbind, lsurvData)[, 6])
+shape <- u^2 /v
+scale <- v/u
 #ij <- ij[ij[, 1] >= ij[, 2], ]
-ng <- 2000
+ng <- 1500
 up = 20
+cen1 <- 0.5
+cen2 <- 1.5
 mx <- matrix(c(0, 1), ncol = p)
 #survData <- do.call(rbind, lapply(1:n, simuRsk, n, p,  theta, 1, 3))
 #survData0 <- do.call(rbind, lapply(1:n, simuRsk1, n, p,nu,  theta0, 300, 400))
-#lsurvData <- lapply(1 : 100, simall, 1,1.5)
+#lsurvData <- lapply(1 : 100, simall, cen1, cen2)
 covm1 <<- matrix(1, ng, p)#matrix(cbind(rep(1, ng), rnorm(ng, 0, 1)), ncol = p)
     
     
 weight <<- rep(1/ng, ng)    
 vg1 <<- qgamma(seq(0.00000001, 0.99999999999, length.out = m1 + 1), 1/nu, 1/nu)
+dm <- function(k, vg, vt, x, theta, v= v){
+            lkgvg(vg[k],  vt, x, theta)* vq[k]
+        }
+num <- function(k, vg,  vt, x, theta, v= v){
+            scoregvg(vt, vg[k],   theta, x, v= 1e-5) *matrix(rep(lkgvg(vg[k], vt, x, theta), q), ncol = q) * vq[k]
+        }
+       
 sRoot <- function(itr){
     survData <- lsurvData[[itr]]
     resp <- survData[, 1:4]
     colnames(resp) <- c("y1", "d1", "y2", "d2")
     covm <- matrix(survData[, 5 : (4+ p)], n, p)
+    
     ht <<- sum(resp[, "d1"] == 1)^(-2/15) * bw.nrd0(log(resp[resp[, "d1"] == 1, "y1"]))
     hx <<- n ^ (-2/15) * apply(covm[, -1, drop = F], 2, bw.nrd0)
-    XY <<- simuRsk3(ng, p, nu, theta, 300, 400, covm1)
-    dnom <<- likelihood2(XY, covm1, theta)
-    vg <<- seq(quantile(lsurvData[[itr]][, 5 + p], 0.01), quantile(lsurvData[[itr]][, 5 + p], 0.95), length.out = m+1)# quantile(lsurvData[[itr]][, 5 + p], seq(0.001, 0.999, length.out= m + 1))##qlnorm(seq(0.001, 0.999, length.out = m + 1), 0, 1.5)#
-    res <- try(dfsane(theta, estm, method = 3, control = list(tol = 1.e-5, noimp = 20, maxit = 200), quiet = FALSE, resp,survData[,  1:4],  covm, n, p, rep(min(resp[, 1] /2), n)))
+    XY <<- simuRsk3(ng, p, nu, theta, cen1, cen2, covm1)
+    
+    dnom1 <<- likelihood2(XY, covm1, theta)
+    vg <<- seq(quantile(lsurvData[[itr]][, 5 + p], 0), quantile(lsurvData[[itr]][, 5 + p], 1), length.out = m+1)# quantile(lsurvData[[itr]][, 5 + p], seq(0.001, 0.999, length.out= m + 1))##qlnorm(seq(0.001, 0.999, length.out = m + 1), 0, 1.5)#
+    vq <<- dgamma(vg, shape = shape, scale = scale)
+    dnom <<- apply(sapply(1:m, dm, vg, XY, covm1, theta), 1, sum) + 1e-6
+    numerator  <- lapply(1:m, num, vg, XY, covm1, theta)
+    sumscore <<- Reduce("+", numerator)
+    res <- try(dfsane(theta, estm, method = 3, control = list(tol = 1.e-5, noimp = 20, maxit = 300), quiet = FALSE, resp,survData[,  1:4],  covm, n, p, rep(min(resp[, 1] /2), n)))
     print(res$convergence)
     return(c(res$par, res$residual))
 }
