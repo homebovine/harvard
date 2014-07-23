@@ -554,15 +554,15 @@ p <- 1
 ij <- as.matrix(expand.grid(1 : m, 1 : m))
 nu1 <- 0.5
 nu <- 0.5
-v <- var(do.call(rbind, lsurvData)[, 6])
-u <- mean(do.call(rbind, lsurvData)[, 6])
-shape <- u^2 /v
-scale <- v/u
+#v <- var(do.call(rbind, lsurvData)[, 6])
+#u <- mean(do.call(rbind, lsurvData)[, 6])
+#shape <- u^2 /v
+#scale <- v/u
 #ij <- ij[ij[, 1] >= ij[, 2], ]
 ng <- 1500
 up = 20
-cen1 <- 0.5
-cen2 <- 1.5
+cen1 <- 300
+cen2 <- 400
 mx <- matrix(c(0, 1), ncol = p)
 #survData <- do.call(rbind, lapply(1:n, simuRsk, n, p,  theta, 1, 3))
 #survData0 <- do.call(rbind, lapply(1:n, simuRsk1, n, p,nu,  theta0, 300, 400))
@@ -592,6 +592,7 @@ sRoot <- function(itr){
     dnom1 <<- likelihood2(XY, covm1, theta)
     vg <<- seq(quantile(lsurvData[[itr]][, 5 + p], 0), quantile(lsurvData[[itr]][, 5 + p], 1), length.out = m+1)# quantile(lsurvData[[itr]][, 5 + p], seq(0.001, 0.999, length.out= m + 1))##qlnorm(seq(0.001, 0.999, length.out = m + 1), 0, 1.5)#
     vq <<- dgamma(vg, shape = shape, scale = scale)
+    vq <<- vq /sum(vq)
     dnom <<- apply(sapply(1:m, dm, vg, XY, covm1, theta), 1, sum) + 1e-6
     numerator  <- lapply(1:m, num, vg, XY, covm1, theta)
     sumscore <<- Reduce("+", numerator)
@@ -660,7 +661,7 @@ evalestm <- function(itr){
     vq <- dlnorm(vg, 0, 1) /sum(dlnorm(vg, 0, 1) )
     dfsane(theta1, estm2, method = 2, control = list(tol = 1.e-7, noimp = 100 ), quiet = FALSE, resp, survData, covm,  n, p)$par
 }
-#res <- mclapply(1 : 1000, evalestm , mc.cores = 15)
+#res <- mclapply(1 : 100, evalestm , mc.cores = 15)
                                         #res1008 <- do.call(rbind, res)
 #theta1 <- c(theta, 0.5)
 #estm2(theta1, resp, survData[, 1:4], covm, n, p)
