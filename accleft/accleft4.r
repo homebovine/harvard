@@ -467,7 +467,7 @@ simuRsk <- function(i, n, p,  theta,  cen1, cen2 ,covm = NULL){
     a3 <- 1/kappa3
     p1g2 <- lb2 /(lb1 + lb2)
     r <- rbinom(1,  1, p1g2)
-    c <- runif(1, cen1, cen2)
+    c <- rexp(1, 1/cr)#runif(1, cen1, cen2)
     if(r == 1){
         u <- runif(1)
         t2 <-  (- log(1- u) / ( lb1 + lb2))^(1/a2)
@@ -509,7 +509,7 @@ simuRsk2 <- function(i, n, p, nu,  theta,  cen1, cen2 ,covm = NULL){
     a3 <- 1/kappa3
     p1g2 <- lb2 /(lb1 + lb2)
     r <- rbinom(1,  1, p1g2)
-    c <- runif(1, cen1, cen2)
+    c <- rexp(1, 1/cr)# runif(1, cen1, cen2)
     if(r == 1){
         u <- runif(1)
         t2 <-   ((u^(-nu ) - 1) / (nu * (lb1 + lb2)))^(1/a2)
@@ -581,7 +581,7 @@ simuRsk1 <- function(i, n, p, nu,  theta,  cen1, cen2 ,covm = NULL){
     a3 <- 1/kappa3
     p1g2 <- lb2 /(lb1 + lb2)
     r <- rbinom(1,  1, p1g2)
-    c <- runif(1, cen1, cen2)
+    c <- rexp(1, 1/cr)#runif(1, cen1, cen2)
     if(r == 1){
         u <- runif(1)
         t2 <-   ((u^(-nu ) - 1) / (nu * (lb1 + lb2)))^(1/a2)
@@ -675,7 +675,7 @@ q <- length(theta)
 mA <- matrix(NA, m, m)
 mb <- matrix(NA, q, m)
 n <- 750
-
+cr <- 10
 p <- 1
 ij <- as.matrix(expand.grid(1 : m, 1 : m))
 nu1 <- 0.5

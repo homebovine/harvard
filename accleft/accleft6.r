@@ -5,6 +5,7 @@ library(BB)
 library(survival)
 #library(pracma)
 library(parallel)
+library(cubature)
 hzd1 <- function(kappa1,  beta1,  t, x, g){
     g * exp((trans1(t)-t(beta1) %*% x)/kappa1) * 1/t * 1/kappa1
     
@@ -396,7 +397,7 @@ estm <- function(theta, resp, survData, covm, n, p, mv = rep(1e-5, n)){
     cmptresp <- resp[cmptix, ]
     cmptcovm <- covm[cmptix, , drop = F]
     cmptv <- mv[cmptix]
-    ma <<- creata(theta, cmptresp,  p,   cmptv)
+    ma <<- creata(theta0[1:q], cmptresp,  p,   cmptv)
     cmptscore <- do.call(rbind, lapply(1 : n,completescore, theta, cmptresp, survData,  cn, p, ma,  cmptcovm, cmptv))
     score <- apply(cmptscore, 2, sum)/n
     
@@ -554,10 +555,10 @@ p <- 1
 ij <- as.matrix(expand.grid(1 : m, 1 : m))
 nu1 <- 0.5
 nu <- 0.5
-#v <- var(do.call(rbind, lsurvData)[, 6])
-#u <- mean(do.call(rbind, lsurvData)[, 6])
-#shape <- u^2 /v
-#scale <- v/u
+v <- theta0[7]#var(do.call(rbind, lsurvData)[, 6])
+u <- 1#mean(do.call(rbind, lsurvData)[, 6])
+shape <- u^2 /v
+scale <- v/u
 #ij <- ij[ij[, 1] >= ij[, 2], ]
 ng <- 1500
 up = 20
@@ -593,8 +594,8 @@ sRoot <- function(itr){
     vg <<- seq(quantile(lsurvData[[itr]][, 5 + p], 0), quantile(lsurvData[[itr]][, 5 + p], 1), length.out = m+1)# quantile(lsurvData[[itr]][, 5 + p], seq(0.001, 0.999, length.out= m + 1))##qlnorm(seq(0.001, 0.999, length.out = m + 1), 0, 1.5)#
     vq <<- dgamma(vg, shape = shape, scale = scale)
     vq <<- vq /sum(vq)
-    dnom <<- apply(sapply(1:m, dm, vg, XY, covm1, theta), 1, sum) + 1e-6
-    numerator  <- lapply(1:m, num, vg, XY, covm1, theta)
+    dnom <<- apply(sapply(1:m, dm, vg, XY, covm1, theta0[1:q]), 1, sum) + 1e-6
+    numerator  <- lapply(1:m, num, vg, XY, covm1, theta0[1:q])
     sumscore <<- Reduce("+", numerator)
     res <- try(dfsane(theta, estm, method = 3, control = list(tol = 1.e-5, noimp = 20, maxit = 300), quiet = FALSE, resp,survData[,  1:4],  covm, n, p, rep(min(resp[, 1] /2), n)))
     print(res$convergence)
