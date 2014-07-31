@@ -298,13 +298,7 @@ creata <- function( theta, cmptresp,  p,   cmptv){
 }
 
 completescore <- function(i, theta, cmptresp,orgresp,  cn, p, ma,  cmptcovm, cmptv){
-    ## apply(ij, 1,  Amatx, vg, vq, theta, cmptcovm[i, ], v = cmptv[i])
-    ## lapply(1 :m, bmatx, vg, vq, theta, cmptcovm[i,], v= cmptv[i])
-    ## invA <- try(ginv(mA))
-    ## if(class(invA) == "try-error"){
-    ##     browser()
-    ## }
-    ## a <- t(invA %*% t(mb))
+    
     a <- ma
     pjscore <-  projscore(vg, vq, theta, cmptresp[i,c("y1", "y2")], orgresp[i, c("y1", "y2")],  cmptcovm[i, ], a,  v = cmptv[i])
     #if(is.nan(sum(pjscore))){
@@ -430,9 +424,9 @@ estm <- function(theta, resp, survData, covm, n, p, mv = rep(1e-5, n)){
 #    browser()
     if(mn  > 0){
 #        browser()
-        temp <- (summary(survfit(Surv(survData[, "y2"], 1 - survData[, "d2"] )~1), times= survData[, "y2"], extend=TRUE))
-        surv1 <- temp$surv
-        surv1[temp$time > max(resp[resp[, 4] == 0, 3])] <- 0.00001
+        #temp <- (summary(survfit(Surv(survData[, "y2"], 1 - survData[, "d2"] )~1), times= survData[, "y2"], extend=TRUE))
+        surv1 <- 1- pexp(survData[, "y2"], 1/cr)#temp$surv
+    #    surv1[survData[, "y2"] > max(resp[resp[, 4] == 0, 3])] <- 0.00001
         cendis <<- surv1^(-1)#pmax(temp$surv[], min(temp[temp>0]))^(-1)
         missscore <- do.call(rbind, lapply(1 : mn, missingscore, theta, missresp, cmptresp, mn,  p, misscovm, cmptcovm, cmptscore, cendis[cmptix],   missv))
     #browser()
@@ -675,11 +669,11 @@ q <- length(theta)
 mA <- matrix(NA, m, m)
 mb <- matrix(NA, q, m)
 n <- 750
-cr <- 10
+cr <- 5
 p <- 1
 ij <- as.matrix(expand.grid(1 : m, 1 : m))
 nu1 <- 0.5
-nu <- 0.87
+nu <- 0.5
 #ij <- ij[ij[, 1] >= ij[, 2], ]
 ng <- 2000
 up = 20
@@ -701,7 +695,7 @@ sRoot <- function(itr){
     hx <<- n ^ (-2/15) * apply(covm[, -1, drop = F], 2, bw.nrd0)
     XY <<- simuRsk3(ng, p, nu, theta, 300, 400, covm1)
     dnom <<- likelihood2(XY, covm1, theta)
-    vg <<- seq(quantile(lsurvData[[itr]][, 5 + p], 0.01), quantile(lsurvData[[itr]][, 5 + p], 0.95), length.out = m+1)# quantile(lsurvData[[itr]][, 5 + p], seq(0.001, 0.999, length.out= m + 1))##qlnorm(seq(0.001, 0.999, length.out = m + 1), 0, 1.5)#
+    vg <<- seq(quantile(lsurvData[[itr]][, 5 + p], 0), quantile(lsurvData[[itr]][, 5 + p], 1), length.out = m+1)# quantile(lsurvData[[itr]][, 5 + p], seq(0.001, 0.999, length.out= m + 1))##qlnorm(seq(0.001, 0.999, length.out = m + 1), 0, 1.5)#
     res <- try(dfsane(theta, estm, method = 3, control = list(tol = 1.e-5, noimp = 20, maxit = 200), quiet = FALSE, resp,survData[,  1:4],  covm, n, p, rep(min(resp[, 1] /2), n)))
     print(res$convergence)
     return(c(res$par, res$residual))
