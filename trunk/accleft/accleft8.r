@@ -479,10 +479,10 @@ estm <- function(theta, resp, survData, covm, n, p, mv = rep(1e-5, n)){
 #    browser()
     if(mn  > 0){
 #        browser()
-        temp <- (summary(survfit(Surv(survData[, "y2"], 1 - survData[, "d2"] )~1), times= survData[, "y2"], extend=TRUE))
-        surv1 <- temp$surv
-        surv1[temp$time > max(resp[resp[, 4] == 0, 3])] <- 0.00001
-        cendis <<- surv1^(-1)#pmax(temp$surv[], min(temp[temp>0]))^(-1)
+     #   temp <- (summary(survfit(Surv(survData[, "y2"], 1 - survData[, "d2"] )~1), times= survData[, "y2"], extend=TRUE))
+      #  surv1 <- temp$surv
+    #    surv1[temp$time > max(resp[resp[, 4] == 0, 3])] <- 0.00001
+        cendis <<- 1 - pexp(survData[, "y2"], 1/cr)#surv1^(-1)#pmax(temp$surv[], min(temp[temp>0]))^(-1)
         missscore <- do.call(rbind, lapply(1 : mn, missingscore, theta, missresp, cmptresp, mn,  p, misscovm, cmptcovm, cmptscore, cendis[cmptix],   missv))
     #browser()
         score <- apply(rbind(cmptscore, missscore), 2, sum)
@@ -516,7 +516,7 @@ simuRsk <- function(i, n, p,  theta,  cen1, cen2 ,covm = NULL){
     a3 <- 1/kappa3
     p1g2 <- lb2 /(lb1 + lb2)
     r <- rbinom(1,  1, p1g2)
-    c <- runif(1, cen1, cen2)
+    c <- rexp(1, 1/cr)#runif(1, cen1, cen2)
     if(r == 1){
         u <- runif(1)
         t2 <-  (- log(1- u) / ( lb1 + lb2))^(1/a2)
@@ -558,7 +558,7 @@ simuRsk2 <- function(i, n, p, nu,  theta,  cen1, cen2 ,covm = NULL){
     a3 <- 1/kappa3
     p1g2 <- lb2 /(lb1 + lb2)
     r <- rbinom(1,  1, p1g2)
-    c <- runif(1, cen1, cen2)
+    c <- rexp(1, 1/cr)
     if(r == 1){
         u <- runif(1)
         t2 <-   ((u^(-nu ) - 1) / (nu * (lb1 + lb2)))^(1/a2)
@@ -630,7 +630,8 @@ simuRsk1 <- function(i, n, p, nu,  theta,  cen1, cen2 ,covm = NULL){
     a3 <- 1/kappa3
     p1g2 <- lb2 /(lb1 + lb2)
     r <- rbinom(1,  1, p1g2)
-    c <- runif(1, cen1, cen2)
+    c <- rexp(1, 1/cr)
+    #c <- runif(1, cen1, cen2)
     if(r == 1){
         u <- runif(1)
         t2 <-   ((u^(-nu ) - 1) / (nu * (lb1 + lb2)))^(1/a2)
@@ -716,7 +717,7 @@ q <- length(theta)
 mA <- matrix(NA, m, m)
 mb <- matrix(NA, q, m)
 n <- 750
-
+cr <- 5
 p <- 1
 ij <- as.matrix(expand.grid(1 : m, 1 : m))
 nu1 <- 0.5
@@ -743,14 +744,14 @@ sRoot <- function(itr){
     resp <- survData[, 1:4]
     colnames(resp) <- c("y1", "d1", "y2", "d2")
     covm <- matrix(survData[, 5 : (4+ p)], n, p)
-    cx <<- gaussLegendre(ng, min(temp[, c(1)]), max(temp[, c(1)])  )
-    x <<- cx$x
-    wx <<- cx$w
-    cy <<- gaussLegendre(ng, min(temp[, c(3)]), max(temp[, c(3)]) )
-    y <<- cy$x
-    wy <<- cy$w
-    mgrid <<- meshgrid(x, y)
-    XY <<- cbind(as.vector(mgrid$X), as.vector(mgrid$Y))
+#    cx <<- gaussLegendre(ng, min(temp[, c(1)]), max(temp[, c(1)])  )
+ #   x <<- cx$x
+  #  wx <<- cx$w
+   # cy <<- gaussLegendre(ng, min(temp[, c(3)]), max(temp[, c(3)]) )
+   # y <<- cy$x
+   # wy <<- cy$w
+   # mgrid <<- meshgrid(x, y)
+    #XY <<- cbind(as.vector(mgrid$X), as.vector(mgrid$Y))
     ht <<- sum(resp[, "d1"] == 1)^(-2/15) * bw.nrd0(log(resp[resp[, "d1"] == 1, "y1"]))
     hx <<- n ^ (-2/15) * apply(covm[, -1, drop = F], 2, bw.nrd0)
     XY <<- simuRsk3(ng, p, nu, theta, 300, 400, covm1)

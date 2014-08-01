@@ -673,7 +673,7 @@ cr <- 5
 p <- 1
 ij <- as.matrix(expand.grid(1 : m, 1 : m))
 nu1 <- 0.5
-nu <- 0.5
+nu <- 0.87
 #ij <- ij[ij[, 1] >= ij[, 2], ]
 ng <- 2000
 up = 20
