@@ -4,6 +4,7 @@ library(BB)
 library(survival)
 library(pracma)
 library(parallel)
+library(numDeriv)
 hzd1 <- function(kappa1,  beta1,  t, x, g){
     g * exp((trans1(t)-t(beta1) %*% x)/kappa1) * 1/t * 1/kappa1
     
@@ -494,6 +495,50 @@ estm <- function(theta, resp, survData, covm, n, p, mv = rep(1e-5, n)){
     
 }
 
+varestm <- function(theta, resp, survData, covm, n, p, mv = rep(1e-5, n)){
+    #print(theta)
+    theta <- c(abs(theta[1 : 3])+ 0.01 , theta[4:q])
+    colnames(resp) <- c("y1", "d1", "y2", "d2")
+    colnames(survData) <- c("y1", "d1", "y2", "d2")
+    
+    dnom <<- apply(sapply(1:m, dm, vg, XY, covm1, theta), 1, sum) + 1e-6
+    numerator  <- lapply(1:m, num, vg, XY, covm1, theta)
+    sumscore <<- Reduce("+", numerator)
+    #simuRsk3(ng, p, nu, theta, cen1, cen2, covm1)
+    cmptix <- resp[, "d2"] == 1
+    
+    covm <- matrix(covm, n, p)
+    cn <- sum(cmptix)
+    missix <- resp[, "d2"] == 0
+    mn <- sum(missix)
+    cmptresp <- resp[cmptix, ]
+    cmptcovm <- covm[cmptix, , drop = F]
+    cmptv <- mv[cmptix]
+    missresp <- resp[missix, ]
+    misscovm <- covm[missix, , drop = F]
+    missv <- mv[missix]
+    ma <<- creata(theta, cmptresp,  p,   cmptv)
+    cmptscore <- do.call(rbind, lapply(1 : cn,completescore, theta, cmptresp, survData,  cn, p, ma,  cmptcovm, cmptv))
+#    browser()
+    if(mn  > 0){
+#        browser()
+     #   temp <- (summary(survfit(Surv(survData[, "y2"], 1 - survData[, "d2"] )~1), times= survData[, "y2"], extend=TRUE))
+      #  surv1 <- temp$surv
+    #    surv1[temp$time > max(resp[resp[, 4] == 0, 3])] <- 0.00001
+        cendis <<- 1 - pexp(survData[, "y2"], 1/cr)#surv1^(-1)#pmax(temp$surv[], min(temp[temp>0]))^(-1)
+        missscore <- do.call(rbind, lapply(1 : mn, missingscore, theta, missresp, cmptresp, mn,  p, misscovm, cmptcovm, cmptscore, cendis[cmptix],   missv))
+    #browser()
+        score <- rbind(cmptscore, missscore)
+        varscore <- t(score) %*% score #apply(rbind(cmptscore, missscore), 2, sum)
+        }else{
+            score <- rbind(cmptscore, missscore)
+        varscore <- t(score) %*% score #apply(rbind(cmptscore, missscore), 2, sum)
+        }
+    return(varscore)
+    
+    
+}
+
 simuRsk <- function(i, n, p,  theta,  cen1, cen2 ,covm = NULL){
     if(is.null(covm)){
         covm <-  matrix(1, p, 1)#matrix(c(1,  rnorm(1, 0, 1)), p, 1 )
@@ -760,8 +805,11 @@ sRoot <- function(itr){
     vq <<- dgamma(vg, nu, 1/nu)#shape = shape, scale = scale)
     vq <<- vq /sum(vq)
     res <- try(dfsane(theta, estm, method = 3, control = list(tol = 1.e-5, noimp = 20, maxit = 200), quiet = FALSE, resp,survData[,  1:4],  covm, n, p, rep(min(resp[, 1] /2), n)))
+    A <- jacobian(estm, res$par, method="simple", method.args=list(), resp,survData[,  1:4],  covm, n, p, rep(min(resp[, 1] /2), n))
+    V <- varestm(res$par, resp,survData[,  1:4],  covm, n, p, rep(min(resp[, 1] /2), n))
+    estv <- A %*% V %*% t(A)
     print(res$convergence)
-    return(c(res$par, res$residual))
+    return(c(res$par, estv, res$residual))
 }
 tsRoot <- function(itr) try(sRoot(itr))
 #spg(theta, estm1, gr = NULL,  project = NULL, lower = c(rep(0, 3), rep(-Inf, 3 * p)), upper = rep(Inf, 3 * p), method = 3, projectArgs= NULL, control = list(ftol = 1.e-3 ), quiet = FALSE, resp,survData[,  1:4],  covm, n, p, rep(min(resp[, 1] /2), n))$par
@@ -769,7 +817,7 @@ tsRoot <- function(itr) try(sRoot(itr))
 
 #multiroot(estm, c(rep(1, 6), rep(-0.5, 3)), maxiter = 100,  rtol = 1e-6, atol = 1e-8, ctol = 1e-8,useFortran = TRUE, positive = FALSE,jacfunc = NULL, jactype = "fullint", verbose = FALSE, bandup = 1, banddown = 1,resp,survData[, 1:4],  covm, n, p)
 
-    
+
     
 delike1 <- function(y1, y2, d1, b1x, b2x, b3x,  g, kappa1, kappa2, kappa3 ){
     dd1x <- -1/kappa1^2 * d1 + (- exp( (log(y1) - log(g) - b1x) / kappa1^2)) * (-1 / kappa1^2)
