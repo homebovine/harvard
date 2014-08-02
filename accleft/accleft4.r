@@ -4,6 +4,7 @@ library(BB)
 library(survival)
 #library(pracma)
 library(parallel)
+library(numDeriv)
 hzd1 <- function(kappa1,  beta1,  t, x, g){
     g * exp((trans1(t)-t(beta1) %*% x)/kappa1) * 1/t * 1/kappa1
     
@@ -439,6 +440,45 @@ estm <- function(theta, resp, survData, covm, n, p, mv = rep(1e-5, n)){
     
 }
 
+varestm <- function(theta, resp, survData, covm, n, p, mv = rep(1e-5, n)){
+    #print(theta)
+    theta <- c(abs(theta[1 : 3])+ 0.01 , theta[4:q])
+    colnames(resp) <- c("y1", "d1", "y2", "d2")
+    colnames(survData) <- c("y1", "d1", "y2", "d2")
+    cmptix <- resp[, "d2"] == 1
+    
+    covm <- matrix(covm, n, p)
+    cn <- sum(cmptix)
+    missix <- resp[, "d2"] == 0
+    mn <- sum(missix)
+    cmptresp <- resp[cmptix, ]
+    cmptcovm <- covm[cmptix, , drop = F]
+    cmptv <- mv[cmptix]
+    missresp <- resp[missix, ]
+    misscovm <- covm[missix, , drop = F]
+    missv <- mv[missix]
+    ma <<- creata(theta, cmptresp,  p,   cmptv)
+    cmptscore <- do.call(rbind, lapply(1 : cn,completescore, theta, cmptresp, survData,  cn, p, ma,  cmptcovm, cmptv))
+#    browser()
+    if(mn  > 0){
+#        browser()
+        #temp <- (summary(survfit(Surv(survData[, "y2"], 1 - survData[, "d2"] )~1), times= survData[, "y2"], extend=TRUE))
+        surv1 <- 1- pexp(survData[, "y2"], 1/cr)#temp$surv
+    #    surv1[survData[, "y2"] > max(resp[resp[, 4] == 0, 3])] <- 0.00001
+        cendis <<- surv1^(-1)#pmax(temp$surv[], min(temp[temp>0]))^(-1)
+        missscore <- do.call(rbind, lapply(1 : mn, missingscore, theta, missresp, cmptresp, mn,  p, misscovm, cmptcovm, cmptscore, cendis[cmptix],   missv))
+    #browser()
+        score <- rbind(cmptscore, missscore)
+        varscore <- t(score) %*% score #apply(rbind(cmptscore, missscore), 2, sum)
+        }else{
+                score <- rbind(cmptscore, missscore)
+        varscore <- t(score) %*% score #apply(rbind(cmptscore, missscore), 2, sum)
+        }
+    return(varscore)
+    
+    
+}
+
 simuRsk <- function(i, n, p,  theta,  cen1, cen2 ,covm = NULL){
     if(is.null(covm)){
         covm <-  matrix(1, p, 1)#matrix(c(1,  rnorm(1, 0, 1)), p, 1 )
@@ -682,7 +722,7 @@ mx <- matrix(c(0, 1), ncol = p)
 #survData0 <- do.call(rbind, lapply(1:n, simuRsk1, n, p,nu,  theta0, 300, 400))
 #lsurvData <- lapply(1 : 100, simall, 1,1.5)
 covm1 <<- matrix(1, ng, p)#matrix(cbind(rep(1, ng), rnorm(ng, 0, 1)), ncol = p)
-    
+cpvar <- 1    
     
 weight <<- rep(1/ng, ng)    
 vg1 <<- qgamma(seq(0.00000001, 0.99999999999, length.out = m1 + 1), 1/nu, 1/nu)
@@ -696,9 +736,18 @@ sRoot <- function(itr){
     XY <<- simuRsk3(ng, p, nu, theta, 300, 400, covm1)
     dnom <<- likelihood2(XY, covm1, theta)
     vg <<- seq(quantile(lsurvData[[itr]][, 5 + p], 0), quantile(lsurvData[[itr]][, 5 + p], 1), length.out = m+1)# quantile(lsurvData[[itr]][, 5 + p], seq(0.001, 0.999, length.out= m + 1))##qlnorm(seq(0.001, 0.999, length.out = m + 1), 0, 1.5)#
+    if(cpvar ==0){
     res <- try(dfsane(theta, estm, method = 3, control = list(tol = 1.e-5, noimp = 20, maxit = 200), quiet = FALSE, resp,survData[,  1:4],  covm, n, p, rep(min(resp[, 1] /2), n)))
-    print(res$convergence)
     return(c(res$par, res$residual))
+    }else if(cpvar == 1){
+        A <- ginv(jacobian(estm, theta, method="simple", method.args=list(), resp,survData[,  1:4],  covm, n, p, rep(min(resp[, 1] /2), n)))
+        V <- varestm(theta, resp,survData[,  1:4],  covm, n, p, rep(min(resp[, 1] /2), n)) /n^2
+        estv <- A %*% V %*% t(A)
+        return(as.vector(estv))
+       
+    }
+    
+    
 }
 tsRoot <- function(itr) try(sRoot(itr))
 #spg(theta, estm1, gr = NULL,  project = NULL, lower = c(rep(0, 3), rep(-Inf, 3 * p)), upper = rep(Inf, 3 * p), method = 3, projectArgs= NULL, control = list(ftol = 1.e-3 ), quiet = FALSE, resp,survData[,  1:4],  covm, n, p, rep(min(resp[, 1] /2), n))$par
