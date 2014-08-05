@@ -355,7 +355,7 @@ missingscore <- function(i, theta, missresp, cmptresp, mn,   p, misscovm, cmptco
         ix <- cmptresp[, "y2"] >= cn & cmptresp[, "y1"] < cn
         if(sum(ix) > 0){
             nr <- nrow(cmptscore[ix,, drop  = F ])
-            missscore <- try(apply( diag(as.numeric(kerdis(x, cmptcovm[ix,  -1, drop = F], hx)), nr, nr) %*% diag(cendis[ix], nr, nr) %*%cmptscore[ix, , drop  = F ] , 2, sum) / max(sum( kerx(x, cmptcovm[ix, -1, drop = F], hx) * cendis[ix] ),  1e-200))
+            missscore <- try(apply( diag(as.numeric(kerx(x, cmptcovm[ix,  -1, drop = F], hx)), nr, nr) %*% diag(cendis[ix], nr, nr) %*%cmptscore[ix, , drop  = F ] , 2, sum) / max(sum( kerx(x, cmptcovm[ix, -1, drop = F], hx) * cendis[ix] ),  1e-200))
             #missscore <- try(apply( diag(as.numeric(kerx(x, cmptcovm[ix,  , drop = F], hx)), nr, nr) %*% diag(cendis[ix], nr, nr) %*%cmptscore[ix, , drop  = F ] , 2, sum) / max(sum( kerx(x, cmptcovm[ix, , drop = F], hx) * cendis[ix] ),  1e-200))
             #missscore <- try(apply(diag(as.numeric(kert(y1, cmptresp[ix, "y1"],  ht)), nr, nr)  %*% diag(cendis[ix], nr, nr) %*%cmptscore[ix, , drop  = F ] , 2, sum) / max(sum( kert(y1, cmptresp[ix, "y1"], ht)  * cendis[ix] ),  1e-200))
             
@@ -369,7 +369,7 @@ missingscore <- function(i, theta, missresp, cmptresp, mn,   p, misscovm, cmptco
         ix <- cmptresp[, "y1"] >= cn
         if(sum(ix) > 0){
             nr <- nrow(cmptscore[ix,, drop  = F ])
-            missscore <- try(apply( diag(as.numeric(kerdis(x, cmptcovm[ix, -1, drop = F ], hx)), nr, nr) %*% diag(cendis[ix], nr, nr)%*%  cmptscore[ix, , drop = F] , 2, sum) / (max(sum(   kerx(x, cmptcovm[ix, -1, drop =  F], hx) * cendis[ix]), 1e-200) ))
+            missscore <- try(apply( diag(as.numeric(kerx(x, cmptcovm[ix, -1, drop = F ], hx)), nr, nr) %*% diag(cendis[ix], nr, nr)%*%  cmptscore[ix, , drop = F] , 2, sum) / (max(sum(   kerx(x, cmptcovm[ix, -1, drop =  F], hx) * cendis[ix]), 1e-200) ))
             #missscore <- try(apply( diag(cendis[ix], nr, nr)%*%  cmptscore[ix, , drop = F] , 2, sum) / (max(sum(    cendis[ix]), 1e-200) ))
             }
         else
@@ -435,8 +435,8 @@ estm <- function(theta, resp, survData, covm, n, p, mv = rep(1e-5, n)){
 #    browser()
     if(mn  > 0){
 #        browser()
-        temp <- (summary(survfit(Surv(survData[, "y2"], 1 - survData[, "d2"] )~1), times= survData[, "y2"], extend=TRUE)$surv)
-        cendis <- pmax(temp, min(temp[temp>0]))^(-1)
+#        temp <- (summary(survfit(Surv(survData[, "y2"], 1 - survData[, "d2"] )~1), times= survData[, "y2"], extend=TRUE)$surv)
+        cendis <<- (1 - pexp(survData[, "y2"], 1/cr))^(-1)#pmax(temp, min(temp[temp>0]))^(-1)
         missscore <- do.call(rbind, lapply(1 : mn, missingscore, theta, missresp, cmptresp, mn,  p, misscovm, cmptcovm, cmptscore, cendis[cmptix],   missv))
     #browser()
         score <- apply(rbind(cmptscore, missscore), 2, sum)
@@ -450,7 +450,7 @@ estm <- function(theta, resp, survData, covm, n, p, mv = rep(1e-5, n)){
 
 simuRsk <- function(i, n, p,  theta,  cen1, cen2 ,covm = NULL){
     if(is.null(covm)){
-        covm <-  matrix(c(1,  rbinom(1, 1, 0.6)), p, 1 )#matrix(1, p, 1)#
+        covm <-  matrix(c(1,  rnorm(1, 0, 1)), p, 1 )#matrix(1, p, 1)#
     }
     kappa1 <- (abs(theta[1]) )
     kappa2 <- (abs(theta[2]) )
@@ -459,10 +459,10 @@ simuRsk <- function(i, n, p,  theta,  cen1, cen2 ,covm = NULL){
     beta2 <- theta[(4 + p) : (3 + 2 * p)]
     beta3 <- theta[(4 + 2* p) : (3 + 3 * p)]
     x <- covm
-    r1 <- x[2] <dg 
+    r1 <- rbinom(1, 1, 0.6)#x[2] <dg 
     
     
-    g <- x[2] * rlnorm(1, 0, 0.75) + (1 - x[2]) * rweibull(1, 2, scale = 2)#rgamma(1, 1/nu1, scale = nu1)  
+    g <- r1 * rlnorm(1, 0, 0.75) + (1 - r1) * rweibull(1, 2, scale = 2)#rgamma(1, 1/nu1, scale = nu1)  
    
     lb1 <- g * exp((- t(beta1)%*%x)/kappa1)
     lb2 <- g * exp((- t(beta2)%*%x)/kappa2)
@@ -472,7 +472,7 @@ simuRsk <- function(i, n, p,  theta,  cen1, cen2 ,covm = NULL){
     a3 <- 1/kappa3
     p1g2 <- lb2 /(lb1 + lb2)
     r <- rbinom(1,  1, p1g2)
-    c <- runif(1, cen1, cen2)
+    c <- rexp(1, 1/cr)#runif(1, cen1, cen2)
     if(r == 1){
         u <- runif(1)
         t2 <-  (- log(1- u) / ( lb1 + lb2))^(1/a2)
@@ -490,6 +490,9 @@ simuRsk <- function(i, n, p,  theta,  cen1, cen2 ,covm = NULL){
     d2 <- as.numeric(y2 < c)
     simdata <- cbind(y1, d1, y2, d2)
     colnames(simdata) <- c("y1", "d1", "y2", "d2")
+    if(sum(is.na(simdata) )!= 0){
+        browser()
+    }
     return(c(simdata, covm, g, p1g2))
 }
 
@@ -514,7 +517,7 @@ simuRsk2 <- function(i, n, p, nu,  theta,  cen1, cen2 ,covm = NULL){
     a3 <- 1/kappa3
     p1g2 <- lb2 /(lb1 + lb2)
     r <- rbinom(1,  1, p1g2)
-    c <- runif(1, cen1, cen2)
+    c <- rexp(1, 1/cr)#runif(1, cen1, cen2)
     if(r == 1){
         u <- runif(1)
         t2 <-   ((u^(-nu ) - 1) / (nu * (lb1 + lb2)))^(1/a2)
@@ -533,7 +536,7 @@ simuRsk2 <- function(i, n, p, nu,  theta,  cen1, cen2 ,covm = NULL){
 simuRsk3 <- function( n, p, nu,  theta,  cen1, cen2 ,covm = NULL){
     t12 <- matrix(NA, n, 2)
    
-    #covm <-  matrix(c( rbinom(n, 1, 0.8)), p, 1 )
+    
     
     kappa1 <- (abs(theta[1]) )
     kappa2 <- (abs(theta[2]) )
@@ -586,7 +589,7 @@ simuRsk1 <- function(i, n, p, nu,  theta,  cen1, cen2 ,covm = NULL){
     a3 <- 1/kappa3
     p1g2 <- lb2 /(lb1 + lb2)
     r <- rbinom(1,  1, p1g2)
-    c <- runif(1, cen1, cen2)
+    c <- rexp(1, 1/cr)#runif(1, cen1, cen2)
     if(r == 1){
         u <- runif(1)
         t2 <-   ((u^(-nu ) - 1) / (nu * (lb1 + lb2)))^(1/a2)
@@ -696,9 +699,10 @@ ng <- 1500
 up = 20
 mx <- matrix(c(0, 1), ncol = p)
 dg <- dgamma(0.6, 0.3, 0.3)
+cr <- 4
 #survData <- do.call(rbind, lapply(1:n, simuRsk, n, p,  theta, 1, 3))
 #survData0 <- do.call(rbind, lapply(1:n, simuRsk1, n, p,nu,  theta0, 300, 400))
-#lsurvData <- lapply(1 : 100, simall, 0.8, 1.35)
+                                        #lsurvData <- lapply(1 : 100, simall, 0.8, 1.35)
 sRoot <- function(itr){
     survData <- lsurvData[[itr]]
     
@@ -707,7 +711,7 @@ sRoot <- function(itr){
     resp <- survData[, 1:4]
     colnames(resp) <- c("y1", "d1", "y2", "d2")
     covm <- matrix(survData[, 5 : (4+ p)], n, p)
-    covm1 <<- matrix(cbind(rep(1, ng), rbinom(ng, 1, 0.6)), ncol = p)#matrix(1, ng, p)#
+    covm1 <<- matrix(cbind(rep(1, ng), rnorm(ng, 0, 1)), ncol = p)#matrix(1, ng, p)#
     XY <<- simuRsk3(ng, p, nu, theta, 300, 400, covm1)#do.call(rbind, lapply(1 :ng, simuRsk2, ng,  p, nu,  theta,  300, 400 , covm1))
     dnom <<- likelihood2(XY, covm1, theta)
     ht <<- sum(resp[, "d1"] == 1)^(-2/15) * bw.nrd0(log(resp[resp[, "d1"] == 1, "y1"]))
@@ -772,7 +776,7 @@ estm2 <- function(theta, resp, survData, covm,  n, p){
     theta <- theta
     apply(( vsinglescore(resp, survData[, c(1, 3)], theta, covm, survData[, 5+ p])), 2,  sum)
 }
-n <- 100
+#n <- 100
 #lsurvData <- mclapply(1 : 1000, simall,0.3, 1.35, mc.cores = 15)
 evalestm <- function(itr){
     survData <- lsurvData[[itr]]
