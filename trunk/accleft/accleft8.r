@@ -528,8 +528,7 @@ varestm <- function(theta, resp, survData, covm, n, p, mv = rep(1e-5, n)){
         cendis <<- 1 - pexp(survData[, "y2"], 1/cr)#surv1^(-1)#pmax(temp$surv[], min(temp[temp>0]))^(-1)
         missscore <- do.call(rbind, lapply(1 : mn, missingscore, theta, missresp, cmptresp, mn,  p, misscovm, cmptcovm, cmptscore, cendis[cmptix],   missv))
     #browser()
-        score <- rbind(cmptscore, missscore)
-        varscore <- t(score) %*% score #apply(rbind(cmptscore, missscore), 2, sum)
+        
         }else{
             score <- rbind(cmptscore, missscore)
         varscore <- t(score) %*% score #apply(rbind(cmptscore, missscore), 2, sum)
