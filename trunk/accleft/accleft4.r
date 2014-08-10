@@ -471,7 +471,7 @@ varestm <- function(theta, resp, survData, covm, n, p, mv = rep(1e-5, n)){
         score <- rbind(cmptscore, missscore)
         varscore <- t(score) %*% score #apply(rbind(cmptscore, missscore), 2, sum)
         }else{
-                score <- rbind(cmptscore, missscore)
+                score <- rbind(cmptscore)
         varscore <- t(score) %*% score #apply(rbind(cmptscore, missscore), 2, sum)
         }
     return(varscore)
@@ -709,7 +709,7 @@ q <- length(theta)
 mA <- matrix(NA, m, m)
 mb <- matrix(NA, q, m)
 n <- 750
-cr <- 5
+cr <- 1000
 p <- 1
 ij <- as.matrix(expand.grid(1 : m, 1 : m))
 nu1 <- 0.5
