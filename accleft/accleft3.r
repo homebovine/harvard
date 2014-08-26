@@ -688,7 +688,7 @@ theta <- c(0.5, 0.5, 0.5, -0.5,  -1.2,   -0.3, -1.0,   -0.5, -1.1)
 q <- length(theta) 
 mA <- matrix(NA, m, m)
 mb <- matrix(NA, q, m)
-n <- 750
+n <- 100
 
 p <- 2
 ij <- as.matrix(expand.grid(1 : m, 1 : m))
