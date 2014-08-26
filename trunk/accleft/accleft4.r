@@ -442,7 +442,7 @@ estm <- function(theta, resp, survData, covm, n, p, mv = rep(1e-5, n)){
 
 varestm <- function(theta, resp, survData, covm, n, p, mv = rep(1e-5, n)){
     #print(theta)
-    theta <- c(abs(theta[1 : 3])+ 0.01 , theta[4:q])
+    theta <- c(abs(theta[1 : 3]) , theta[4:q])
     colnames(resp) <- c("y1", "d1", "y2", "d2")
     colnames(survData) <- c("y1", "d1", "y2", "d2")
     cmptix <- resp[, "d2"] == 1
