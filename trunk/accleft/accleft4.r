@@ -426,7 +426,7 @@ estm <- function(theta, resp, survData, covm, n, p, mv = rep(1e-5, n)){
     if(mn  > 0){
 #        browser()
         temp <- (summary(survfit(Surv(survData[, "y2"], 1 - survData[, "d2"] )~1), times= survData[, "y2"], extend=TRUE))
-        surv1 <- emp$surv#1- pexp(survData[, "y2"], 1/cr)#t
+        surv1 <- temp$surv#1- pexp(survData[, "y2"], 1/cr)#t
     #    surv1[survData[, "y2"] > max(resp[resp[, 4] == 0, 3])] <- 0.00001
         cendis <<- surv1^(-1)#pmax(temp$surv[], min(temp[temp>0]))^(-1)
         missscore <- do.call(rbind, lapply(1 : mn, missingscore, theta, missresp, cmptresp, mn,  p, misscovm, cmptcovm, cmptscore, cendis[cmptix],   missv))
