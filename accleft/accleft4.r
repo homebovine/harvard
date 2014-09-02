@@ -803,17 +803,17 @@ evalestm <- function(itr){
     survData <- lsurvData[[itr]]
     resp <- survData[, 1:4]
     colnames(resp) <- c("y1", "d1", "y2", "d2")
-    covm <- matrix(survData[, 5 : (4+ p)], n, p)
+    covm <- matrix(1, n, p)#matrix(survData[, 5 : (4+ p)], n, p)
     ht <- n^(-2/15) * bw.nrd0(resp[resp[, "d1"] == 1, "y1"])
     hx <- n ^ (-2/15) * apply(covm[, , drop = F], 2, bw.nrd0)
-    vg <- quantile(survData[, 5 + p], seq(0, 1, length.out = m))
-    vq <- dlnorm(vg, 0, 1) /sum(dlnorm(vg, 0, 1) )
+ #   vg <- quantile(survData[, 5 + p], seq(0, 1, length.out = m))
+  #  vq <- dlnorm(vg, 0, 1) /sum(dlnorm(vg, 0, 1) )
     dfsane(theta1, estm2, method = 2, control = list(tol = 1.e-7, noimp = 100 ), quiet = FALSE, resp, survData, covm,  n, p)$par
 }
 #res <- mclapply(1 : 1000, evalestm , mc.cores = 15)
                                         #res1008 <- do.call(rbind, res)
 #theta1 <- c(theta, 0.5)
-#estm2(theta1, resp, survData[, 1:4], covm, n, p)
+#estm2(theta1, resp, survData[, 1:4], matrix(1, nrow(survData), p), n, p)
 ## res100 <- res1008
 ## res250 <- res2508
 ## res500 <- res5008
