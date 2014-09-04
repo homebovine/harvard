@@ -692,7 +692,7 @@ theta <- c(0.5, 0.5, 0.5, -0.5,  -1.1,   -0.2, -1.1,   -0.2, -1.1)
 q <- length(theta) 
 mA <- matrix(NA, m, m)
 mb <- matrix(NA, q, m)
-n <- 250
+n <- 100
 
 p <- 2
 ij <- as.matrix(expand.grid(1 : m, 1 : m))
@@ -703,7 +703,7 @@ ng <- 1500
 up = 20
 mx <- matrix(c(0, 1), ncol = p)
 dg <- dgamma(0.6, 0.3, 0.3)
-cr <- 2.1
+cr <- 1000
 #survData <- do.call(rbind, lapply(1:n, simuRsk, n, p,  theta, 1, 3))
 #survData0 <- do.call(rbind, lapply(1:n, simuRsk1, n, p,nu,  theta0, 300, 400))
                                         #lsurvData <- lapply(1 : 100, simall, 0.8, 1.35)
@@ -781,7 +781,8 @@ estm2 <- function(theta, resp, survData, covm,  n, p){
     theta <- theta
     apply(( vsinglescore(resp, survData[, c(1, 3)], theta, covm, survData[, 5+ p])), 2,  sum)
 }
-#n <- 100
+#cr <- 2
+#n <- 250
 #lsurvData <- mclapply(1 : 1000, simall,0.3, 1.35, mc.cores = 15)
 evalestm <- function(itr){
     survData <- lsurvData[[itr]]
@@ -796,6 +797,18 @@ evalestm <- function(itr){
 }
 
                                         #res <- mclapply(1 : 1000, evalestm, mc.cores = 15)
-#res1008 <- do.call(rbind, res)
+#res100n <- do.call(rbind, res)
+#res1002 <- do.call(rbind, res)
+#res250n <- do.call(rbind, res)
+#res2502 <- do.call(rbind, res)
 theta1 <- c(theta, 0.5)
 #estm2(theta1, resp, survData[, 1:4], covm, n, p)
+res100 <- res1002[, 1:q]
+res250 <- res2502[, 1:q]
+mres100 <- round(apply(res100, 2, median), 3)
+mres250 <- round(apply(res250, 2, median), 3)
+sdres100 <- round(apply(res100, 2, mad), 3)
+sdres250 <- round(apply(res250, 2, mad), 3)
+msres100 <- round((mres100- theta)^2 + sdres100^2, 4)
+msres250 <- round((mres250- theta)^2 + sdres250^2, 4)
+paste(mres100, sdres100, msres100, mres250, sdres250, msres250, sep = "&")
