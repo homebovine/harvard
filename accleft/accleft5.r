@@ -791,8 +791,8 @@ evalestm <- function(itr){
     covm <- matrix(survData[, 5 : (4+ p)], n, p)
     #ht <- n^(-2/15) * bw.nrd0(resp[resp[, "d1"] == 1, "y1"])
     #hx <- n ^ (-2/15) * apply(covm[, , drop = F], 2, bw.nrd0)
-    vg <- quantile(survData[, 5 + p], seq(0, 1, length.out = m))
-    vq <- dlnorm(vg, 0, 1) /sum(dlnorm(vg, 0, 1) )
+#    vg <- quantile(survData[, 5 + p], seq(0, 1, length.out = m))
+ #   vq <- dlnorm(vg, 0, 1) /sum(dlnorm(vg, 0, 1) )
     dfsane(theta1, estm2, method = 2, control = list(tol = 1.e-7, noimp = 100 ), quiet = FALSE, resp, survData, covm,  n, p)$par
 }
 
@@ -803,12 +803,12 @@ evalestm <- function(itr){
 #res2502 <- do.call(rbind, res)
 theta1 <- c(theta, 0.5)
 #estm2(theta1, resp, survData[, 1:4], covm, n, p)
-res100 <- res1002[, 1:q]
-res250 <- res2502[, 1:q]
-mres100 <- round(apply(res100, 2, median), 3)
-mres250 <- round(apply(res250, 2, median), 3)
-sdres100 <- round(apply(res100, 2, mad), 3)
-sdres250 <- round(apply(res250, 2, mad), 3)
-msres100 <- round((mres100- theta)^2 + sdres100^2, 4)
-msres250 <- round((mres250- theta)^2 + sdres250^2, 4)
-paste(mres100, sdres100, msres100, mres250, sdres250, msres250, sep = "&")
+## res100 <- res1002[, 1:q]
+## res250 <- res2502[, 1:q]
+## mres100 <- round(apply(res100, 2, median), 3)
+## mres250 <- round(apply(res250, 2, median), 3)
+## sdres100 <- round(apply(res100, 2, mad), 3)
+## sdres250 <- round(apply(res250, 2, mad), 3)
+## msres100 <- round((mres100- theta)^2 + sdres100^2, 4)
+## msres250 <- round((mres250- theta)^2 + sdres250^2, 4)
+## paste(mres100, sdres100, msres100, mres250, sdres250, msres250, sep = "&")
