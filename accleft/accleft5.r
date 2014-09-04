@@ -466,7 +466,7 @@ simuRsk <- function(i, n, p,  theta,  cen1, cen2 ,covm = NULL){
     r1 <- rbinom(1, 1, 0.6)# x[2] < dg
     
     
-    g <- r1 * rlnorm(1, 0, 0.75) + (1 - r1) * rweibull(1, 2, scale = 2)#rgamma(1, 1/nu1, scale = nu1)  
+    g <- (1 - x[2]) * rlnorm(1, 0, 0.75) + x[2] * rweibull(1, 2, scale = 2)#rgamma(1, 1/nu1, scale = nu1)  
    
     lb1 <- g * exp((- t(beta1)%*%x)/kappa1)
     lb2 <- g * exp((- t(beta2)%*%x)/kappa2)
@@ -703,7 +703,7 @@ ng <- 1500
 up = 20
 mx <- matrix(c(0, 1), ncol = p)
 dg <- dgamma(0.6, 0.3, 0.3)
-cr <- 4
+cr <- 2.1
 #survData <- do.call(rbind, lapply(1:n, simuRsk, n, p,  theta, 1, 3))
 #survData0 <- do.call(rbind, lapply(1:n, simuRsk1, n, p,nu,  theta0, 300, 400))
                                         #lsurvData <- lapply(1 : 100, simall, 0.8, 1.35)
