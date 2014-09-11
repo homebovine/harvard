@@ -58,13 +58,13 @@ trans3 <- function(t){
 
 
 
-clkhd.intg <- expression((g * exp((log(y1/alpha1)-b1x)/kappa1 ) * 1/y1 * 1/kappa1 ) ^ d1* (g * exp((log(y1/alpha2)-b2x)/kappa2 ) * 1/y1 * 1/kappa2 ) ^ (1 - d1) * (g * exp((log(y2/alpha3)-b3x)/kappa3 ) * 1/y2 * 1/kappa3 ) ^ d1 * exp(-  g * (exp((log(y1/alpha1)-b1x)/kappa1 ) +  exp((log(y1/alpha2)-b2x)/kappa2 ) + d1 * (exp((log(y2/alpha3)-b3x)/kappa3 ) - exp((log(y1/alpha3)-b3x)/kappa3 ))  )) )
+clkhd.intg <- expression((g * exp(((y1^alpha1 - 1)/alpha1-b1x)/kappa1 ) * y1^(alpha1 - 1) *   1/kappa1 ) ^ d1* (g * exp(((y1^alpha2 - 1)/alpha2-b2x)/kappa2 ) * y1 ^ (alpha2-1) * 1/kappa2 ) ^ (1 - d1) * (g * exp(((y2^alpha3 - 1)/alpha3-b3x)/kappa3 ) * y2^ (alpha3-1) *  1/kappa3 ) ^ d1 * exp(-  g * (exp(((y1^alpha1 - 1)/alpha1-b1x)/kappa1 ) +  exp(((y1^alpha2 - 1)/alpha2-b2x)/kappa2 ) + d1 * (exp(((y2^alpha3 - 1)/alpha3-b3x)/kappa3 ) - exp(((y1^alpha3 - 1)/alpha3-b3x)/kappa3 ))  )) )
 
-lkhd.intg <- expression((exp((log(y1/alpha1)-b1x)/kappa1 ) * 1/y1 * 1/kappa1 ) ^ d1* (exp((log(y1/alpha2)-b2x)/kappa2 ) * 1/y1 * 1/kappa2 ) ^ (1 - d1) * (exp((log(y2/alpha3)-b3x)/kappa3 ) * 1/y2 * 1/kappa3 ) ^ d1 * (1 + nu) ^ d1 * (1 + nu *  (exp((log(y1/alpha1)-b1x)/kappa1 ) +  exp((log(y1/alpha2)-b2x)/kappa2 ) + d1 * (exp((log(y2/alpha3)-b3x)/kappa3 ) - exp((log(y1/alpha3)-b3x)/kappa3 ))  )) ^ (-d1 - 1 - 1/ nu ))
+lkhd.intg <- expression((exp(((y1^alpha1 - 1)/alpha1-b1x)/kappa1 ) * y1^ (alpha1-1)  * 1/kappa1 ) ^ d1* (exp(((y1^alpha2 - 1)/alpha2-b2x)/kappa2 ) * y1 ^ (alpha2 -1 ) * 1/kappa2 ) ^ (1 - d1) * (exp(((y2^alpha3 - 1)/alpha3-b3x)/kappa3 ) * y2 ^ (alpha3-1) * 1/kappa3 ) ^ d1 * (1 + nu) ^ d1 * (1 + nu *  (exp(((y1^alpha1 - 1)/alpha1-b1x)/kappa1 ) +  exp(((y1^alpha2 - 1)/alpha2-b2x)/kappa2 ) + d1 * (exp(((y2^alpha3 - 1)/alpha3-b3x)/kappa3 ) - exp(((y1^alpha3 - 1)/alpha3-b3x)/kappa3 ))  )) ^ (-d1 - 1 - 1/ nu ))
 
-llgk.intg <- expression((((log(y1/alpha1)-b1x)/kappa1 ) +log(1/y1) + log (1/kappa1 ))  *  d1 +  (((log(y1/alpha2)-b2x)/kappa2 ) +  log(1/y1) + log(1/kappa2 )) * (1 - d1) + (((log(y2/alpha3)-b3x)/kappa3 ) + log(1/y2) + log(1/kappa3 )) * d1 +  log(1 + nu) * d1 +  log(1 + nu *  (exp((log(y1/alpha1)-b1x)/kappa1 ) +  exp((log(y1/alpha2)-b2x)/kappa2 ) + d1 * (exp((log(y2/alpha3)-b3x)/kappa3 ) - exp((log(y1/alpha3)-b3x)/kappa3 )))  ) * (-d1 - 1 - 1/ nu ))
+llgk.intg <- expression(((((y1^alpha1 - 1)/alpha1-b1x)/kappa1 ) + (alpha1-1)* log(y1) + log (1/kappa1 ))  *  d1 +  ((((y1^alpha2 - 1)/alpha2-b2x)/kappa2 ) +  (alpha2 - 1) * log(y1)+ log(1/kappa2 )) * (1 - d1) + ((((y2^alpha3 - 1)/alpha3-b3x)/kappa3 ) + (alpha3 - 1) * log(y2) + log(1/kappa3 )) * d1 +  log(1 + nu) * d1 +  log(1 + nu *  (exp(((y1^alpha1 - 1)/alpha1-b1x)/kappa1 ) +  exp(((y1^alpha2 - 1)/alpha2-b2x)/kappa2 ) + d1 * (exp(((y2^alpha3 - 1)/alpha3-b3x)/kappa3 ) - exp(((y1^alpha3 - 1)/alpha3-b3x)/kappa3 )))  ) * (-d1 - 1 - 1/ nu ))
 
-llgk.intg1 <- expression((((log(y1/alpha1)-b1x)/kappa1 ) +log(1/y1) + log (1/kappa1 ))  *  d1 +  (((log(y1/alpha2)-b2x)/kappa2 ) +  log(1/y1) + log(1/kappa2 )) * ((1 - d1) * d2) + (((log(y2/alpha3)-b3x)/kappa3 ) + log(1/y2) + log(1/kappa3 )) * (d1*d2) +  log(1 + nu) * (d1 * d2) +  log(1 + nu *  (exp((log(y1/alpha1)-b1x)/kappa1 ) +  exp((log(y1/alpha2)-b2x)/kappa2 ) + d1 * (exp((log(y2/alpha3)-b3x)/kappa3 ) - exp((log(y1/alpha3)-b3x)/kappa3 )))  ) * (-d1 - d2 - 1/ nu ))
+llgk.intg1 <- expression(((((y1^alpha1 - 1)/alpha1-b1x)/kappa1 ) + log (y1) * (alpha1 - 1)+ log (1/kappa1 ))  *  d1 +  ((((y1^alpha2 - 1)/alpha2-b2x)/kappa2 ) +  log(y1) * (alpha2-1) + log(1/kappa2 )) * ((1 - d1) * d2) + ((((y2^alpha3 - 1)/alpha3-b3x)/kappa3 ) + log(y2) * (alpha3 - 1) + log(1/kappa3 )) * (d1*d2) +  log(1 + nu) * (d1 * d2) +  log(1 + nu *  (exp(((y1^alpha1 - 1)/alpha1-b1x)/kappa1 ) +  exp(((y1^alpha2 - 1)/alpha2-b2x)/kappa2 ) + d1 * (exp(((y2^alpha3 - 1)/alpha3-b3x)/kappa3 ) - exp(((y1^alpha3 - 1)/alpha3-b3x)/kappa3 )))  ) * (-d1 - d2 - 1/ nu ))
 
 dllgk.intg <- deriv(llgk.intg,  c("b1x", "b2x", "b3x", "kappa1", "kappa2", "kappa3", "alpha1", "alpha2", "alpha3"))
 dllgk.intg1 <- deriv(llgk.intg1,  c("b1x", "b2x", "b3x", "kappa1", "kappa2", "kappa3", "alpha1", "alpha2", "alpha3", "nu"))
@@ -178,7 +178,7 @@ alpha3 <- theta[(4 + 3* p + 2)]
     y2 <-  t2
     y1 <- pmin(t1, t2)
     a = 1/nu + d1 + 1
-    b = 1/nu +(exp((log(y1/alpha1)-b1x)/kappa1 ) +  exp((log(y1/alpha2)-b2x)/kappa2 ) + exp((log(y2/alpha3)-b3x)/kappa3 ) - exp((log(y1/alpha3)-b3x)/kappa3 ))
+    b = 1/nu +(exp(((y1^alpha1 - 1)/alpha1-b1x)/kappa1 ) +  exp(((y1^alpha2 - 1)/alpha2-b2x)/kappa2 ) + exp(((y2^alpha3 - 1)/alpha3-b3x)/kappa3 ) - exp(((y1^alpha3 - 1)/alpha3-b3x)/kappa3 ))
      (pgamma(ug, a, b) - pgamma(lg, a, b))#eval(lkhd.intg) *
     
 }
@@ -371,7 +371,7 @@ estm1 <- function(theta, resp, survData, covm, n, p, mv = rep(1e-5, n)){
 estm <- function(theta, resp, survData, covm, n, p, mv = rep(1e-5, n)){
     
     #print(theta)
-    theta <- c(abs(theta[1 : 3]) , theta[4: (3 + 3 * p)], abs(theta[(4 + 3 * p) : (4 + 3 * p + 2)]))
+    theta <- c(abs(theta[1 : 3]) , theta[4: (3 + 3 * p)], (theta[(4 + 3 * p) : (4 + 3 * p + 2)]))
     colnames(resp) <- c("y1", "d1", "y2", "d2")
     colnames(survData) <- c("y1", "d1", "y2", "d2")
     cmptix <- resp[, "d2"] == 1
@@ -712,7 +712,7 @@ vsinglescore <-  function(resp, orgt, theta, x, g, v= 1e-5){
     alpha1 <- theta[(4 + 3* p)]
     alpha2 <- theta[(4 + 3* p + 1)]
     alpha3 <- theta[(4 + 3* p + 2)]
-    nu <- abs(theta[4 + 3 * p])
+    nu <- abs(theta[4 + 3 * p + 3])
     b1x <- x %*% beta1
     b2x <- x %*% beta2
     b3x <- x %*% beta3
@@ -726,15 +726,15 @@ vsinglescore <-  function(resp, orgt, theta, x, g, v= 1e-5){
     score <- cbind( derivlike[, 4 : 6], diag(derivlike[, 1]) %*% matrix(x, ncol = p), diag(derivlike[, 2]) %*% matrix(x, ncol = p), diag(derivlike[, 3]) %*% matrix(x, ncol = p), derivlike[, 7 : 9], derivlike[, 10])
 }
 estm2 <- function(theta, resp, survData, covm,  n, p){
-    theta <- theta
-    apply(( vsinglescore(resp, survData[, c(1, 3)], theta, covm, survData[, 5+ p])), 2,  sum)
+    theta <- c(abs(theta[1:3]), theta[4:9], (theta[10:12]), theta[13])
+    apply(( vsinglescore(resp, survData[, c(1, 3)], theta, covm, survData[, 5+ p])), 2,  mean)
 }
 #vestm <- jacobian(estm2, x = theta,  method="Richardson", method.args=list(), resp, survData, covm, n, p)
 #cr <- 2
 #n <- 250
 #lsurvData <- mclapply(1 : 1000, simall,0.3, 1.35, mc.cores = 15)
 evalestm <- function(itr){
-   ix <- 1 :n#sample(1:n, n, replace = T)
+   ix <- sample(1:n, n, replace = T)
     survData <- lsurvData[[1]][ix, ]
     resp <- survData[, 1:4]
     colnames(resp) <- c("y1", "d1", "y2", "d2")
