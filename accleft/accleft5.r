@@ -781,7 +781,7 @@ estm2 <- function(theta, resp, survData, covm,  n, p){
     theta <- theta
     apply(( vsinglescore(resp, survData[, c(1, 3)], theta, covm, survData[, 5+ p])), 2,  sum)
 }
-vestm <- jacobian(estm2, x = theta,  method="Richardson", method.args=list(), resp, survData, covm, n, p)
+#vestm <- jacobian(estm2, x = theta,  method="Richardson", method.args=list(), resp, survData, covm, n, p)
 #cr <- 2
 #n <- 250
 #lsurvData <- mclapply(1 : 1000, simall,0.3, 1.35, mc.cores = 15)
