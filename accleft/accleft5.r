@@ -439,8 +439,8 @@ estm <- function(theta, resp, survData, covm, n, p, mv = rep(1e-5, n)){
 #    browser()
     if(mn  > 0){
 #        browser()
-        temp <- (summary(survfit(Surv(survData[, "y2"], 1 - survData[, "d2"] )~1), times= survData[, "y2"], extend=TRUE)$surv)
-        cendis <<- temp^(-1)#(1 - pexp(survData[, "y2"], 1/cr))^(-1)#pmax(temp, min(temp[temp>0]))^(-1)
+#        temp <- (summary(survfit(Surv(survData[, "y2"], 1 - survData[, "d2"] )~1), times= survData[, "y2"], extend=TRUE)$surv)
+        cendis <<- (1 - pexp(survData[, "y2"], 1/cr))^(-1)#pmax(temp, min(temp[temp>0]))^(-1)#temp^(-1)#
         missscore <- do.call(rbind, lapply(1 : mn, missingscore, theta, missresp, cmptresp, mn,  p, misscovm, cmptcovm, cmptscore, cendis[cmptix],   missv))
     #browser()
         score <- apply(rbind(cmptscore, missscore), 2, sum)
