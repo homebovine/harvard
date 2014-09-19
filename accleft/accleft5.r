@@ -456,7 +456,7 @@ simuRsk <- function(i, n, p,  theta,  cen1, cen2 ,covm = NULL){
     if(is.null(covm)){
         r1 <- rbinom(1, 1, 0.6)# x[2] < dg
         nm1 <- rnorm(1, 0, 1)
-        p1 <- pnorm(r1 + m1, 0, 1)
+        p1 <- pnorm(r1 + nm1, 0.6, 1)
     
         covm <-  matrix(c(1,  rbinom(1, 1, p1)), p, 1 )#matrix(1, p, 1)#
     }
@@ -509,7 +509,7 @@ simuRsk2 <- function(i, n, p, nu,  theta,  cen1, cen2 ,covm = NULL){
     if(is.null(covm)){
         r1 <- rbinom(1, 1, 0.6)# x[2] < dg
         nm1 <- rnorm(1, 0, 1)
-        p1 <- pnorm(r1 + m1, 0, 1)
+        p1 <- pnorm(r1 + nm1, 0.6, 1)
     
         covm <-  matrix(c(1,  rbinom(1, 1, p1)), p, 1 )#matrix(1, p, 1)#
     }
@@ -585,7 +585,7 @@ simuRsk1 <- function(i, n, p, nu,  theta,  cen1, cen2 ,covm = NULL){
     if(is.null(covm)){
         r1 <- rbinom(1, 1, 0.6)# x[2] < dg
         nm1 <- rnorm(1, 0, 1)
-        p1 <- pnorm(r1 + m1, 0, 1)
+        p1 <- pnorm(r1 + nm1, 0.6, 1)
     
         covm <-  matrix(c(1,  rbinom(1, 1, p1)), p, 1 )#matrix(1, p, 1)#
     }
@@ -795,7 +795,7 @@ estm2 <- function(theta, resp, survData, covm,  n, p){
     apply(( vsinglescore(resp, survData[, c(1, 3)], theta, covm, survData[, 5+ p])), 2,  sum)
 }
 #vestm <- jacobian(estm2, x = theta,  method="Richardson", method.args=list(), resp, survData, covm, n, p)
-#cr <- 1000
+#cr <- 2
 #n <- 500
 #lsurvData <- mclapply(1 : 1000, simall,0.3, 1.35, mc.cores = 15)
 evalestm <- function(itr){
