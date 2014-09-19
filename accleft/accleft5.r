@@ -454,7 +454,11 @@ estm <- function(theta, resp, survData, covm, n, p, mv = rep(1e-5, n)){
 
 simuRsk <- function(i, n, p,  theta,  cen1, cen2 ,covm = NULL){
     if(is.null(covm)){
-        covm <-  matrix(c(1,  rbinom(1, 1, 0.4)), p, 1 )#matrix(1, p, 1)#
+        r1 <- rbinom(1, 1, 0.6)# x[2] < dg
+        nm1 <- rnorm(1, 0, 1)
+        p1 <- pnorm(r1 + m1, 0, 1)
+    
+        covm <-  matrix(c(1,  rbinom(1, 1, p1)), p, 1 )#matrix(1, p, 1)#
     }
     kappa1 <- (abs(theta[1]) )
     kappa2 <- (abs(theta[2]) )
@@ -463,10 +467,10 @@ simuRsk <- function(i, n, p,  theta,  cen1, cen2 ,covm = NULL){
     beta2 <- theta[(4 + p) : (3 + 2 * p)]
     beta3 <- theta[(4 + 2* p) : (3 + 3 * p)]
     x <- covm
-    r1 <- rbinom(1, 1, 0.6)# x[2] < dg
+     
     
     
-    g <- (1 - x[2]) * rlnorm(1, 0, 0.75) + x[2] * rweibull(1, 2, scale = 2)#rgamma(1, 1/nu1, scale = nu1)  
+    g <- r1 * rgamma(1, 1/0.5, 1/0.5) + (1 - r1) * (rgamma(1, 1/6, 1/6) + 2)#(1 - x[2]) * rlnorm(1, 0, 0.75) + x[2] * rweibull(1, 2, scale = 2)#rgamma(1, 1/nu1, scale = nu1)  
    
     lb1 <- g * exp((- t(beta1)%*%x)/kappa1)
     lb2 <- g * exp((- t(beta2)%*%x)/kappa2)
@@ -503,7 +507,11 @@ simuRsk <- function(i, n, p,  theta,  cen1, cen2 ,covm = NULL){
 simuRsk2 <- function(i, n, p, nu,  theta,  cen1, cen2 ,covm = NULL){
     
     if(is.null(covm)){
-        covm <-  matrix(c( rbinom(1, 1, 0.8)), p, 1 )
+        r1 <- rbinom(1, 1, 0.6)# x[2] < dg
+        nm1 <- rnorm(1, 0, 1)
+        p1 <- pnorm(r1 + m1, 0, 1)
+    
+        covm <-  matrix(c(1,  rbinom(1, 1, p1)), p, 1 )#matrix(1, p, 1)#
     }
     kappa1 <- (abs(theta[1]) )
     kappa2 <- (abs(theta[2]) )
@@ -575,7 +583,11 @@ simuRsk3 <- function( n, p, nu,  theta,  cen1, cen2 ,covm = NULL){
 
 simuRsk1 <- function(i, n, p, nu,  theta,  cen1, cen2 ,covm = NULL){
     if(is.null(covm)){
-        covm <-  matrix(c( rbinom(1, 1, 0.8)), p, 1 )
+        r1 <- rbinom(1, 1, 0.6)# x[2] < dg
+        nm1 <- rnorm(1, 0, 1)
+        p1 <- pnorm(r1 + m1, 0, 1)
+    
+        covm <-  matrix(c(1,  rbinom(1, 1, p1)), p, 1 )#matrix(1, p, 1)#
     }
     kappa1 <- (abs(theta[1]) )
     kappa2 <- (abs(theta[2]) )
@@ -716,7 +728,8 @@ sRoot <- function(itr){
     resp <- survData[, 1:4]
     colnames(resp) <- c("y1", "d1", "y2", "d2")
     covm <- matrix(survData[, 5 : (4+ p)], n, p)
-    covm1 <<- matrix(cbind(rep(1, ng), rbinom(ng, 1, 0.4)), ncol = p)#matrix(1, ng, p)#
+    p1 <- mean(covm[, 2])
+    covm1 <<- matrix(cbind(rep(1, ng), rbinom(ng, 1, p1)), ncol = p)#matrix(1, ng, p)#
     XY <<- simuRsk3(ng, p, nu, theta, 300, 400, covm1)#do.call(rbind, lapply(1 :ng, simuRsk2, ng,  p, nu,  theta,  300, 400 , covm1))
     dnom <<- likelihood2(XY, covm1, theta)
     ht <<- sum(resp[, "d1"] == 1)^(-2/15) * bw.nrd0(log(resp[resp[, "d1"] == 1, "y1"]))
@@ -782,12 +795,12 @@ estm2 <- function(theta, resp, survData, covm,  n, p){
     apply(( vsinglescore(resp, survData[, c(1, 3)], theta, covm, survData[, 5+ p])), 2,  sum)
 }
 #vestm <- jacobian(estm2, x = theta,  method="Richardson", method.args=list(), resp, survData, covm, n, p)
-#cr <- 2
-#n <- 250
+#cr <- 1000
+#n <- 500
 #lsurvData <- mclapply(1 : 1000, simall,0.3, 1.35, mc.cores = 15)
 evalestm <- function(itr){
-   ix <- 1 :n#sample(1:n, n, replace = T)
-    survData <- lsurvData[[1]][ix, ]
+   #ix <- 1 :n#sample(1:n, n, replace = T)
+    survData <- lsurvData[[itr]]#[ix, ]
     resp <- survData[, 1:4]
     colnames(resp) <- c("y1", "d1", "y2", "d2")
     covm <- matrix(survData[, 5 : (4+ p)], n, p)
@@ -803,14 +816,19 @@ evalestm <- function(itr){
 #res1002 <- do.call(rbind, res)
 #res250n <- do.call(rbind, res)
 #res2502 <- do.call(rbind, res)
+#res500n <- do.call(rbind, res)
+#res5002 <- do.call(rbind, res)
 theta1 <- c(theta, 0.5)
 #estm2(theta1, resp, survData[, 1:4], covm, n, p)
 ## res100 <- res1002[, 1:q]
 ## res250 <- res2502[, 1:q]
 ## mres100 <- round(apply(res100, 2, median), 3)
 ## mres250 <- round(apply(res250, 2, median), 3)
+##mres500 <- abs(round(apply(res500, 2, median)[1:q] - theta, 3))
 ## sdres100 <- round(apply(res100, 2, mad), 3)
 ## sdres250 <- round(apply(res250, 2, mad), 3)
+##sdres500 <- round(apply(res500, 2, mad), 3)
 ## msres100 <- round((mres100- theta)^2 + sdres100^2, 4)
 ## msres250 <- round((mres250- theta)^2 + sdres250^2, 4)
+#msres500 <- round((mres500)^2 + sdres500[1:q]^2, 4)
 ## paste(mres100, sdres100, msres100, mres250, sdres250, msres250, sep = "&")
