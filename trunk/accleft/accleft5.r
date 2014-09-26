@@ -454,11 +454,11 @@ estm <- function(theta, resp, survData, covm, n, p, mv = rep(1e-5, n)){
 
 simuRsk <- function(i, n, p,  theta,  cen1, cen2 ,covm = NULL){
     if(is.null(covm)){
-        r1 <- rbinom(1, 1, 0.4)# x[2] < dg
-        #nm1 <- rnorm(1, 0, 1)
-       # p1 <- rbinom(1, 1, pnorm(r1, 0.6, 1))
+       # r1 <- rbinom(1, 1, 0.4)# x[2] < dg
+        r1 <- rnorm(1, 0, 1)
+        p1 <- rbinom(1, 1, pnorm(r1, -2.5, 1))
     
-        covm <-  matrix(c(1,  rbinom(1, 1, 0.6)), p, 1 )#matrix(1, p, 1)#
+        covm <-  matrix(c(1,  rbinom(1, 1, p1)), p, 1 )#matrix(1, p, 1)#
     }
     kappa1 <- (abs(theta[1]) )
     kappa2 <- (abs(theta[2]) )
@@ -470,11 +470,11 @@ simuRsk <- function(i, n, p,  theta,  cen1, cen2 ,covm = NULL){
      
     
     
-    g <- r1 * rgamma(1, 1/0.5, 1/0.5) + (1 - r1) * (rgamma(1, 1/6, 1/6) + 2)#(1 - x[2]) * rlnorm(1, 0, 0.75) + x[2] * rweibull(1, 2, scale = 2)#rgamma(1, 1/nu1, scale = nu1)  
+    g <- p1 * rgamma(1, 1/0.5, 1/0.5) + (1 - p1) * (rgamma(1, 1/6, 1/6))#(1 - x[2]) * rlnorm(1, 0, 0.75) + x[2] * rweibull(1, 2, scale = 2)#rgamma(1, 1/nu1, scale = nu1)  
    
-    lb1 <- g * exp((- t(beta1)%*%x + r1 * x[2] + r1)/kappa1)
-    lb2 <- g * exp((- t(beta2)%*%x + r1 * x[2] +  r1)/kappa2)
-    lb3 <- g * exp((- t(beta3)%*%x + r1 * x[2] +  r1)/kappa3)
+    lb1 <- g * exp((- t(beta1)%*%x )/kappa1)
+    lb2 <- g * exp((- t(beta2)%*%x )/kappa2)
+    lb3 <- g * exp((- t(beta3)%*%x  )/kappa3)
     a1 <- 1/kappa1
     a2 <- 1/kappa2
     a3 <- 1/kappa3
@@ -508,10 +508,10 @@ simuRsk2 <- function(i, n, p, nu,  theta,  cen1, cen2 ,covm = NULL){
     
     if(is.null(covm)){
         r1 <- rbinom(1, 1, 0.4)# x[2] < dg
-        #nm1 <- rnorm(1, 0, 1)
-       # p1 <- rbinom(1, 1, pnorm(r1, 0.6, 1))
+        r1 <- rnorm(1, 0, 1)
+        p1 <- rbinom(1, 1, pnorm(r1, 0, 1))
     
-        covm <-  matrix(c(1,  rbinom(1, 1, 0.6)), p, 1 )#matrix(1, p, 1)#
+        covm <-  matrix(c(1,  rbinom(1, 1, p1)), p, 1 )#matrix(1, p, 1)#
     }
     kappa1 <- (abs(theta[1]) )
     kappa2 <- (abs(theta[2]) )
@@ -584,10 +584,10 @@ simuRsk3 <- function( n, p, nu,  theta,  cen1, cen2 ,covm = NULL){
 simuRsk1 <- function(i, n, p, nu,  theta,  cen1, cen2 ,covm = NULL){
     if(is.null(covm)){
         r1 <- rbinom(1, 1, 0.4)# x[2] < dg
-        #nm1 <- rnorm(1, 0, 1)
-       # p1 <- rbinom(1, 1, pnorm(r1, 0.6, 1))
+        r1 <- rnorm(1, 0, 1)
+        p1 <- rbinom(1, 1, pnorm(r1, 0, 1))
     
-        covm <-  matrix(c(1,  rbinom(1, 1, 0.6)), p, 1 )#matrix(1, p, 1)#
+        covm <-  matrix(c(1,  rbinom(1, 1, p1)), p, 1 )#matrix(1, p, 1)#
     }
     kappa1 <- (abs(theta[1]) )
     kappa2 <- (abs(theta[2]) )
@@ -795,7 +795,7 @@ estm2 <- function(theta, resp, survData, covm,  n, p){
     apply(( vsinglescore(resp, survData[, c(1, 3)], theta, covm, survData[, 5+ p])), 2,  sum)
 }
 #vestm <- jacobian(estm2, x = theta,  method="Richardson", method.args=list(), resp, survData, covm, n, p)
-#cr <- 2
+#cr <- 10000
 #n <- 100
 #lsurvData <- mclapply(1 : 1000, simall,0.3, 1.35, mc.cores = 15)
 evalestm <- function(itr){
