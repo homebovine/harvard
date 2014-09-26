@@ -470,7 +470,7 @@ simuRsk <- function(i, n, p,  theta,  cen1, cen2 ,covm = NULL){
      
     
     
-M F'    g <- p1 * rgamma(1, 1/0.5, 1/0.5) + (1 - p1) * (rgamma(1, 1/6, 1/6) + 2)#(1 - x[2]) * rlnorm(1, 0, 0.75) + x[2] * rweibull(1, 2, scale = 2)#rgamma(1, 1/nu1, scale = nu1)  
+    g <- p1 * rgamma(1, 1/0.5, 1/0.5) + (1 - p1) * (rgamma(1, 1/6, 1/6) + 2)#(1 - x[2]) * rlnorm(1, 0, 0.75) + x[2] * rweibull(1, 2, scale = 2)#rgamma(1, 1/nu1, scale = nu1)  
    
     lb1 <- g * exp((- t(beta1)%*%x )/kappa1)
     lb2 <- g * exp((- t(beta2)%*%x )/kappa2)
@@ -795,7 +795,7 @@ estm2 <- function(theta, resp, survData, covm,  n, p){
     apply(( vsinglescore(resp, survData[, c(1, 3)], theta, covm, survData[, 5+ p])), 2,  sum)
 }
 #vestm <- jacobian(estm2, x = theta,  method="Richardson", method.args=list(), resp, survData, covm, n, p)
-#cr <- 1.5
+#cr <- 4
 #n <- 100
 #lsurvData <- mclapply(1 : 1000, simall,0.3, 1.35, mc.cores = 15)
 evalestm <- function(itr){
