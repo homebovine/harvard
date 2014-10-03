@@ -585,4 +585,4 @@ plot.FrqID <- function(object, ...){
     res <- do.call(rbind, object)
     plot(res[, ncol(res)] ~ res[, ncol(res) - 2], ...)
 }
-FrqID( survData, rep(0, 9), stheta = c(0.85, 1.1), tol = 1e-6,  ltr = T, step = 0.02,ncores = 1,   verbose =2)
+#res <- FrqID( survData, rep(0, 9), stheta = c(0.01, 0.1), tol = 1e-6,  ltr = T, step = 0.02,ncores = 10,   verbose =2)
