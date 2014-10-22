@@ -796,11 +796,11 @@ estm2 <- function(theta, resp, survData, covm,  n, p){
 }
 #vestm <- jacobian(estm2, x = theta,  method="Richardson", method.args=list(), resp, survData, covm, n, p)
 #cr <- 4
-#n <- 100
+#n <- 500
 #lsurvData <- mclapply(1 : 1000, simall,0.3, 1.35, mc.cores = 15)
 evalestm <- function(itr){
-   #ix <- 1 :n#sample(1:n, n, replace = T)
-    survData <- lsurvData[[itr]]#[ix, ]
+   ix <- sample(1:n, n, replace = T)
+    survData <- survData[ix, ]
     resp <- survData[, 1:4]
     colnames(resp) <- c("y1", "d1", "y2", "d2")
     covm <- matrix(survData[, 5 : (4+ p)], n, p)
@@ -810,7 +810,7 @@ evalestm <- function(itr){
  #   vq <- dlnorm(vg, 0, 1) /sum(dlnorm(vg, 0, 1) )
     dfsane(theta1, estm2, method = 2, control = list(tol = 1.e-7, noimp = 100 ), quiet = FALSE, resp, survData, covm,  n, p)$par
 }
-#res <- mclapply(1 : 1000, evalestm, mc.cores = 15)
+                                        #xres <- mclapply(1 : 1000, evalestm, mc.cores = 15) 
 #res100n <- do.call(rbind, res)
 #res1002 <- do.call(rbind, res)
 #res250n <- do.call(rbind, res)
@@ -821,13 +821,14 @@ theta1 <- c(theta, 0.5)
 #estm2(theta1, resp, survData[, 1:4], covm, n, p)
 ## res100 <- res1002[, 1:q]
 ## res250 <- res2502[, 1:q]
-## mres100 <- round(apply(res100, 2, median), 3)
+##res500 <- res500n[, 1:q]
+## mres100 <- abs(round(apply(res100, 2, median)[1:q] -theta, 3))
 ## mres250 <- round(apply(res250, 2, median), 3)
 ##mres500 <- abs(round(apply(res500, 2, median)[1:q] - theta, 3))
-## sdres100 <- round(apply(res100, 2, mad), 3)
-## sdres250 <- round(apply(res250, 2, mad), 3)
-##sdres500 <- round(apply(res500, 2, mad), 3)
-## msres100 <- round((mres100- theta)^2 + sdres100^2, 4)
+## sdres100 <- round(apply(res100, 2, mad), 3)[1:q]
+## sdres250 <- round(apply(res250, 2, mad), 3)[1:q]
+##sdres500 <- round(apply(res500, 2, mad), 3)[1:q]
+## msres100 <- round((mres100)^2 + sdres100^2, 4)
 ## msres250 <- round((mres250- theta)^2 + sdres250^2, 4)
-#msres500 <- round((mres500)^2 + sdres500[1:q]^2, 4)
-## paste(mres100, sdres100, msres100, mres250, sdres250, msres250, sep = "&")
+#msres500 <- round((mres500 )^2 + sdres500[1:q]^2, 4)
+## paste(mres100, sdres100, msres100, mres500, sdres500, msres500, sep = "&")

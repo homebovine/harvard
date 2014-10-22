@@ -262,7 +262,7 @@ scoreindv2 <- function( bb, theta, resp, cov, vl1, vl2, vl3, lvl1, lvl2, lvl3, m
     svl2 <- matrix(sapply(1 : f, fvl, lvl2, vl2, expb2, expb2n, 2), f, p, byrow = T) 
     svl3 <- matrix(sapply(1: g, fvl, lvl3, vl3,  expb3, expb3n, 0), g, p, byrow = T) 
     x <- matrix(cov, n, p)
-    if(!is.numeric(svl1)){browser()}
+    #if(!is.numeric(svl1)){browser()}
     u2 <- (t(d1) %*% x - colSums(svl1))#
     u3 <- (t((1 - d1) * d2) %*%  x - colSums(svl2))
     u4 <- (t(d1 * d2) %*% x - colSums(svl3))#
@@ -585,4 +585,4 @@ plot.FrqID <- function(object, ...){
     res <- do.call(rbind, object)
     plot(res[, ncol(res)] ~ res[, ncol(res) - 2], ...)
 }
-#res <- FrqID( survData, rep(0, 9), stheta = c(0.01, 0.1), tol = 1e-6,  ltr = T, step = 0.02,ncores = 10,   verbose =2)
+#rescen05084 <- FrqID( survData, rep(0, 9), stheta = c(0.5, 0.84), tol = 1e-6,  ltr = T, step = 0.02,ncores = 10,   verbose =2)
