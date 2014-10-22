@@ -1,12 +1,12 @@
-source("accleft3.r")
+source("accleft5.r")
 set.seed(2014)
 m = 25
 m1 = 100
-theta <- c(0.5, 0.5, 0.5, -0.5,  -1.2,    -0.3, -1.0,    -0.5, -1.1)
+theta <- c(0.5, 0.5, 0.5, -0.5,  -1.1,     -0.2, -1.1,     -0.2, -1.1)
 q <- length(theta) 
 mA <- matrix(NA, m, m)
 mb <- matrix(NA, q, m)
-n <- 500
+n <- 100
 sta <- 1
 end <- sta + 99
 p <- 2
@@ -21,7 +21,7 @@ dg <- dgamma(0.6, 0.3, 0.3)
 cr <- 1000
 cpvar <- 0
 sRoot <- function(itr){
-    filename <- paste("./simdata/simu", itr, n, p, m, ng, cr, sep = "_")
+    filename <- paste("./simdata/simudis", itr, n, p, m, ng, cr, sep = "_")
     load(filename)
     #v <- var(survData[, 6])
     #u <- mean(survData[, 6])
@@ -31,7 +31,8 @@ sRoot <- function(itr){
     resp <- survData[, 1:4]
     colnames(resp) <- c("y1", "d1", "y2", "d2")
     covm <- matrix(survData[, 5 : (4+ p)], n, p)
-    covm1 <<- matrix(cbind(rep(1, ng), rnorm(ng, 0, 1)), ncol = p)
+    p1 <- mean(covm[, 2])
+    covm1 <<- matrix(cbind(rep(1, ng), rbinom(ng, 1, p1)), ncol = p)
     
     XY <<- simuRsk3(ng, p, nu, theta, 300, 400, covm1)#do.call(rbind, lapply(1 :ng, simuRsk2, ng,  p, nu,  theta,  300, 400 , covm1))
     dnom <<- likelihood2(XY, covm1, theta)
@@ -56,4 +57,4 @@ sRoot <- function(itr){
 }
 tsRoot <- function(itr) try(sRoot(itr))
 res <- mclapply(sta:end, tsRoot, mc.cores = 32)
-save(res, file = paste("./result/res3", sta, cpvar, n, p, m, ng, cr, sep = "_"))
+save(res, file = paste("./result/res5disnew", sta, cpvar, n, p, m, ng, cr, sep = "_"))
