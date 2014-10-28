@@ -27,8 +27,8 @@ ctrind <- dataHW$county.date %in% dataHWcontrol$county.date[dataHWcontrol$ctrl3]
 dataHW<- cbind(dataHW, hwind, ctrind)
 dataHW <- cbind(dataHW, matrix(NA, nrow(dataHW), 7))
 subdataHW <- dataHW[dataHW$FIPS == "01001", ]
-lag7 <- function(i, loc, subdataHW){
-    subdataHW[i, 8:14]<- seq(subdataHW[, 2][i ]-6, subdataHW[, 2][i], 1)%in%  dataHWcontrol$date[dataHWcontrol$hw3 &dataHWcontrol$FIPS == loc]
+lag7 <- function(i, loc, subdataHW, datahwd){
+    subdataHW[i, 8:14]<- seq(subdataHW[, 2][i ]-6, subdataHW[, 2][i], 1)%in% datahwd
     subdataHW[i, 8:14]
     
                           
@@ -56,24 +56,33 @@ uniloc <- unique(dataHW$FIPS)
 len <- length(uniloc)
 colnames(dataHW)[5] <- "admit.55"
 loccoef <- function(i){
-    subdataHW <- dataHW[dataHW$FIPS == uniloc[i], ]
-    subdataHW[, 8:14] <- matrix(unlist(sapply(1 : nrow(subdataHW), lag7, uniloc[i], (subdataHW))), ncol = 7, byrow = T)
-    subdataHWcontrol <- subdataHW[apply(subdataHW[, 8:14], 1, sum)|subdataHW$ctrind, ]
-    weight <- 3/4 *  (1 - ((0:6)/100)^2)
+    load(paste("./spatial/hwlagloc55", uniloc[i], sep = "_" ))
+    
+    weight <- rho
     weight <- weight / sum(weight)
     cov1 <- as.matrix(subdataHWcontrol[, 8:14]) %*% as.matrix(weight)
-    cov2 <- as.numeric(subdataHWcontrol$date)/365
+    cov2 <- log(as.numeric(subdataHWcontrol$date)/365)
     glmres <- glm(admit.55~cov1 + cov2 + offset(log(denom)), family = poisson(), data = subdataHWcontrol)
     print(i)
     bb <- coef(glmres)
     
 }
 
-getdata <- function(i){
+savedata <- function(i){
     subdataHW <- dataHW[dataHW$FIPS == uniloc[i], ]
-    subdataHW[, 8:14] <- matrix(unlist(sapply(1 : nrow(subdataHW), lag7, uniloc[i], (subdataHW))), ncol = 7, byrow = T)
+    datahwd <- dataHWcontrol$date[dataHWcontrol$hw3 &dataHWcontrol$FIPS == uniloc[i]]
+    save(subdataHW, datahwd, file = paste("./spatial/loc55", uniloc[i], sep = "_"))
+    
+}
+
+getdata <- function(i){
+    load(paste("./spatial/loc55", uniloc[i], sep = "_"))
+    subdataHW[, 8:14] <- matrix(unlist(sapply(1 : nrow(subdataHW), lag7, uniloc[i], (subdataHW), datahwd)), ncol = 7, byrow = T)
     subdataHWcontrol <- subdataHW[apply(subdataHW[, 8:14], 1, sum)|subdataHW$ctrind, ]
-   aggdata <- data.frame(c(uniloc[i], apply(subdataHWcontrol[, 8:14], 2, mean), (mean(subdataHWcontrol[, 5] /subdataHWcontrol[, 4]))))
+#   aggdata <- data.frame(c(uniloc[i], apply(subdataHWcontrol[, 8:14], 2, mean), (mean(subdataHWcontrol[, 5] /subdataHWcontrol[, 4]))))
+    print(i)
+    save(subdataHWcontrol, file = paste("./spatial/hwlagloc55", uniloc[i], sep = "_" ))
+    #return(subdataHWcontrol)
     
 }
 res <- sapply(1 : 10, loccoef)
@@ -119,3 +128,35 @@ title("Heat weave day counts")
 
 leg.txt <- c("3-12", "12-15", "15-17", "17-18", "18-20", ">20")
 legend("topright", leg.txt, horiz = TRUE, fill = colors)
+
+
+
+trygetdata <- function(i){
+    try(getdata(i))
+    
+    }
+lapply(1:len, savedata)
+aggdata <- mclapply(1 : len, trygetdata, mc.cores = 10)
+
+ meanhwday <- aggregate(aggallData[, 8:14], by=list(aggallData$FIPS), FUN = mean)
+sumcount <- aggregate(aggallData[, 5], by=list(aggallData$FIPS), FUN = sum)
+spsz <- aggregate(aggallData[, 5], by=list(aggallData$FIPS), FUN = length)
+
+
+
+
+aggAll1 <- aggregate(cbind(aggallData[, 5]/aggallData[, 4], aggallData[, 6], aggallData[, 8:14]), by=list(aggallData$FIPS), FUN = mean)
+
+
+colnames(aggAll)[4:10] <- c("lag6", "lag5", "lag4", "lag3", "lag2", "lag1", "lag0" )
+
+tryloc <- function(i){
+    res <- try(loccoef(i))
+    if(class(res) != "try-error"){
+        return(res)
+    }else{
+        return(c(NA, NA, NA))
+        }
+    }
+aggbb <- mclapply(1 : len, tryloc, mc.cores = 10)
+aggbb <- matrix(as.numeric(aggbb), ncol = 3, byrow = T)
