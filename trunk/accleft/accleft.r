@@ -461,3 +461,7 @@ my2d <- function (f, mgrid,  nf,  ...)
 mx <- matrix(c(0, 1), ncol = p)
 #multiroot(estm, c(rep(1, 6), rep(-0.5, 3)), maxiter = 100,  rtol = 1e-6, atol = 1e-8, ctol = 1e-8,useFortran = TRUE, positive = FALSE,jacfunc = NULL, jactype = "fullint", verbose = FALSE, bandup = 1, banddown = 1,resp, covm, n, p)
 theta<- c(0.08241974,  -0.06403001,   0.21495395,   0.50000000,   0.50000000,   0.50000000,  -0.44144138,  -0.50645970,  -0.85097759)
+
+
+Z<- rnorm(1000, 0, 1)
+g <- rgamma(1000, 1, 1/0.5) * (Z <=0) + (2 + rgamma(1000, 1, 1/6)) * (Z >0) 
