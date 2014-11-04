@@ -407,7 +407,11 @@ estm <- function(theta, resp, survData, covm, n, p, mv = rep(1e-5, n)){
 
 simuRsk <- function(i, n, p,  theta,  cen1, cen2 ,covm = NULL){
     if(is.null(covm)){
-        covm <-  matrix(c(1,  rbinom(1, 1, 0.4)), p, 1 )#matrix(1, p, 1)#
+       # r1 <- rbinom(1, 1, 0.4)# x[2] < dg
+        r1 <- rnorm(1, 0, 1)
+        p1 <- rbinom(1, 1, pnorm(r1, 0, 1))
+    
+        covm <-  matrix(c(1,  rbinom(1, 1, pnorm(r1, 0, 1))), p, 1 )#matrix(1, p, 1)#
     }
     kappa1 <- (abs(theta[1]) )
     kappa2 <- (abs(theta[2]) )
