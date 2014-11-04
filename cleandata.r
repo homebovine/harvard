@@ -22,16 +22,19 @@ rm(data.lag)
 
 }
 load("admissionsHWcontrolDays.RData")
-hwind <- dataHW$county.date %in% dataHWcontrol$county.date[dataHWcontrol$hw3]
+hwind <- dataHW$county.date%in% dataHWcontrol$county.date[dataHWcontrol$hw3]
 ctrind <- dataHW$county.date %in% dataHWcontrol$county.date[dataHWcontrol$ctrl3]
 dataHW<- cbind(dataHW, hwind, ctrind)
 dataHW <- cbind(dataHW, matrix(NA, nrow(dataHW), 7))
 subdataHW <- dataHW[dataHW$FIPS == "01001", ]
-lag7 <- function(i, loc, subdataHW, datahwd){
-    subdataHW[i, 8:14]<- seq(subdataHW[, 2][i ]-6, subdataHW[, 2][i], 1)%in% datahwd
-    subdataHW[i, 8:14]
+lag7 <- function(i, loc, subdataHW, datahwd, datactrl){
+    subdataHW$date <- as.Date(subdataHW$date)
+    subdataHW[i, 6:12]<- seq(subdataHW$date[i]-6, subdataHW$date[i], 1)%in% datahwd
+    subdataHW[i, 13] <- subdataHW$date[i]%in% datactrl
+    subdataHW[i, 6:13]
     
                           
+
 }
 temp <- sapply(1 : nrow(subdataHW), lag7, "01001",subdataHW)
 subdataHW[, 8:14] <- matrix(unlist(temp), ncol = 7, byrow = T)
@@ -52,7 +55,7 @@ object <- function(bbs){
     
 }
 optim(c(coef(Glmres), 18), object, gr = NULL, method = "L-BFGS-B", lower = c(-10, -2, -10, 11), upper = c(1, 1, 1,  20))
-uniloc <- unique(dataHW$FIPS)
+uniloc <- unique(dataHWcontrol$FIPS)
 len <- length(uniloc)
 colnames(dataHW)[5] <- "admit.55"
 loccoef <- function(i){
@@ -60,7 +63,7 @@ loccoef <- function(i){
     
     weight <- rho
     weight <- weight / sum(weight)
-    cov1 <- as.matrix(subdataHWcontrol[, 8:14]) %*% as.matrix(weight)
+    cov1 <- as.matrix(subdataHWcontrol[, 6:12]) %*% as.matrix(weight)
     cov2 <- log(as.numeric(subdataHWcontrol$date)/365)
     glmres <- glm(admit.55~cov1 + cov2 + offset(log(denom)), family = poisson(), data = subdataHWcontrol)
     print(i)
@@ -71,18 +74,20 @@ loccoef <- function(i){
 savedata <- function(i){
     subdataHW <- dataHW[dataHW$FIPS == uniloc[i], ]
     datahwd <- dataHWcontrol$date[dataHWcontrol$hw3 &dataHWcontrol$FIPS == uniloc[i]]
-    save(subdataHW, datahwd, file = paste("./spatial/loc55", uniloc[i], sep = "_"))
+    datactrl <- dataHWcontrol$date[dataHWcontrol$ctrl3 &dataHWcontrol$FIPS == uniloc[i]]
+    save(subdataHW, datahwd, datactrl, file = paste("./spatial/loc55", uniloc[i], sep = "_"))
     
 }
 
 getdata <- function(i){
     load(paste("./spatial/loc55", uniloc[i], sep = "_"))
-    subdataHW[, 8:14] <- matrix(unlist(sapply(1 : nrow(subdataHW), lag7, uniloc[i], (subdataHW), datahwd)), ncol = 7, byrow = T)
-    subdataHWcontrol <- subdataHW[apply(subdataHW[, 8:14], 1, sum)|subdataHW$ctrind, ]
+    subdataHW <- cbind(subdataHW, matrix(NA, nrow(subdataHW), 8))
+    subdataHW[, 6:13] <- matrix(unlist(sapply(1 : nrow(subdataHW), lag7, uniloc[i], (subdataHW), datahwd, datactrl)), ncol = 8, byrow = T)
+    subdataHWcontrol <- subdataHW[apply(subdataHW[, 6:13], 1, sum), ]
 #   aggdata <- data.frame(c(uniloc[i], apply(subdataHWcontrol[, 8:14], 2, mean), (mean(subdataHWcontrol[, 5] /subdataHWcontrol[, 4]))))
     print(i)
     save(subdataHWcontrol, file = paste("./spatial/hwlagloc55", uniloc[i], sep = "_" ))
-    #return(subdataHWcontrol)
+    return(subdataHWcontrol)
     
 }
 res <- sapply(1 : 10, loccoef)
@@ -138,7 +143,7 @@ trygetdata <- function(i){
 lapply(1:len, savedata)
 aggdata <- mclapply(1 : len, trygetdata, mc.cores = 10)
 
- meanhwday <- aggregate(aggallData[, 8:14], by=list(aggallData$FIPS), FUN = mean)
+ meanhwday <- aggregate(aggallData[, 6:12], by=list(aggallData$FIPS), FUN = mean)
 sumcount <- aggregate(aggallData[, 5], by=list(aggallData$FIPS), FUN = sum)
 spsz <- aggregate(aggallData[, 5], by=list(aggallData$FIPS), FUN = length)
 
