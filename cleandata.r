@@ -64,15 +64,16 @@ loccoef <- function(i){
     weight <- rho
     weight <- weight / sum(weight)
     cov1 <- as.matrix(subdataHWcontrol[, 6:12]) %*% as.matrix(weight)
-    cov2 <- log(as.numeric(subdataHWcontrol$date)/365)
+    cov2 <- log(as.numeric(subdataHWcontrol$date - inidate))
     glmres <- glm(admit.55~cov1 + cov2 + offset(log(denom)), family = poisson(), data = subdataHWcontrol)
     print(i)
-    bb <- coef(glmres)
-    
+   bb <- coef(glmres)
+   # pvalue <- coefficients(summary(glmres))[2, 4]
 }
 
 savedata <- function(i){
     subdataHW <- dataHW[dataHW$FIPS == uniloc[i], ]
+    
     datahwd <- dataHWcontrol$date[dataHWcontrol$hw3 &dataHWcontrol$FIPS == uniloc[i]]
     datactrl <- dataHWcontrol$date[dataHWcontrol$ctrl3 &dataHWcontrol$FIPS == uniloc[i]]
     save(subdataHW, datahwd, datactrl, file = paste("./spatial/loc55", uniloc[i], sep = "_"))
@@ -82,8 +83,8 @@ savedata <- function(i){
 getdata <- function(i){
     load(paste("./spatial/loc55", uniloc[i], sep = "_"))
     subdataHW <- cbind(subdataHW, matrix(NA, nrow(subdataHW), 8))
-    subdataHW[, 6:13] <- matrix(unlist(sapply(1 : nrow(subdataHW), lag7, uniloc[i], (subdataHW), datahwd, datactrl)), ncol = 8, byrow = T)
-    subdataHWcontrol <- subdataHW[apply(subdataHW[, 6:13], 1, sum), ]
+    subdataHW[, 6:13] <- matrix(do.call(rbind, lapply(1 : nrow(subdataHW), lag7,  uniloc[i], (subdataHW), datahwd, datactrl)), ncol = 8, byrow = T)
+    subdataHWcontrol <- subdataHW[apply(subdataHW[, 6:13], 1, sum) > 0, ]
 #   aggdata <- data.frame(c(uniloc[i], apply(subdataHWcontrol[, 8:14], 2, mean), (mean(subdataHWcontrol[, 5] /subdataHWcontrol[, 4]))))
     print(i)
     save(subdataHWcontrol, file = paste("./spatial/hwlagloc55", uniloc[i], sep = "_" ))
@@ -91,7 +92,7 @@ getdata <- function(i){
     
 }
 res <- sapply(1 : 10, loccoef)
- aggregate<- aggregate(dataAltLong[, c(4, 6, 14)], by=list(dataAltLong$FIPS), FUN = sum)
+aggregate<- aggregate(dataAltLong[, c(4, 6, 14)], by=list(dataAltLong$FIPS), FUN = sum)
 AltLong <- apply(dataAltLong[, 25:26], 1, paste, collapse =  ":")
 AltLong <- unique(AltLong)
 FIPS <- unique(dataAltLong$FIPS)
@@ -119,6 +120,7 @@ legend("topright", leg.txt, horiz = TRUE, fill = colors)
 
 
 library(maps)
+
 AltLongagg$colorBuckets <- as.numeric(cut(AltLongagg$hw3, quantile(AltLongagg$hw3, c(0, seq(0.2, 0.8, length.out = 5),1), type = 3 )))
 colorsmatched <- AltLongagg$colorBuckets[match(county.fips$fips, AltLongagg$FIPS)]
 colors = c("#F1EEF6", "#D4B9DA", "#C994C7", "#DF65B0", "#DD1C77", 
@@ -137,7 +139,12 @@ legend("topright", leg.txt, horiz = TRUE, fill = colors)
 
 
 trygetdata <- function(i){
-    try(getdata(i))
+    res<- try(getdata(i))
+    if(class(res) == "try-error"){
+        return(NULL)
+        }else{
+            return(res)
+            }
     
     }
 lapply(1:len, savedata)
@@ -164,4 +171,6 @@ tryloc <- function(i){
         }
     }
 aggbb <- mclapply(1 : len, tryloc, mc.cores = 10)
+aggbb <- do.call(rbind, aggbb)
 aggbb <- matrix(as.numeric(aggbb), ncol = 3, byrow = T)
+aggpvalue <- mclapply(1 : len, tryloc, mc.cores = 10)
