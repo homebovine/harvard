@@ -251,7 +251,7 @@ scoreindv2 <- function( bb, theta, resp, cov, vl1, vl2, vl3, lvl1, lvl2, lvl3, m
            return(a)
         }else{
             #browser()
-           return(0)
+           return(rep(0, p))
         }
         
         
