@@ -308,8 +308,9 @@ margpartial <- function(theta, beta1, beta2, beta3, vl1, vl2, vl3, resp, cov, n,
     parasall <- sapply(1 : n, getA, theta,   beta1, beta2, beta3, vl1, vl2, vl3, resp, cov, n, p)
     paras <- parasall[4, ]
     sumbb <- sum(matrix(cov1, ncol = p)%*%  matrix(beta1))  + sum(matrix(cov2, ncol = p)%*%  matrix(beta2))+ sum(matrix(cov3, ncol = p)%*%  matrix(beta3))
-    B <- 1/theta + resp[, 1] + resp[, 2]  
-    (sum(resp[, 1] * resp[, 2]) * log(theta + 1)  - sum(B * log(1 + theta* paras))+  sumbb + sum(log(vl)))/n
+    B <- 1/theta + resp[, 1] + resp[, 2]
+    
+    (sum(resp[, 1] * resp[, 2]) * log(theta + 1)  - sum(B * log(1 + theta* paras))+  sumbb + sum(log(vl + 1e-4)))/n
  #   browser()
    # eta <- 1/theta
     #log(prod(eta^eta /gamma(eta) * gamma(eta + resp[, 1] + resp[, 2])/ (eta + paras ) ^(eta + resp[, 1] + resp[, 2])))  + sum(log(vl)) + (sumbb)
