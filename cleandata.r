@@ -64,11 +64,11 @@ loccoef <- function(i){
     weight <- rho
     weight <- weight / sum(weight)
     cov1 <- as.matrix(subdataHWcontrol[, 6:12]) %*% as.matrix(weight)
-    cov2 <- log(as.numeric(subdataHWcontrol$date - inidate))
-    glmres <- glm(admit.55~cov1 + cov2 + offset(log(denom)), family = poisson(), data = subdataHWcontrol)
+    cov2 <- log(as.numeric(subdataHWcontrol$date - inidate)/365)
+    glmres <- glm(admit.55~cov1  +cov2 +  offset(log(denom)), family = poisson(), data = subdataHWcontrol)
     print(i)
-   bb <- coef(glmres)
-   # pvalue <- coefficients(summary(glmres))[2, 4]
+#   bb <- coef(glmres)
+    pvalue <- coefficients(summary(glmres))[2, 4]
 }
 
 savedata <- function(i){
@@ -174,3 +174,4 @@ aggbb <- mclapply(1 : len, tryloc, mc.cores = 10)
 aggbb <- do.call(rbind, aggbb)
 aggbb <- matrix(as.numeric(aggbb), ncol = 3, byrow = T)
 aggpvalue <- mclapply(1 : len, tryloc, mc.cores = 10)
+aggpvalue <- do.call(rbind, aggpvalue)
