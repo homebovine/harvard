@@ -31,13 +31,13 @@ margpartial <- function(paras, resp, cov, n, p, cov1, cov2, cov3, A1, A2, A32, A
     ##     browser()
     ## }
     o <- order(resp[, "y1"])
-    lambda1 <-as.matrix(c( Lambda1[o][1], diff(Lambda1[o]))/c(1, diff(resp[o, "y1"])))
+    lambda1 <-as.matrix(c( Lambda1[o][1], diff(Lambda1[o])))
     rownames(lambda1) <- as.character(resp[o, "y1"])
     o <- order(resp[, "y1"])
-    lambda2 <- as.matrix(c(Lambda2[o][1], diff(Lambda2[o]))/ c(1, diff(resp[o, "y1"])))
+    lambda2 <- as.matrix(c(Lambda2[o][1], diff(Lambda2[o])))
     rownames(lambda2) <- as.character(resp[o, "y1"])
     o <- order(resp[, "y2"])
-    lambda3 <- as.matrix(c(Lambda32[o][1], diff(Lambda32[o]))/c(1, diff(resp[o, "y2"])))
+    lambda3 <- as.matrix(c(Lambda32[o][1], diff(Lambda32[o])))
     rownames(lambda3) <- as.character(resp[o, "y2"])
   
     A <- (Lambda1 -  Av1 %*% sp1)  * exp(cov %*% beta1) +  (Lambda2 -  Av2 %*% sp2)  * exp(cov %*% beta2) +  (Lambda32 - Lambda31)  * exp(cov %*% beta3)
@@ -68,6 +68,7 @@ iniestreal <- function(theta, bb,  resp, cov){
      resp[, 3] <- round(resp[, 3], 8)
      resp[, 4] <- round(resp[, 4], 8)
      colnames(resp) <- c("d1", "d2", "y1", "y2", "v")
+     resp[, 3:5] <- exp(resp[, 3:5])/(1 + exp(resp[, 3:5]))
      nml <- max(resp[, 3:5])
      resp[, 3:5] <- resp[, 3:5]
      knots1 <- seq(quantile(resp[, c(3:5)], 0), quantile(resp[, c(3:5)], 1), length.out = nk)
@@ -211,7 +212,7 @@ iniestreal1 <- function(theta, bb,  resp, cov){
      resp[, 4] <- round(resp[, 4], 8)
      colnames(resp) <- c("d1", "d2", "y1", "y2", "v")
      nml <- max(resp[, 3:5])
-     resp[, 3:5] <- resp[, 3:5]
+     resp[, 3:5] <- exp(resp[, 3:5])/(1 + exp(resp[, 3:5)])
      o1 <- order(resp[, "y1"])
      o2 <- order(resp[, "y2"])
      beta1 <- bb[1 : p]
@@ -281,9 +282,9 @@ margpartial2 <- function(paras, resp, cov, n, p, cov1, cov2, cov3, ind1, ind2, i
     dA2 <- (dA2)
     dA3 <- (dA3)
    # if(as.integer(dA1[1]) != 1){browser()}
-    lambda1 <- as.matrix(stepfun(x = knots1, y = dA1, f= 0)(uniqtime1))
-    lambda2 <- as.matrix(stepfun(x = knots2, y = dA2, f= 0)(uniqtime1))
-    lambda3 <- as.matrix(stepfun(x = knots3, y = dA3, f= 0)(uniqtime2))
+    lambda1 <- as.matrix(stepfun(x = knots1, y = dA1, f= 1/2)(uniqtime1))
+    lambda2 <- as.matrix(stepfun(x = knots2, y = dA2, f= 1/2)(uniqtime1))
+    lambda3 <- as.matrix(stepfun(x = knots3, y = dA3, f= 1/2)(uniqtime2))
     if(sum(is.na(c(lambda1, lambda2, lambda3))) >0){
         browser()
     }
@@ -299,7 +300,7 @@ margpartial2 <- function(paras, resp, cov, n, p, cov1, cov2, cov3, ind1, ind2, i
     rownames(Lambda3) <- rname2
     
     A <- (Lambda1[ as.character(resp[, "y1"]), ] - Lambda1[as.character(resp[, "v"]), ] )  * exp(cov %*% beta1) + (Lambda2[ as.character(resp[, "y1"]), ] - Lambda2[as.character(resp[, "v"]), ] )  * exp(cov %*% beta2) +  (Lambda3[ as.character(resp[, "y2"]), ] - Lambda3[ as.character(resp[, "y1"]), ])  * exp(cov %*% beta3)
-    vl <-c( ((lambda1)[as.character(resp[ind1, "y1"]), ] ), ((lambda2  )[as.character(resp[ind2, "y1"]), ]), ((lambda3 )[as.character(resp[ind3, "y2"]), ]) )#c(lambda1, lambda2, lambda3)# c(lambda1, lambda2, lambda3)##
+    vl <-c( ((lambda1* dtime1)[as.character(resp[ind1, "y1"]), ] ), ((lambda2*dtime1  )[as.character(resp[ind2, "y1"]), ]), ((lambda3 * dtime2)[as.character(resp[ind3, "y2"]), ]) )#c(lambda1, lambda2, lambda3)# c(lambda1, lambda2, lambda3)##
     sumbb <- sum(matrix(cov1, ncol = p)%*%  matrix(beta1))  + sum(matrix(cov2, ncol = p)%*%  matrix(beta2))+ sum(matrix(cov3, ncol = p)%*%  matrix(beta3))
     B <- 1/theta + resp[, 1] + resp[, 2]
 #    print(range(theta * A))
@@ -328,7 +329,7 @@ iniestreal2 <- function(theta, bb,  resp, cov){
      resp[, 4] <- round(resp[, 4], 8)
      colnames(resp) <- c("d1", "d2", "y1", "y2", "v")
      nml <- max(resp[, 3:5])
-     resp[, 3:5] <- resp[, 3:5]
+    # resp[, 3:5] <- exp(resp[, 3:5])/(1 + exp(resp[, 3:5]))
      o1 <- order(resp[, "y1"])
      o2 <- order(resp[, "y2"])
      beta1 <- bb[1 : p]
@@ -367,7 +368,7 @@ iniestreal2 <- function(theta, bb,  resp, cov){
      dA2 <- rep(1, nk + 1)
      dA3 <- rep(1, nk + 1) 
   
-     res <- spg(c(beta1, beta2, beta3, dA1, dA2, dA3, theta), margpartial2, gr = NULL, method=2,  lower = c(rep(-1, 3 * p), rep(0, 3 * pl), 0.01), upper = c(rep(10, 3 * p), rep(10, 3 * pl), 10), project=NULL, projectArgs=NULL, control=list(M = 10, ftol = 1.e-10, maxit = 2000), quiet=FALSE, resp, cov, n, p, cov1, cov2, cov3,  ind1, ind2, ind3, o1, o2, knots1, knots2, knots3,  uniqtime1, rname1, dtime1, uniqtime2, rname2, dtime2, vec1, vec2, vec3)
+     res <- spg(c(beta1, beta2, beta3, dA1, dA2, dA3, theta), margpartial2, gr = NULL, method=2,  lower = c(rep(-1, 3 * p), rep(0, 3 * pl), 0.01), upper = c(rep(100, 3 * p), rep(100, 3 * pl), 10), project=NULL, projectArgs=NULL, control=list(M = 10, ftol = 1.e-10, maxit = 2000), quiet=FALSE, resp, cov, n, p, cov1, cov2, cov3,  ind1, ind2, ind3, o1, o2, knots1, knots2, knots3,  uniqtime1, rname1, dtime1, uniqtime2, rname2, dtime2, vec1, vec2, vec3)
     res
  }
 
@@ -378,7 +379,7 @@ iniestreal2 <- function(theta, bb,  resp, cov){
 res<- matrix(NA, 1, 25)
 set.seed(2013)
 for(i in 1:10){
-    survData <- simCpRsk(1000, p = 1, theta = 0.8, lambda1 = 1, lambda2 = 0.5, lambda3 = 1, kappa = 2,   beta1 = 0.2, beta2 = 0.2, beta3 = 0.2, covm =  NULL, 3, 5)
+    survData <- simCpRsk(1000, p = 1, theta = 0.8, lambda1 = 1, lambda2 = 0.5, lambda3 = 1, kappa = 1/2,   beta1 = 0.2, beta2 = 0.2, beta3 = 0.2, covm =  NULL, 3, 5)
 if(sum(is.na(survData) > 0)){
     next
 }
