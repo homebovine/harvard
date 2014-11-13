@@ -282,9 +282,9 @@ margpartial2 <- function(paras, resp, cov, n, p, cov1, cov2, cov3, ind1, ind2, i
     dA2 <- (dA2)
     dA3 <- (dA3)
    # if(as.integer(dA1[1]) != 1){browser()}
-    lambda1 <- as.matrix(stepfun(x = knots1, y = dA1, f= 1/2)(uniqtime1))
-    lambda2 <- as.matrix(stepfun(x = knots2, y = dA2, f= 1/2)(uniqtime1))
-    lambda3 <- as.matrix(stepfun(x = knots3, y = dA3, f= 1/2)(uniqtime2))
+    lambda1 <- as.matrix(stepfun(x = knots1, y = dA1, f= 0)(uniqtime1))
+    lambda2 <- as.matrix(stepfun(x = knots2, y = dA2, f= 0)(uniqtime1))
+    lambda3 <- as.matrix(stepfun(x = knots3, y = dA3, f= 0)(uniqtime2))
     if(sum(is.na(c(lambda1, lambda2, lambda3))) >0){
         browser()
     }
@@ -300,12 +300,12 @@ margpartial2 <- function(paras, resp, cov, n, p, cov1, cov2, cov3, ind1, ind2, i
     rownames(Lambda3) <- rname2
     
     A <- (Lambda1[ as.character(resp[, "y1"]), ] - Lambda1[as.character(resp[, "v"]), ] )  * exp(cov %*% beta1) + (Lambda2[ as.character(resp[, "y1"]), ] - Lambda2[as.character(resp[, "v"]), ] )  * exp(cov %*% beta2) +  (Lambda3[ as.character(resp[, "y2"]), ] - Lambda3[ as.character(resp[, "y1"]), ])  * exp(cov %*% beta3)
-    vl <-c( ((lambda1* dtime1)[as.character(resp[ind1, "y1"]), ] ), ((lambda2*dtime1  )[as.character(resp[ind2, "y1"]), ]), ((lambda3 * dtime2)[as.character(resp[ind3, "y2"]), ]) )#c(lambda1, lambda2, lambda3)# c(lambda1, lambda2, lambda3)##
+    vl <-c( ((lambda1)[as.character(resp[ind1, "y1"]), ] ), ((lambda2  )[as.character(resp[ind2, "y1"]), ]), ((lambda3 )[as.character(resp[ind3, "y2"]), ]) )#c(lambda1, lambda2, lambda3)# c(lambda1, lambda2, lambda3)##
     sumbb <- sum(matrix(cov1, ncol = p)%*%  matrix(beta1))  + sum(matrix(cov2, ncol = p)%*%  matrix(beta2))+ sum(matrix(cov3, ncol = p)%*%  matrix(beta3))
     B <- 1/theta + resp[, 1] + resp[, 2]
 #    print(range(theta * A))
 #    print(range(vl))
-    res <- try((sum(resp[, 1] * resp[, 2]) * log(theta + 1)  - sum(B * log(1 + theta* A))+  sumbb + sum(log(vl + 1e-16))))
+    res <- try((sum(resp[, 1] * resp[, 2]) * log(theta + 1)  - sum(B * log(1 + theta* A))+  sumbb + sum(log(vl + 1e-16)))/n)
     #print(theta)
     if(class(res) == "try-error"){
         browser()
@@ -345,9 +345,9 @@ iniestreal2 <- function(theta, bb,  resp, cov){
      cov1 <- cov[ind1, ]
      cov2 <- cov[ind2, ]
      cov3 <- cov[ind3, ]
-     knots1 <- seq(quantile(resp[ind1, c(3)], 0.2), quantile(resp[ind1, c(3)], 0.8), length.out = nk)
-     knots2 <- seq(quantile(resp[ind2, c(3)], 0.2), quantile(resp[ind2, c(3)], 0.8), length.out = nk)#quantile(resp[ind2, c(3,  5 )], seq(0.2, 0.8, length = nk))  #
-     knots3 <- seq(quantile(resp[ind3, c(4)],0.2 ), quantile(resp[ind3, c(4)], 0.8), length.out = nk)#quantile(resp[ind3, c(3,  4)], seq(0.2, 0.8, length = nk)) #quantile(resp[, c(3:5)], seq(0, 1, length = nk))#
+     knots1 <- quantile(resp[ind1, c(3)], seq(0.1, 0.85, length.out = nk))#seq(quantile(resp[ind1, c(3)], 0.2), quantile(resp[ind1, c(3)], 0.8), length.out = nk)
+     knots2 <-quantile(resp[ind2, c(3)], seq(0.1, 0.85, length.out = nk)) #seq(quantile(resp[ind2, c(3)], 0.2), quantile(resp[ind2, c(3)], 0.8), length.out = nk)#quantile(resp[ind2, c(3,  5 )], seq(0.2, 0.8, length = nk))  #
+     knots3 <- quantile(resp[ind3, c(4)], seq(0.1, 0.85, length.out = nk))#seq(quantile(resp[ind3, c(4)],0.2 ), quantile(resp[ind3, c(4)], 0.8), length.out = nk)#quantile(resp[ind3, c(3,  4)], seq(0.2, 0.8, length = nk)) #quantile(resp[, c(3:5)], seq(0, 1, length = nk))#
      uniqtime1 <- unique(as.vector(resp[, c(3, 5)]))
      uniqtime1 <- uniqtime1[order(uniqtime1)]
      rname1 <- as.character(uniqtime1)
@@ -379,7 +379,7 @@ iniestreal2 <- function(theta, bb,  resp, cov){
 res<- matrix(NA, 1, 25)
 set.seed(2013)
 for(i in 1:10){
-    survData <- simCpRsk(1000, p = 1, theta = 0.8, lambda1 = 1, lambda2 = 0.5, lambda3 = 1, kappa = 1/2,   beta1 = 0.2, beta2 = 0.2, beta3 = 0.2, covm =  NULL, 3, 5)
+    survData <- simCpRsk(250, p = 1, theta = 0.8, lambda1 = 1, lambda2 = 0.5, lambda3 = 1, kappa = 1/2,   beta1 = 0.2, beta2 = 0.2, beta3 = 0.2, covm =  NULL, 3, 5)
 if(sum(is.na(survData) > 0)){
     next
 }
@@ -397,7 +397,7 @@ covmy <- matrix(survData[, (5 : np)], ncol =  np - 4)
        
 resp <- cbind(d1, d2, y1, y2, v)
 colnames(resp) <- cbind("d1", "d2", "y1", "y2", "v")
-res <- rbind(res, iniestreal1(theta, bb, resp, covmy)$par)
+res <- rbind(res, iniestreal2(theta, bb, resp, covmy)$par)
     print(res[i, 3 * p + 3 * pl + 1])
    #res <- iniestreal2(theta, bb, resp, covmy)$par 
 }
