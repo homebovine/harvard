@@ -582,6 +582,8 @@ Bs3 <- as.matrix(Bs3[as.character(resp[ind3, "y2"]), ])
     sp2 <- paras[ (3 * p + pl1 + 1): (3 * p + pl1 + pl2)]
     sp3 <- paras[ (3 * p + pl1 + pl2 + 1): (3 * p + pl1 + pl2 + pl3)]
     theta <- paras[  (3 * p + pl1 + pl2  +pl3) + 1]
+#   mtheta <- c(mtheta, theta)
+ #   mtheta <<- mtheta[max(length(mtheta)- 500, 1) : length(mtheta)]
     Lambda1 <- A1 %*% sp1
     Lambda2 <- A2  %*% sp2
     Lambda32 <- A32 %*% sp3
@@ -603,7 +605,7 @@ Bs3 <- as.matrix(Bs3[as.character(resp[ind3, "y2"]), ])
     B <- 1/theta + resp[, 1] + resp[, 2]
 #    print(range(theta * A))
 #    print(range(vl))
-    res <- try((sum(resp[, 1] * resp[, 2]) * log(theta + 1)  - sum(B * log(1 + theta* A))+  sumbb + sum(log(vl + 1e-16)))/n)
+    res <- try((sum(resp[, 1] * resp[, 2]) * log(theta + 1)  - sum(B * log(1 + theta* A))+  sumbb + sum(log(vl + 1e-16))))
     if(class(res) == "try-error"){
         browser()
     }else{
@@ -694,9 +696,9 @@ knots3 <- expand.knots(knots3, ord)
      pl1 <- ncol(mA1)
      pl2 <- ncol(mA2)
      pl3 <- ncol(mA3)
-    
+ #   mtheta <<- 0
      
-     res <- spg(c(beta1, beta2, beta3, sp1, sp2, sp3, theta), margpartial4, gr = NULL, method=2,  lower = c(rep(-1, 3 * p), rep(0, pl1 + pl2 + pl3), 0.01), upper = c(rep(10, 3 * p), rep(10, pl1 + pl2 + pl3), 1), project=NULL, projectArgs=NULL, control=list(M = 10, maxit = 5000), quiet=FALSE, resp, cov, n, p, cov1, cov2, cov3, A1, A2, A32, A31, dA1, dA2, dA3, ind1, ind2, ind3,  Av1, Av2)
+     res <- spg(c(beta1, beta2, beta3, sp1, sp2, sp3, theta), margpartial4, gr = NULL, method=2,  lower = c(rep(-1, 3 * p), rep(0, pl1 + pl2 + pl3), 0.01), upper = c(rep(10, 3 * p), rep(100, pl1 + pl2 + pl3), 10), project=NULL, projectArgs=NULL, control=list(M = 10, maxit = 20000, maxfeval = 1e6, trace = FALSE), quiet=FALSE, resp, cov, n, p, cov1, cov2, cov3, A1, A2, A32, A31, dA1, dA2, dA3, ind1, ind2, ind3,  Av1, Av2)
     res
  }
 
@@ -704,6 +706,7 @@ knots3 <- expand.knots(knots3, ord)
 res <- vector("list")
 set.seed(2013)
 for(i in 1:100){
+    print(i)
     survData <- simCpRsk(1000, p = 1, theta = 0.8, lambda1 = 1, lambda2 = 0.5, lambda3 = 1, kappa = 2,   beta1 = 0.2, beta2 = 0.2, beta3 = 0.2, covm =  NULL, 3, 5)
 if(sum(is.na(survData) > 0)){
     next
