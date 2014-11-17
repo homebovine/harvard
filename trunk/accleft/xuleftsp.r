@@ -564,7 +564,7 @@ Bs1 <- as.matrix(Bs1[as.character(resp[ind1, "y1"]), ])
 Bs3 <- as.matrix(Bs3[as.character(resp[ind3, "y2"]), ])
 
 
-     pl <- ncol(mA1)
+    pl <- ncol(mA1)
      res <- spg(c(beta1, beta2, beta3, sp1, sp2, sp3, theta), margpartial3, gr = NULL, method=2,  lower = c(rep(-1, 3 * p), rep(0, 3 * pl), 0.001), upper = c(rep(100, 3 * p), rep(10, 3 * pl), 10), project=NULL, projectArgs=NULL, control=list(M = 10, maxit = 5000), quiet=FALSE, resp, cov, n, p, cov1, cov2, cov3, Bs1, Bs2, Bs3,  A1, A2, A32, A31, ind1, ind2, ind3,  Av1, Av2)
     res
  }
@@ -605,7 +605,7 @@ Bs3 <- as.matrix(Bs3[as.character(resp[ind3, "y2"]), ])
     B <- 1/theta + resp[, 1] + resp[, 2]
 #    print(range(theta * A))
 #    print(range(vl))
-    res <- try((sum(resp[, 1] * resp[, 2]) * log(theta + 1)  - sum(B * log(1 + theta* A))+  sumbb + sum(log(vl + 1e-16))))
+    res <- try((sum(resp[, 1] * resp[, 2]) * log(theta + 1)  - sum(B * log(1 + theta* A))+  sumbb + sum(log(vl + 1e-16)))) * 1000
     if(class(res) == "try-error"){
         browser()
     }else{
@@ -630,6 +630,10 @@ iniestreal4 <- function(theta, bb,  resp, cov){
    #  resp[, 3:5] <- exp(resp[, 3:5])/(1 + exp(resp[, 3:5]))
      nml <- max(resp[, 3:5])
      resp[, 3:5] <- resp[, 3:5]
+     d1 <- resp[, 1]
+     d2 <- resp[, 2]
+     y1 <- resp[, 3]
+     y2 <- resp[, 4]
      ind1 <- which(d1 == 1 )
      ind2 <- which((d1 == 0) & (d2 == 1))
      ind3 <- which((d1 ==1) & (d2 == 1))
@@ -661,10 +665,7 @@ knots3 <- expand.knots(knots3, ord)
      beta1 <- bb[1 : p]
      beta2 <- bb[(p + 1): (2 * p)]
      beta3 <- bb[(2 * p + 1): (3 * p)]
-     d1 <- resp[, 1]
-     d2 <- resp[, 2]
-     y1 <- resp[, 3]
-     y2 <- resp[, 4]
+   
      
      subgix1 <- (d1 == 0)
      respsub1 <- resp[subgix1, ]
@@ -686,9 +687,9 @@ knots3 <- expand.knots(knots3, ord)
      ## dA1 <- dA[as.character(resp[, "y1"]), ]
      ## dA2 <- dA[as.character(resp[, "y2"]), ]
      ## dA3 <- dA2
-     sp1 <- pmax(ginv(t(A1) %*% (A1)) %*% t(A1) %*% bz10$hazard, 0.01)
-     sp2 <- pmax(ginv(t(A2) %*% (A2)) %*% t(A2) %*% bz20$hazard, 0.01)
-     sp3 <- pmax(ginv(t(A3) %*% (A3)) %*% t(A3) %*% bz30$hazard, 0.01)
+     sp1 <- pmax(ginv(t(A1) %*% (A1)) %*% t(A1) %*% bz10$hazard, 0)
+     sp2 <- pmax(ginv(t(A2) %*% (A2)) %*% t(A2) %*% bz20$hazard, 0)
+     sp3 <- pmax(ginv(t(A3) %*% (A3)) %*% t(A3) %*% bz30$hazard, 0)
      A1 <- mA1[as.character(resp[, "y1"]), ]
      A2 <- mA2[as.character(resp[, "y1"]), ]
      A32 <- mA3[as.character(resp[, "y2"]), ]
@@ -698,16 +699,16 @@ knots3 <- expand.knots(knots3, ord)
      pl3 <- ncol(mA3)
  #   mtheta <<- 0
      
-     res <- spg(c(beta1, beta2, beta3, sp1, sp2, sp3, theta), margpartial4, gr = NULL, method=2,  lower = c(rep(-1, 3 * p), rep(0, pl1 + pl2 + pl3), 0.01), upper = c(rep(10, 3 * p), rep(100, pl1 + pl2 + pl3), 10), project=NULL, projectArgs=NULL, control=list(M = 10, maxit = 20000, maxfeval = 1e6, trace = FALSE), quiet=FALSE, resp, cov, n, p, cov1, cov2, cov3, A1, A2, A32, A31, dA1, dA2, dA3, ind1, ind2, ind3,  Av1, Av2)
+     res <- spg(c(beta1, beta2, beta3, sp1, sp2, sp3, theta), margpartial4, gr = NULL, method=2,  lower = c(rep(-1, 3 * p), rep(0, pl1 + pl2 + pl3), 0.01), upper = c(rep(10, 3 * p), rep(100, pl1 + pl2 + pl3), 10), project=NULL, projectArgs=NULL, control=list(M = 10, maxit = 30000, maxfeval = 1e6, trace = FALSE), quiet=FALSE, resp, cov, n, p, cov1, cov2, cov3, A1, A2, A32, A31, dA1, dA2, dA3, ind1, ind2, ind3,  Av1, Av2)
     res
  }
 
 
 res <- vector("list")
 set.seed(2013)
-for(i in 1:100){
+for(i in 27:100){
     print(i)
-    survData <- simCpRsk(1000, p = 1, theta = 0.8, lambda1 = 1, lambda2 = 0.5, lambda3 = 1, kappa = 2,   beta1 = 0.2, beta2 = 0.2, beta3 = 0.2, covm =  NULL, 3, 5)
+    survData <- simCpRsk(1000, p = 1, theta = 0.8, lambda1 = 1, lambda2 = 0.5, lambda3 = 1, kappa = 3,   beta1 = 0.2, beta2 = 0.2, beta3 = 0.2, covm =  NULL, 3, 5)
 if(sum(is.na(survData) > 0)){
     next
 }
@@ -774,4 +775,4 @@ simwei2 <- function(i, t, l1, l2, l3, b1, b2, b3, a, cov, cen1, cen2){
 getres <- function(i){
     res[[i]][[1]]
 }
-     mres <- do.call(rbind, lapply(1:29, getres))
+     mres <- do.call(rbind, lapply(1:100, getres))
