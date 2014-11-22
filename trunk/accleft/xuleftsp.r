@@ -12,7 +12,7 @@ library(ICsurv)
 
 
     
-margpartial <- function(paras, resp, cov, n, p, cov1, cov2, cov3, A1, A2, A32, A31, dA1, dA2, dA3, ind1, ind2, ind3,   Av1, Av2 ){
+Margpartial <- function(paras, resp, cov, n, p, cov1, cov2, cov3, A1, A2, A32, A31, dA1, dA2, dA3, ind1, ind2, ind3,   Av1, Av2 ){
     
     pl1 <- ncol(A1)
     pl2 <- ncol(A2)
@@ -605,7 +605,7 @@ Bs3 <- as.matrix(Bs3[as.character(resp[ind3, "y2"]), ])
     B <- 1/theta + resp[, 1] + resp[, 2]
 #    print(range(theta * A))
 #    print(range(vl))
-    res <- try((sum(resp[, 1] * resp[, 2]) * log(theta + 1)  - sum(B * log(1 + theta* A))+  sumbb + sum(log(vl + 1e-16)))) * 1000
+    res <- try((sum(resp[, 1] * resp[, 2]) * log(theta + 1)  - sum(B * log(1 + theta* A))+  sumbb + sum(log(vl + 1e-16)))/n)
     if(class(res) == "try-error"){
         browser()
     }else{
@@ -621,7 +621,7 @@ Bs3 <- as.matrix(Bs3[as.character(resp[ind3, "y2"]), ])
 
 
 
-iniestreal4 <- function(theta, bb,  resp, cov){
+iniestreal4 <- function(theta, bb,  resp, cov, nitr){
      p <- ncol(cov)
      n <- nrow(resp)
      resp[, 3] <- round(resp[, 3], 8)
@@ -699,7 +699,7 @@ knots3 <- expand.knots(knots3, ord)
      pl3 <- ncol(mA3)
  #   mtheta <<- 0
      
-     res <- spg(c(beta1, beta2, beta3, sp1, sp2, sp3, theta), margpartial4, gr = NULL, method=2,  lower = c(rep(-1, 3 * p), rep(0, pl1 + pl2 + pl3), 0.01), upper = c(rep(10, 3 * p), rep(100, pl1 + pl2 + pl3), 10), project=NULL, projectArgs=NULL, control=list(M = 10, maxit = 30000, maxfeval = 1e6, trace = FALSE), quiet=FALSE, resp, cov, n, p, cov1, cov2, cov3, A1, A2, A32, A31, dA1, dA2, dA3, ind1, ind2, ind3,  Av1, Av2)
+     res <- spg(c(beta1, beta2, beta3, sp1, sp2, sp3, theta), margpartial4, gr = NULL, method=2,  lower = c(rep(-10, 3 * p), rep(0, pl1 + pl2 + pl3), 0.01), upper = c(rep(10, 3 * p), rep(100, pl1 + pl2 + pl3), 100), project=NULL, projectArgs=NULL, control=list(M = 10, maxit = nitr, maxfeval = 1e6, trace = FALSE), quiet=FALSE, resp, cov, n, p, cov1, cov2, cov3, A1, A2, A32, A31, dA1, dA2, dA3, ind1, ind2, ind3,  Av1, Av2)
     res
  }
 
@@ -726,10 +726,28 @@ covmy <- matrix(survData[, (5 : np)], ncol =  np - 4)
        
 resp <- cbind(d1, d2, y1, y2, v)
 colnames(resp) <- cbind("d1", "d2", "y1", "y2", "v")
-res[[i]] <-  iniestreal4(theta, bb, resp, covmy)
+res<-   iniestreal4(theta, bb, resp, covmy, 50000)
  #   print(res[i, 3 * p + 3 * pl + 1])
    #res <- iniestreal2(theta, bb, resp, covmy, knots1, knots2, knots3)
 }
+
+    FrqSemCprsk <- function(survData, bb, theta, nitr = 20000){
+        np <- ncol(survData)
+        n <- nrow(survData)
+        y1 <- pmin(survData[, 1], survData[, 3])
+        y2 <- survData[, 3]
+        d1 <- survData[, 2]
+        d2 <- survData[, 4]
+
+        v <- rep(0, n)
+        covmy <- matrix(survData[, (5 : np)], ncol =  np - 4)
+   
+
+       
+        resp <- cbind(d1, d2, y1, y2, v)
+        colnames(resp) <- cbind("d1", "d2", "y1", "y2", "v")
+        res<-   iniestreal4(theta, bb, resp, covmy, nitr)
+    }
 simwei2 <- function(i, t, l1, l2, l3, b1, b2, b3, a, cov, cen1, cen2){
     expb1 <- exp(sum(cov[i, ] * b1))
     expb2 <- exp(sum(cov[i, ] * b2))
