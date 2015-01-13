@@ -618,10 +618,65 @@ Bs3 <- as.matrix(Bs3[as.character(resp[ind3, "y2"]), ])
 
 
 
+         margpartial4nosum <- function(paras, resp, cov, n, p, cov1, cov2, cov3, A1, A2, A32, A31, dA1, dA2, dA3, ind1, ind2, ind3,   Av1, Av2 ){
+    
+    pl1 <- ncol(A1)
+    pl2 <- ncol(A2)
+    pl3 <- ncol(A32)
+    beta1 <- paras[1 : p]
+    beta2 <- paras[(1 + p) : (2 * p)]
+    beta3 <- paras[(2 * p + 1) : (3 * p)]
+    sp1 <- paras[ (3 * p + 1): (3 * p + pl1)]
+    sp2 <- paras[ (3 * p + pl1 + 1): (3 * p + pl1 + pl2)]
+    sp3 <- paras[ (3 * p + pl1 + pl2 + 1): (3 * p + pl1 + pl2 + pl3)]
+    theta <- paras[  (3 * p + pl1 + pl2  +pl3) + 1]
+#   mtheta <- c(mtheta, theta)
+ #   mtheta <<- mtheta[max(length(mtheta)- 500, 1) : length(mtheta)]
+    Lambda1 <- A1 %*% sp1
+    Lambda2 <- A2  %*% sp2
+    Lambda32 <- A32 %*% sp3
+    Lambda31 <- A31 %*% sp3
+    ## lambda1 <- pmax(predict(smooth.spline(resp[, "y1"], Lambda1), resp[ind1, "y1"], deriv= 1)$y, 0)
+    ## lambda2 <- pmax(predict(smooth.spline(resp[, "y2"], Lambda2), resp[ind2, "y2"], deriv= 1)$y, 0)
+    ## lambda3 <- pmax(predict(smooth.spline(resp[, "y2"], Lambda32), resp[ind3, "y2"], deriv= 1)$y, 0)
+    ## if(sum(lambda1<0) > 0|sum(lambda2<0) > 0 |sum(lambda3<0) > 0){
+    ##     browser()
+    ## }
+    lambda1 <- dA1 %*% sp1
+    lambda2 <- dA2 %*% sp2
+    lambda3 <- dA3 %*% sp3
+    mvl1 <- mvl2 <- mvl3 <- rep(0, n)
+    mcov1 <- mcov2 <- mcov3 <- matrix(0, n, p)
+    mvl1[ind1] <- lambda1
+    mvl2[ind2] <- lambda2
+    mvl3[ind3] <- lambda3
+    mcov1[ind1, ] <- cov1
+    mcov2[ind2, ] <- cov2
+    mcov3[ind3, ] <- cov3
+  
+    A <- (Lambda1 -  Av1 %*% sp1)  * exp(cov %*% beta1) +  (Lambda2 -  Av2 %*% sp2)  * exp(cov %*% beta2) +  (Lambda32 - Lambda31)  * exp(cov %*% beta3)
+    vl <- c( (lambda1 ), (lambda2), (lambda3) )#c(lambda1, lambda2, lambda3)#c(lambda1, lambda2, lambda3)##
+    sumbb <- (matrix(mcov1, ncol = p)%*%  matrix(beta1))  + (matrix(mcov2, ncol = p)%*%  matrix(beta2))+ (matrix(cov3, ncol = p)%*%  matrix(beta3))
+    B <- 1/theta + resp[, 1] + resp[, 2]
+#    print(range(theta * A))
+#    print(range(vl))
+    res <- try(((resp[, 1] * resp[, 2]) * log(theta + 1)  -(B * log(1 + theta* A))+  sumbb + mv1 + mv2 + mv3)) 
+    if(class(res) == "try-error"){
+        browser()
+    }else{
+        return(-res)
+    }
+    
+
+    
+}
 
 
 
-iniestreal4 <- function(theta, bb,  resp, cov){
+
+
+
+iniestreal4 <- function(theta, bb,  resp, cov, var){
      p <- ncol(cov)
      n <- nrow(resp)
      resp[, 3] <- round(resp[, 3], 8)
@@ -700,7 +755,15 @@ knots3 <- expand.knots(knots3, ord)
  #   mtheta <<- 0
      
      res <- spg(c(beta1, beta2, beta3, sp1, sp2, sp3, theta), margpartial4, gr = NULL, method=2,  lower = c(rep(-100, 3 * p), rep(0, pl1 + pl2 + pl3), 0.01), upper = c(rep(10, 3 * p), rep(100, pl1 + pl2 + pl3), 10), project=NULL, projectArgs=NULL, control=list(M = 10, maxit = 50000, maxfeval = 1e6, trace = FALSE), quiet=FALSE, resp, cov, n, p, cov1, cov2, cov3, A1, A2, A32, A31, dA1, dA2, dA3, ind1, ind2, ind3,  Av1, Av2)
-    res
+     if(var == TRUE){
+     D1 <- jacobian(margpartial4nosum, x, method="Richardson", method.args=list(), resp, cov, n, p, cov1, cov2, cov3, A1, A2, A32, A31, dA1, dA2, dA3, ind1, ind2, ind3,  Av1, Av2)
+     D2 <- hessian(margpartial4, x, method="Richardson", method.args=list(), resp, cov, n, p, cov1, cov2, cov3, A1, A2, A32, A31, dA1, dA2, dA3, ind1, ind2, ind3,  Av1, Av2)
+     gD2 <- ginv(D2)
+     var <- gD2 %*% t(D1) %*% D1 %*% t(gD)
+ }else{
+     var <- NULL
+ }
+   list(res, var)
  }
 
 
@@ -731,48 +794,7 @@ res <-  iniestreal4(theta, bb, resp, covmy)
    #res <- iniestreal2(theta, bb, resp, covmy, knots1, knots2, knots3)
 }
    res <- mclapply(1:100, resfun, mc.cores = 15)     
-simwei2 <- function(i, t, l1, l2, l3, b1, b2, b3, a, cov, cen1, cen2){
-    expb1 <- exp(sum(cov[i, ] * b1))
-    expb2 <- exp(sum(cov[i, ] * b2))
-    expb3 <- exp(sum(cov[i, ] * b3))
-    lb1 <- l1 * expb1
-    lb2 <- l2 * expb2
-    lb3 <- l3 * expb3
-    p <- lb2/(lb1 + lb2)
-    r <- rbinom(1, 1, p)
-    u <- runif(3)
-    t1 <- exp(((u[1]^(-t) - 1) / (t * (lb1 + lb2))))
-    t2 <- exp(((u[2]^(-t ) - 1) / (t * (lb1 + lb2))))
-    if(r == 0){
-        t2 <-  exp((u[3]^(- t / (1 + t)) * ( 1 + t * lb1 * log(t1) + t * lb2 * log(t1)) - ( 1 + t * lb1 * log(t1)  + t * lb2 * log(t1) - t * lb3 * log(t1)))/ (t * lb3))
-    }else{
-        t1 <- t2 + 3
-    }
-    c <- runif(1, cen1, cen2) #censoring time
-    c(t1, t2, c)
-}
 
-simwei2 <- function(i, t, l1, l2, l3, b1, b2, b3, a, cov, cen1, cen2){
-    expb1 <- exp(sum(cov[i, ] * b1))
-    expb2 <- exp(sum(cov[i, ] * b2))
-    expb3 <- exp(sum(cov[i, ] * b3))
-    lb1 <- l1 * expb1
-    lb2 <- l2 * expb2
-    lb3 <- l3 * expb3
-    p <- lb2/(lb1 + lb2)
-    r <- rbinom(1, 1, p)
-    u <- runif(3)
-    t1 <- ((u[1]^(-t) - 1) / (t * (lb1 + lb2)))^(1/a)
-    t2 <- ((u[2]^(-t ) - 1) / (t * (lb1 + lb2)))^(1/a)
-    if(r == 0){
-        t2 <-  ((u[3]^(- t / (1 + t)) * ( 1 + t * lb1 * t1 ^ a + t * lb2 * t1^a) - ( 1 + t * lb1 * t1 ^ a + t * lb2 * t1^a - t * lb3 * t1 ^ a))/ (t * lb3))^ (1/a)
-    }else{
-        t1 <- t2 + 3
-    }
-    c <- runif(1, cen1, cen2)
-    #c <- rexp(1, 1/3) #censoring time
-    c(t1, t2, c)
-}
 getres <- function(i){
     res[[i]][[1]]
 }
