@@ -1,3 +1,4 @@
+library(dlnm)
 lalg <- function(i){
     return(as.numeric(haix[[ix[i]]]))
 }
@@ -60,16 +61,24 @@ len <- length(uniloc)
 colnames(dataHW)[5] <- "admit"
 loccoef <- function(i){
     load(paste("./spatial/hwlagloc55", uniloc[i], sep = "_" ))
-    
+    colnames(subdataHWcontrol)[5] <- "admit"
     weight <- rho
     weight <- weight / sum(weight)
-    cov1 <- as.matrix(subdataHWcontrol[, 6:12]) %*% as.matrix(weight)
+#    cov1 <- as.matrix(subdataHWcontrol[, 6:12]) %*% as.matrix(weight)
+    mQ <- as.matrix((subdataHWcontrol[, seq(12, 6, -1)]), ncol = 7)
+    cov1 <- crossbasis(mQ, lag = c(0, 6), argvar = list(fun = "lin", cen = TRUE), arglag = list(fun = "poly", degree = df) )
     cov2 <- log(as.numeric(subdataHWcontrol$date - inidate)/365)
     glmres <- glm(admit~cov1  +cov2 +  offset(log(denom)), family = poisson(), data = subdataHWcontrol)
-    print(i)
-    bb <- coef(glmres)
-    pvalue <- coefficients(summary(glmres))[2, 4]
-    c(bb, pvalue)
+    glmcoef <- summary(glmres)$coefficients
+    C <- solve(t(mQ) %*% mQ) %*% t(mQ) %*% cov1
+    
+    bb <- sum(C %*% glmcoef[2:(df + 2), 1])
+    vbb <- C %*% vcov(glmres)[2:(df + 2), 2:(df + 2)] %*% t(C)
+    sdbb <- sqrt(t(rep(1, 7)) %*% vbb %*% (rep(1, 7)))
+    
+    
+    
+    cbind(bb, sdbb)
 }
 
 savedata <- function(i){
@@ -83,6 +92,7 @@ savedata <- function(i){
 
 getdata <- function(i){
     load(paste("./spatial/loc55", uniloc[i], sep = "_"))
+    colnames(subdataHW)[5] <- "admit"
     subdataHW <- cbind(subdataHW, matrix(NA, nrow(subdataHW), 8))
     subdataHW[, 6:13] <- matrix(do.call(rbind, lapply(1 : nrow(subdataHW), lag7,  uniloc[i], (subdataHW), datahwd, datactrl)), ncol = 8, byrow = T)
     subdataHWcontrol <- subdataHW[apply(subdataHW[, 6:13], 1, sum) > 0, ]
@@ -151,7 +161,7 @@ trygetdata <- function(i){
 lapply(1:len, savedata)
 aggdata <- mclapply(1 : len, trygetdata, mc.cores = 10)
 
- meanhwday <- aggregate(aggallData[, 6:12], by=list(aggallData$FIPS), FUN = mean)
+meanhwday <- aggregate(aggallData[, 6:12], by=list(aggallData$FIPS), FUN = mean)
 sumcount <- aggregate(aggallData[, 5], by=list(aggallData$FIPS), FUN = sum)
 sumadjust <- aggregate(aggallData[, 5] / aggallData[, 4], by=list(aggallData$FIPS), FUN = sum)
 spsz <- aggregate(aggallData[, 5], by=list(aggallData$FIPS), FUN = length)
@@ -168,13 +178,14 @@ colnames(aggAll)[4:10] <- c("lag6", "lag5", "lag4", "lag3", "lag2", "lag1", "lag
 
 tryloc <- function(i){
     res <- try(loccoef(i))
+    
     if(class(res) != "try-error"){
         return(res)
     }else{
-        return(c(NA, NA, NA, NA))
+        return(rep(NA, 2))
         }
     }
-aggbb <- mclapply(1 : len, tryloc, mc.cores = 10)
+aggbb <- lapply(1 : len, tryloc)#, mc.cores = 10)
 aggbb <- do.call(rbind, aggbb)
 aggbb <- matrix(as.numeric(aggbb), ncol = 3, byrow = T)
 aggpvalue <- mclapply(1 : len, tryloc, mc.cores = 10)
@@ -183,7 +194,7 @@ aggpvalue <- do.call(rbind, aggpvalue)
 
 locpred <- function(i){
     load(paste("./spatial/hwlagloc55", uniloc[i], sep = "_" ))
-    cov1 <- crossbasis(subdataHWcontrol[, 6:12], lag = c(0, 6))
+    cov1 <- crossbasis(subdataHWcontrol[, seq(12, 6, -1)], lag = c(0, 6))
     cov2 <- log(as.numeric(subdataHWcontrol$date - inidate)/365)
     glmres <- glm(admit~cov1  + cov2 +  offset(log(denom)), family = poisson(), data = subdataHWcontrol)
     mean((exp(predict(glmres)) - subdataHWcontrol$admit)^2, na.rm = T)
@@ -210,13 +221,14 @@ locgetvar <- function(i){
     
     weight <- rho
     weight <- weight / sum(weight)
-    cov1 <- as.matrix(subdataHWcontrol[, 6:12]) %*% as.matrix(weight)
+    cov1 <- crossbasis(subdataHWcontrol[, seq(12, 6, -1)], lag = c(0, 6))
+   # cov1 <- as.matrix(subdataHWcontrol[, 6:12]) %*% as.matrix(weight)
     cov2 <- log(as.numeric(subdataHWcontrol$date - inidate)/365)
     glmres <- glm(admit~cov1 + cov2 +  offset(log(denom)), family = poisson(), data = subdataHWcontrol)
     print(i)
     coefficients(summary(glmres))[2, 2]
 }
-ix <- which(sumcount[, 2] >20)
+ix <- which(sumcount[, 2] > 60)
 uniloc <- uniloc[ix]
 len <- length(uniloc)
 myprederror <- mclapply(1 : len,  locmypred, mc.preschedule = FALSE, mc.cores = 10)
@@ -228,58 +240,78 @@ myvar <- mclapply(1 : len,  locgetvar, mc.preschedule = FALSE, mc.cores = 10)
 myvar <- as.numeric(unlist(myvar))
 
 
+
+AltLong <- AltLong[ix, ]
+AltLong <- as.matrix(AltLong)
 h <- c(bw.nrd0(AltLong[, 1]),bw.nrd0(AltLong[, 2])) * len^(-1/15)
 dis <- dis[ix, ix]
 rho <- aa[4]
 myvar <- myvar[ix]
-aggbb <- aggbb[ix, ]
+aggbb <- aggbb1[ix, ]
 object <- function(aa, s, invSigma, Kh){
-    
-    estm <- aggbb[, 2] - aa[1] -  (s - AltLong) %*% (aa[2 : 3])
-    temp <- t(estm) %*% Kh %*% invSigma %*% estm
-    if(temp <0 ){
-        browser()
-    }
+
+ 
+    estm <- aggbb[, 1] - aa[1] - (s - AltLong) %*% aa[2:3]#apply((aa[, 2 : 3]) *  (s - AltLong), 1, sum)
+    temp <- (t(estm) %*% Kh %*% invSigma %*% estm)
     temp
     
 }
 
 objectrho <- function(rho,   a0){
-    estm <- aggbb[, 2] - a0 
-    Vpara <- myvar %*% t(myvar)
-    mrho <- exp(-sqrt(3)  * dis  /  rho) * (1 + sqrt(3) * dis /rho)
-    Sigma <- (mrho * Vpara)
-    invSigma <- ginv(Sigma)
-   1/2 *  t(estm)  %*% invSigma %*% estm +1/2 * log(det(Sigma))
+    estm <- aggbb[, 1] - a0
+    
+    
+    mrho <-  exp(-sqrt(5)  * dis/10  /  rho) * (1 + sqrt(5) * dis/10 /rho + 5 * (dis/10) ^2 /(3 * rho ^2))
+    Vpara <- aggbb[, 2] %*% t(aggbb[, 2]) * mrho
+    invSigma <- ginv(Vpara)
+   1/2 *  t(estm)  %*% invSigma %*% estm #+1/2 * log(det(Sigma))
     
 }
-aa <- matrix(c(1, 1, 1), ncol= 3, nrow= len)
-temp <- optim(aa, object, gr= NULL, AltLong[i, ], method = "L-BFGS-B", lower = c(-Inf, -Inf, -Inf, 0.1), upper = c(Inf, Inf, Inf, 0.9))
 
-getaa <- function(i, aa, rho){
- #   print(i)
-    s <- AltLong[i, ]
-    s <- matrix(rep(s, len), ncol = 2, byrow = T)
-    Kh <- diag(dnorm((s[, 1] - AltLong[, 1])/ h[1]) * dnorm((s[, 2] - AltLong[, 2])/ h[2]))
-    mrho <- exp(-sqrt(3)  * dis  /  rho) * (1 + sqrt(3) * dis /rho)
-    Vpara <- myvar %*% t(myvar)
-    invSigma <- ginv(mrho * Vpara)
-    aa <- aa[i, ]
-    aa <- spg(aa, object, gr = NULL, method = 3, project = NULL, lower = c(-Inf, -Inf, -Inf), upper = c(Inf, Inf, Inf), projectArgs = NULL, control = list(trace = FALSE), quiet = FALSE, s, invSigma, Kh )$par
+objectrho1 <- function(rho,   a0){
+    
+    
+    
+    mrho <- exp(-sqrt(5)  * dis  /  rho) * (1 + sqrt(5) * (dis) /rho + 5 * (dis) ^2 /(3 * rho ^2))
+    Vpara <- aggbb[, 2] %*% t(aggbb[, 2]) * mrho
+    estm <- aggbb[, 1] %*% t(aggbb[, 1]) -  a0 %*% t(a0) - Vpara
+    max(eigen(t(estm)  %*% estm)$values)#+1/2 * log(det(Sigma))
+    
 }
 
+newaa <- matrix(1, ncol= 3, nrow= len)
+temp <- optim(aa, object, gr= NULL, AltLong[i, ], method = "L-BFGS-B", lower = c(-Inf, -Inf, -Inf, 0.1), upper = c(Inf, Inf, Inf, 0.9))
+AltLong <- cbind(rep(AltLong[, 1], each = 7), rep(AltLong[, 2], each = 7))
+getaa <- function(i, aa, rho, sigma){
+ #   print(i)
+    s <- AltLong[i, ]
+    
+    s <- matrix(rep(s, len), ncol = 2, byrow = T)
+    Kh <- diag((dnorm((s[, 1] - AltLong[, 1])/ h[1]) * dnorm((s[, 2] - AltLong[, 2])/ h[2])))
+    mrho <- exp(-sqrt(5)  * dis /  rho) * (1 + sqrt(5) * dis/rho + 5 * (dis) ^2 /(3 * rho ^2))
+    Vpara <- aggbb[, 2] %*% t(aggbb[, 2]) * mrho
+    invSigma <- ginv(Vpara)
+    aa <- aa[i, ]
+    aa <- spg(aa, object, gr = NULL, method = 3, project = NULL, lower = -Inf, upper = Inf, projectArgs = NULL, control = list(trace = TRUE), quiet = FALSE, s, invSigma, Kh )$par
+}
+mdis <- matrix(NA, 7 * len, 7 * len)
+for(l in 1: len){
+    for(l1 in 1 : len){
+    mdis[ (7 * (l-1) + 1) : (7 * l), (7 * (l1-1) + 1) : (7 * l1) ]  <- dis[l, l1]
+    }
+    }
 estm <- lapply(1:len, getaa, aa, rho1) 
 for(j in 1: nsim){
     rho <- newrho
+    #sigma <- newrho[2]
     
     aa <- newaa
-    newaa <- do.call(rbind, lapply(1:len, getaa, aa, rho))
-    newrho <- spg(rho, objectrho, gr = NULL, method = 3, project = NULL, lower = c(0.01), upper = c( 10), projectArgs = NULL, control = list(trace = FALSE), quiet = FALSE, newaa[, 1])$par
-    crita <- sum(c(newrho - rho, newaa - aa)^2 / (len + 1)^2)
+    newaa <- do.call(rbind, mclapply(1:len, getaa, aa, rho, sigma, mc.cores = 5))
+    newrho <- spg(newrho, objectrho1, gr = NULL, method = 3, project = NULL, lower = c(0.05), upper = c( 100), projectArgs = NULL, control = list(trace = FALSE), quiet = FALSE, newaa[, 1])$par
+    crita <- sqrt(sum(c(newrho - rho, newaa - aa)^2 / (len + 1)^2))
     print(crita)
     if(crita < tol){
         break
     }
 }
-    
 tol <- 1e-5
