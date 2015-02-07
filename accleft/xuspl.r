@@ -60,7 +60,7 @@ library(ICsurv)
 }
 
 
-        margpartial4sum <- function(paras, sp1, sp2, sp3, resp, cov, n, p, cov1, cov2, cov3, A1, A2, A32, A31, dA1, dA2, dA3, ind1, ind2, ind3,   Av1, Av2 ){
+        margpartial4sum <- function(paras,  resp, cov, n, p, cov1, cov2, cov3, A1, A2, A32, A31, dA1, dA2, dA3, ind1, ind2, ind3,   Av1, Av2 ){
     
     pl1 <- ncol(A1)
     pl2 <- ncol(A2)
@@ -68,10 +68,10 @@ library(ICsurv)
     beta1 <- paras[1 : p]
     beta2 <- paras[(1 + p) : (2 * p)]
     beta3 <- paras[(2 * p + 1) : (3 * p)]
-    ## sp1 <- paras[ (3 * p + 1): (3 * p + pl1)]
-    ## sp2 <- paras[ (3 * p + pl1 + 1): (3 * p + pl1 + pl2)]
-    ## sp3 <- paras[ (3 * p + pl1 + pl2 + 1): (3 * p + pl1 + pl2 + pl3)]
-    theta <- paras[  (3 * p) + 1]
+    sp1 <- paras[ (3 * p + 1): (3 * p + pl1)]
+    sp2 <- paras[ (3 * p + pl1 + 1): (3 * p + pl1 + pl2)]
+    sp3 <- paras[ (3 * p + pl1 + pl2 + 1): (3 * p + pl1 + pl2 + pl3)]
+    theta <- paras[  (3 * p + pl1 + pl2 + pl3) + 1]
 #   mtheta <- c(mtheta, theta)
  #   mtheta <<- mtheta[max(length(mtheta)- 500, 1) : length(mtheta)]
     Lambda1 <- A1 %*% sp1
@@ -108,7 +108,7 @@ library(ICsurv)
 
 
 
-         margpartial4nosum <- function(paras, sp1, sp2, sp3, resp, cov, n, p, cov1, cov2, cov3, A1, A2, A32, A31, dA1, dA2, dA3, ind1, ind2, ind3,   Av1, Av2 ){
+         margpartial4nosum <- function(paras,  resp, cov, n, p, cov1, cov2, cov3, A1, A2, A32, A31, dA1, dA2, dA3, ind1, ind2, ind3,   Av1, Av2 ){
     
     pl1 <- ncol(A1)
     pl2 <- ncol(A2)
@@ -116,10 +116,10 @@ library(ICsurv)
     beta1 <- paras[1 : p]
     beta2 <- paras[(1 + p) : (2 * p)]
     beta3 <- paras[(2 * p + 1) : (3 * p)]
-    ## sp1 <- paras[ (3 * p + 1): (3 * p + pl1)]
-    ## sp2 <- paras[ (3 * p + pl1 + 1): (3 * p + pl1 + pl2)]
-    ## sp3 <- paras[ (3 * p + pl1 + pl2 + 1): (3 * p + pl1 + pl2 + pl3)]
-    theta <- paras[  (3 * p) + 1]
+    sp1 <- paras[ (3 * p + 1): (3 * p + pl1)]
+    sp2 <- paras[ (3 * p + pl1 + 1): (3 * p + pl1 + pl2)]
+    sp3 <- paras[ (3 * p + pl1 + pl2 + 1): (3 * p + pl1 + pl2 + pl3)]
+    theta <- paras[  (3 * p + pl1 + pl2 + pl3) + 1]
 #   mtheta <- c(mtheta, theta)
  #   mtheta <<- mtheta[max(length(mtheta)- 500, 1) : length(mtheta)]
     Lambda1 <- A1 %*% sp1
@@ -135,11 +135,11 @@ library(ICsurv)
     lambda1 <- dA1 %*% sp1
     lambda2 <- dA2 %*% sp2
     lambda3 <- dA3 %*% sp3
-    mvl1 <- mvl2 <- mvl3 <- rep(0, n)
+    mvl1 <- mvl2 <- mvl3 <- rep(1, n)
     mcov1 <- mcov2 <- mcov3 <- matrix(0, n, p)
-    mvl1[ind1] <- lambda1
-    mvl2[ind2] <- lambda2
-    mvl3[ind3] <- lambda3
+    mvl1[ind1] <- lambda1 + 1e-16
+    mvl2[ind2] <- lambda2 + 1e-16
+    mvl3[ind3] <- lambda3 + 1e-16
     mcov1[ind1, ] <- cov1
     mcov2[ind2, ] <- cov2
     mcov3[ind3, ] <- cov3
@@ -150,7 +150,7 @@ library(ICsurv)
     B <- 1/theta + resp[, 1] + resp[, 2]
 #    print(range(theta * A))
 #    print(range(vl))
-    res <- try(((resp[, 1] * resp[, 2]) * log(theta + 1)  -(B * log(1 + theta* A))+  sumbb + mvl1 + mvl2 + mvl3)) 
+    res <- try(((resp[, 1] * resp[, 2]) * log(theta + 1)  -(B * log(1 + theta* A))+  sumbb + log(mvl1) + log(mvl2) + log(mvl3))) 
     if(class(res) == "try-error"){
         browser()
     }else{
@@ -244,9 +244,11 @@ knots3 <- expand.knots(knots3, ord)
      
     
      if(var == TRUE){
+         #c(bb[1 : (3 * p)], bb[length(bb)]), bb[(3 * p + 1) : (3 * p + pl1)], bb[(3 * p + pl1 + 1) : (3 * p + pl1 + pl2)], bb[(3 * p +pl1 + pl2 +  1) : (3 * p + pl1 + pl2 + pl3)],
+         #c(bb[1 : (3 * p)], bb[length(bb)]), bb[(3 * p + 1) : (3 * p + pl1)], bb[(3 * p + pl1 + 1) : (3 * p + pl1 + pl2)], bb[(3 * p +pl1 + pl2 +  1) : (3 * p + pl1 + pl2 + pl3)],
          #browser()
-     D1 <- jacobian(margpartial4nosum, c(bb[1 : (3 * p)], bb[length(bb)]), bb[(3 * p + 1) : (3 * p + pl1)], bb[(3 * p + pl1 + 1) : (3 * p + pl1 + pl2)], bb[(3 * p +pl1 + pl2 +  1) : (3 * p + pl1 + pl2 + pl3)],  method="Richardson", method.args=list(), resp, cov, n, p, cov1, cov2, cov3, A1, A2, A32, A31, dA1, dA2, dA3, ind1, ind2, ind3,  Av1, Av2)
-     D2 <- numDeriv::hessian(margpartial4sum, c(bb[1 : (3 * p)], bb[length(bb)]), bb[(3 * p + 1) : (3 * p + pl1)], bb[(3 * p + pl1 + 1) : (3 * p + pl1 + pl2)], bb[(3 * p +pl1 + pl2 +  1) : (3 * p + pl1 + pl2 + pl3)], method="Richardson", method.args=list(), resp, cov, n, p, cov1, cov2, cov3, A1, A2, A32, A31, dA1, dA2, dA3, ind1, ind2, ind3,  Av1, Av2) 
+     D1 <- jacobian(margpartial4nosum, bb,   method="Richardson", method.args=list(), resp, cov, n, p, cov1, cov2, cov3, A1, A2, A32, A31, dA1, dA2, dA3, ind1, ind2, ind3,  Av1, Av2)
+     D2 <- numDeriv::hessian(margpartial4, bb,  method="Richardson", method.args=list(), resp, cov, n, p, cov1, cov2, cov3, A1, A2, A32, A31, dA1, dA2, dA3, ind1, ind2, ind3,  Av1, Av2) 
      gD2 <- ginv(D2)
      var <- t(gD2) %*% t(D1) %*% D1 %*% (gD2)
      res <- NULL
