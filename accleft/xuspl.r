@@ -2,18 +2,50 @@
 library("survival")
 library("BB")
 library(numDeriv)
-library(rootSolve)
 library(parallel)
 library(splines)
 library(survival)
 library(orthogonalsplinebasis)
 library(MASS)
-library(ICsurv)
+simwei2 <- function(i, t, l1, l2, l3, b1, b2, b3, a, cov, cen1, cen2){
+    expb1 <- exp(sum(cov[i, ] * b1))
+    expb2 <- exp(sum(cov[i, ] * b2))
+    expb3 <- exp(sum(cov[i, ] * b3))
+    lb1 <- l1 * expb1
+    lb2 <- l2 * expb2
+    lb3 <- l3 * expb3
+    p <- lb2/(lb1 + lb2)
+    r <- rbinom(1, 1, p)
+    u <- runif(3)
+    t1 <- ((u[1]^(-t) - 1) / (t * (lb1 + lb2)))^(1/a)
+    t2 <- ((u[2]^(-t ) - 1) / (t * (lb1 + lb2)))^(1/a)
+    if(r == 0){
+        t2 <-  ((u[3]^(- t / (1 + t)) * ( 1 + t * lb1 * t1 ^ a + t * lb2 * t1^a) - ( 1 + t * lb1 * t1 ^ a + t * lb2 * t1^a - t * lb3 * t1 ^ a))/ (t * lb3))^ (1/a)
+    }else{
+        t1 <- t2 + 3
+    }
+    c <- runif(1, cen1, cen2) #censoring time
+    c(t1, t2, c)
+}
+simCpRsk <- function(n, p, theta,  lambda1, lambda2, lambda3, kappa, beta1, beta2, beta3, covm = NULL,  cen1, cen2){
+    if(is.null(covm)){
+        covm <- matrix(rnorm(p * n), n, p) #covariance matrix
+    }
+    simdata1 <- t(sapply(1 : n, simwei2, theta,  lambda1, lambda2, lambda3, beta1, beta2, beta3, kappa, covm, cen1, cen2))
+    d1 <- simdata1[, 1] < simdata1[, 2]&simdata1[, 1] < simdata1[, 3]
+    d2 <- simdata1[, 2] < simdata1[, 3]
+    y2 <- pmin(simdata1[, 2], simdata1[, 3])
+    y1 <- pmin(simdata1[, 1], y2)
+    simresp1 <- cbind(y1, d1, y2, d2)
+    colnames(simresp1) <- c("y1", "d1", "y2", "d2")
+    survData = cbind(simresp1, covm)
+    return(survData)
+}
 
 
     
 
-        margpartial4 <- function(paras, resp, cov, n, p, cov1, cov2, cov3, A1, A2, A32, A31, dA1, dA2, dA3, ind1, ind2, ind3,   Av1, Av2 ){
+margpartial4 <- function(paras, resp, cov, n, p, cov1, cov2, cov3, A1, A2, A32, A31, dA1, dA2, dA3, ind1, ind2, ind3,   Av1, Av2 ){
     
     pl1 <- ncol(A1)
     pl2 <- ncol(A2)
@@ -60,7 +92,7 @@ library(ICsurv)
 }
 
 
-        margpartial4sum <- function(paras,  resp, cov, n, p, cov1, cov2, cov3, A1, A2, A32, A31, dA1, dA2, dA3, ind1, ind2, ind3,   Av1, Av2 ){
+margpartial4sum <- function(paras,  resp, cov, n, p, cov1, cov2, cov3, A1, A2, A32, A31, dA1, dA2, dA3, ind1, ind2, ind3,   Av1, Av2 ){
     
     pl1 <- ncol(A1)
     pl2 <- ncol(A2)
@@ -108,7 +140,7 @@ library(ICsurv)
 
 
 
-         margpartial4nosum <- function(paras,  resp, cov, n, p, cov1, cov2, cov3, A1, A2, A32, A31, dA1, dA2, dA3, ind1, ind2, ind3,   Av1, Av2 ){
+margpartial4nosum <- function(paras,  resp, cov, n, p, cov1, cov2, cov3, A1, A2, A32, A31, dA1, dA2, dA3, ind1, ind2, ind3,   Av1, Av2 ){
     
     pl1 <- ncol(A1)
     pl2 <- ncol(A2)
@@ -343,48 +375,4 @@ plot.FrqSp <- function(objects, ...){
     plot(bspline3 ~ tm, type = "l", xlab = "Time to the terminal event with nonterminal event", ylab = "Cumulative hazard", ylim = c(0,  1))
     
 }
-   subres <- mclapply(1:100, resfun, mc.cores = 15)
-        var <- mclapply(1:100, resfun,  mc.cores = 15)     
-        
-getres <- function(i, res){
-    
-    if(!is.numeric(res[[i]][[1]][1])){
-        return(NULL)
-        }
-    res[[i]][[1]]
-}
-
-getvar <- function(i){
-    if(!is.numeric(var[[i]][1])){
-        return(NULL)
-        }
-    sqrt(diag(var[[i]]))
-}
-        mres <- do.call(rbind, lapply(1:100, getres, res))
-        mmoreres <-  do.call(rbind, lapply(1:100, getres, moreres))
-        mvar <- do.call(rbind, lapply(1:00, getvar))
-
-        tm <- (seq(0, 1, 0.01) * 90)
-        dA1 <- evaluate(integrate(Bs1), seq(0, 1, 0.01))
-        dA2 <- evaluate(integrate(Bs2), seq(0, 1, 0.01))
-        dA3 <- evaluate(integrate(Bs3), seq(0, 1, 0.01))
-        sp1 <- res$par[34:(34 + 23 - 1)]
-        sp2 <- res$par[(34 + 23):(34 + 23 + 23 - 1)]
-        sp3 <- res$par[(34 + 23 + 23):(34 + 23 + 23 + 23 - 1)]
-
-        bspline1 <- ( (dA1 %*% sp1) ) 
-        bspline2 <- ( (dA2 %*% sp2 ))
-        bspline3 <- ( (dA3 %*% sp3))
-
-        pdf("spbl1.pdf")
-        plot(bspline1 ~ tm, type = "l", xlab = "Time to the nonterminal event", ylab = "Cumulative hazard", ylim = c(0, 1))
-        dev.off()
-
-        pdf("spbl2.pdf")
-        plot(bspline2 ~ tm, type = "l", xlab = "Time to the terminal event w/o nonterminal event", ylab = "Cumulative hazard", ylim = c(0, 1))
-        dev.off()
-
-        pdf("spbl3.pdf")
-        plot(bspline3 ~ tm, type = "l", xlab = "Time to the terminal event with nonterminal event", ylab = "Cumulative hazard", ylim = c(0,  1))
-        dev.off() 
         
