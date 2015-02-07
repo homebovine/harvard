@@ -256,14 +256,13 @@ knots3 <- expand.knots(knots3, ord)
  }else{
       res <- spg(c(beta1, beta2, beta3, sp1, sp2, sp3, theta), margpartial4, gr = NULL, method=2,  lower = c(rep(-10, 3 * p), rep(0.001, pl1 + pl2 + pl3), 0.001), upper = c(rep(10, 3 * p), rep(5, pl1 + pl2 + pl3), 10), project=NULL, projectArgs=NULL, control=ctrl,  quiet=FALSE, resp, cov, n, p, cov1, cov2, cov3, A1, A2, A32, A31, dA1, dA2, dA3, ind1, ind2, ind3,  Av1, Av2)
      var <- NULL
-      return(list(res, Bs1, Bs2, Bs3))
+      return(list(res, Bs1, Bs2, Bs3, p = p))
  }
    
  }
 
 
-res <- vector("list")
-set.seed(2013)
+
 resfun <- function(survData, iniv, nk, ord,var,  ctrl = list(M = 10, maxit = 30000, maxfeval = 1e6, trace = FALSE)){
     if(var != 1){
         lpara <- length(iniv)
@@ -272,6 +271,7 @@ resfun <- function(survData, iniv, nk, ord,var,  ctrl = list(M = 10, maxit = 300
     }else{
             bb <- iniv
         }
+    survData[, c(1, 3)] <- survData[, c(1, 3)]/ max(survData[, c(1, 3)])
     np <- ncol(survData)
     n <- nrow(survData)
     y1 <- pmin(survData[, 1], survData[, 3])
@@ -288,6 +288,60 @@ resp <- cbind(d1, d2, y1, y2, v)
 colnames(resp) <- cbind("d1", "d2", "y1", "y2", "v")
 res <-  iniestreal4(theta, bb, resp, covmy, nk, ord, var, ctrl) #apply(mres, 2, median)
  
+}
+
+FrqSp <- function(survData, iniv, nk, ord,  ctrl = list(M = 10, maxit = 30000, maxfeval = 1e6, trace = FALSE)){
+    tres <- resfun(survData, iniv, nk, ord, 0, ctrl)
+    tvar <- resfun(survData, tres[[1]][[1]], nk, ord, 1)
+    res <- list(tres, tvar, survData[, c(1, 3)])
+    class(res) <- "FrqSp"
+    return(res)
+    }
+
+summary.FrqSp <- function(objects){
+    p<- objects[[1]]$p
+    beta1 <- objects[[1]][[1]]$par[ 1:(p)]
+    beta2 <- objects[[1]][[1]]$par[ (p+ 1):(2 * p)]
+    beta3 <- objects[[1]][[1]]$par[ (2 * p+ 1):(3 * p)]
+    theta <- objects[[1]][[1]]$par[length(objects[[1]][[1]]$par)]
+    msd <- sqrt(diag(objects[[2]]))
+    sbeta1 <- msd[ 1:(p)]
+    sbeta2 <- msd[ (p + 1 ): (2 * p)]
+    sbeta3 <- msd[(2 * p + 1) : (3 *p)]
+    rbeta1 <- cbind(beta1, sbeta1)
+    rbeta2 <- cbind(beta2, sbeta2)
+    rbeta3 <- cbind(beta3, sbeta3)
+    rtheta <- cbind(theta, msd[length(objects[[1]][[1]]$par)])
+    colnames(rbeta1) <- colnames(rbeta2) <- colnames(rbeta3) <- c("beta", "sd")
+    colnames(rtheta) <- c("theta", "sd")
+    list(beta1 = rbeta1, beta2 = rbeta2, beta3 = rbeta3, theta = rtheta)
+}
+plot.FrqSp <- function(objects, ...){
+    p <- objects[[1]]$p
+    Bs1 <- objects[[1]][[2]]
+    Bs2 <- objects[[1]][[3]]
+    Bs3 <- objects[[1]][[4]]
+   
+    tm <- (seq(0, 1, 0.01) * max(objects[[3]]))
+    dA1 <- evaluate(integrate(Bs1), seq(0, 1, 0.01))
+    dA2 <- evaluate(integrate(Bs2), seq(0, 1, 0.01))
+    dA3 <- evaluate(integrate(Bs3), seq(0, 1, 0.01))
+    lp <- ncol(dA1) 
+    sp1 <- objects[[1]][[1]]$par[(3 * p + 1):( 3 * p + 1 + lp - 1)]
+    sp2 <- objects[[1]][[1]]$par[( 3 * p + 1 + lp ):( 3 * p + 1 + 2 * lp - 1)]
+    sp3 <- objects[[1]][[1]]$par[( 3 * p + 1 + 2 * lp ):( 3 * p + 1 + 3 * lp - 1)]
+    bspline1 <- ( (dA1 %*% sp1) ) 
+    bspline2 <- ( (dA2 %*% sp2 ))
+    bspline3 <- ( (dA3 %*% sp3))
+    plot(bspline1 ~ tm, type = "l", xlab = "Time to the nonterminal event", ylab = "Cumulative hazard", ylim = c(0, 1))
+    dev.new()
+   
+    plot(bspline2 ~ tm, type = "l", xlab = "Time to the terminal event w/o nonterminal event", ylab = "Cumulative hazard", ylim = c(0, 1))
+    dev.new()
+
+        
+    plot(bspline3 ~ tm, type = "l", xlab = "Time to the terminal event with nonterminal event", ylab = "Cumulative hazard", ylim = c(0,  1))
+    
 }
    subres <- mclapply(1:100, resfun, mc.cores = 15)
         var <- mclapply(1:100, resfun,  mc.cores = 15)     
