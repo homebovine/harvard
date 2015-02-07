@@ -810,7 +810,7 @@ evalestm <- function(itr){
  #   vq <- dlnorm(vg, 0, 1) /sum(dlnorm(vg, 0, 1) )
     dfsane(theta1, estm2, method = 2, control = list(tol = 1.e-7, noimp = 100 ), quiet = FALSE, resp, survData, covm,  n, p)$par
 }
-                                        #xres <- mclapply(1 : 1000, evalestm, mc.cores = 15) 
+                                        #res <- mclapply(1 : 1000, evalestm, mc.cores = 10) 
 #res100n <- do.call(rbind, res)
 #res1002 <- do.call(rbind, res)
 #res250n <- do.call(rbind, res)
