@@ -771,7 +771,8 @@ res <- vector("list")
 set.seed(2013)
 resfun <- function(i){
 #    print(i)
- #   survData <- simCpRsk(1000, p = 3, theta = 0.8, lambda1 = 1, lambda2 = 0.5, lambda3 = 1, kappa = 1/2,   beta1 = c(0.2, 0.3, 0.2), beta2 = c(0.2, 0.2, 0.4), beta3 = c(0.3, 0.2, 0.4), covm =  NULL, 3, 5)
+ #   survData <- simCpRsk(1000, p = 3, theta = 0.8, lambda1 = 1, lambda2 = 0.5, lambda3 = 1, kappa = 1/2,   beta1 = c(0.2, 0.3, 0.2),
+    beta2 = c(0.2, 0.2, 0.4), beta3 = c(0.3, 0.2, 0.4), covm =  NULL, 3, 5)
 if(sum(is.na(survData) > 0)){
     next
 }
