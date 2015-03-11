@@ -198,7 +198,7 @@ margpartial4nosum <- function(paras,  resp, cov, n, p, cov1, cov2, cov3, A1, A2,
 
 
 
-iniestreal4 <- function(theta, bb,  resp, cov, nk, ord, var, ctrl = list(M = 10, maxit = 30000, maxfeval = 1e6, trace = FALSE)){
+iniestreal4 <- function(theta, bb, upper, lower,  resp, cov, nk, ord, var, ctrl = list(M = 10, maxit = 30000, maxfeval = 1e6, trace = FALSE)){
      p <- ncol(cov)
      n <- nrow(resp)
      resp[, 3] <- round(resp[, 3], 8)
@@ -286,7 +286,7 @@ knots3 <- expand.knots(knots3, ord)
      res <- NULL
      return(var)
  }else{
-      res <- spg(c(beta1, beta2, beta3, sp1, sp2, sp3, theta), margpartial4, gr = NULL, method=2,  lower = c(rep(-10, 3 * p), rep(0.001, pl1 + pl2 + pl3), 0.001), upper = c(rep(10, 3 * p), rep(5, pl1 + pl2 + pl3), 10), project=NULL, projectArgs=NULL, control=ctrl,  quiet=FALSE, resp, cov, n, p, cov1, cov2, cov3, A1, A2, A32, A31, dA1, dA2, dA3, ind1, ind2, ind3,  Av1, Av2)
+      res <- spg(c(beta1, beta2, beta3, sp1, sp2, sp3, theta), margpartial4, gr = NULL, method=2,  lower = lower,  upper = upper,  project=NULL, projectArgs=NULL, control=ctrl,  quiet=FALSE, resp, cov, n, p, cov1, cov2, cov3, A1, A2, A32, A31, dA1, dA2, dA3, ind1, ind2, ind3,  Av1, Av2)
      var <- NULL
       return(list(res, Bs1, Bs2, Bs3, p = p))
  }
@@ -295,7 +295,7 @@ knots3 <- expand.knots(knots3, ord)
 
 
 
-resfun <- function(survData, iniv, nk, ord,var,  ctrl = list(M = 10, maxit = 30000, maxfeval = 1e6, trace = FALSE)){
+resfun <- function(survData,  iniv, lower, upper, nk, ord,scale, var,  ctrl = list(M = 10, maxit = 30000, maxfeval = 1e6, trace = FALSE)){
     if(var != 1){
         lpara <- length(iniv)
         theta <- iniv[lpara]
@@ -303,7 +303,7 @@ resfun <- function(survData, iniv, nk, ord,var,  ctrl = list(M = 10, maxit = 300
     }else{
             bb <- iniv
         }
-    survData[, c(1, 3)] <- survData[, c(1, 3)]/ max(survData[, c(1, 3)])
+    survData[, c(1, 3)] <- survData[, c(1, 3)]/scale#/ max(survData[, c(1, 3)])
     np <- ncol(survData)
     n <- nrow(survData)
     y1 <- pmin(survData[, 1], survData[, 3])
@@ -318,17 +318,17 @@ resfun <- function(survData, iniv, nk, ord,var,  ctrl = list(M = 10, maxit = 300
        
 resp <- cbind(d1, d2, y1, y2, v)
 colnames(resp) <- cbind("d1", "d2", "y1", "y2", "v")
-res <-  iniestreal4(theta, bb, resp, covmy, nk, ord, var, ctrl) #apply(mres, 2, median)
+res <-  iniestreal4(theta, bb, upper, lower,  resp, covmy, nk, ord, var, ctrl) #apply(mres, 2, median)
  
 }
 
-FrqSp <- function(survData, iniv, nk, ord,  ctrl = list(M = 10, maxit = 30000, maxfeval = 1e6, trace = FALSE)){
-    tres <- resfun(survData, iniv, nk, ord, 0, ctrl)
-    tvar <- resfun(survData, tres[[1]][[1]], nk, ord, 1)
-    res <- list(tres, tvar, survData[, c(1, 3)])
+FrqSp <- function(survData, startValues, lower, upper, nknots, ord, scale,  ctrl = list(M = 10, maxit = 30000, maxfeval = 1e6, trace = FALSE)){
+    tres <- resfun(survData, startValues, lower, upper, nknots, ord, scale, 0,  ctrl)
+    tvar <- resfun(survData, tres[[1]][[1]], lower, upper, nknots, ord, scale, 1)
+    res <- list(tres, tvar, scale)
     class(res) <- "FrqSp"
     return(res)
-    }
+}
 
 summary.FrqSp <- function(objects){
     p<- objects[[1]]$p
@@ -348,13 +348,13 @@ summary.FrqSp <- function(objects){
     colnames(rtheta) <- c("theta", "sd")
     list(beta1 = rbeta1, beta2 = rbeta2, beta3 = rbeta3, theta = rtheta)
 }
-plot.FrqSp <- function(objects, ...){
+plot.FrqSp <- function(objects, lty = c(1, 2, 3), ylim = NULL){
     p <- objects[[1]]$p
     Bs1 <- objects[[1]][[2]]
     Bs2 <- objects[[1]][[3]]
     Bs3 <- objects[[1]][[4]]
    
-    tm <- (seq(0, 1, 0.01) * max(objects[[3]]))
+    tm <- (seq(0, 1, 0.01) * objects[[3]])
     dA1 <- evaluate(integrate(Bs1), seq(0, 1, 0.01))
     dA2 <- evaluate(integrate(Bs2), seq(0, 1, 0.01))
     dA3 <- evaluate(integrate(Bs3), seq(0, 1, 0.01))
@@ -365,14 +365,12 @@ plot.FrqSp <- function(objects, ...){
     bspline1 <- ( (dA1 %*% sp1) ) 
     bspline2 <- ( (dA2 %*% sp2 ))
     bspline3 <- ( (dA3 %*% sp3))
-    plot(bspline1 ~ tm, type = "l", xlab = "Time to the nonterminal event", ylab = "Cumulative hazard", ylim = c(0, 1))
-    dev.new()
-   
-    plot(bspline2 ~ tm, type = "l", xlab = "Time to the terminal event w/o nonterminal event", ylab = "Cumulative hazard", ylim = c(0, 1))
-    dev.new()
-
+    plot(bspline1 ~ tm, type = "l", xlab = "Time to event", ylab = "Cumulative hazard", ylim = ylim, lty = lty[1])
+    lines(bspline2 ~ tm, type = "l", ylab = "Cumulative hazard", ylim = ylim, lty = lty[2] )
+    lines(bspline3 ~ tm, type = "l",  ylab = "Cumulative hazard", ylim = ylim, lty = lty[3])
+   legend("topleft", c("nonterminal event", "terminal event w/o nonterminal event", "terminal event with nonterminal event"), lty = lty, cex = 0.8)
         
-    plot(bspline3 ~ tm, type = "l", xlab = "Time to the terminal event with nonterminal event", ylab = "Cumulative hazard", ylim = c(0,  1))
+    
     
 }
         
