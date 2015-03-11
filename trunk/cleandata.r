@@ -149,6 +149,28 @@ legend("topright", leg.txt, horiz = TRUE, fill = colors)
 
 
 
+
+
+
+library(maps)
+
+lcumlageff$colorBuckets <- as.numeric(cut((lcumlageff[[1]]), quantile((lcumlageff[[1]]), c(0, seq(0.2, 0.8, length.out = 5),1), type = 3 )))
+colorsmatched <- lcumlageff$colorBuckets[match(state.fips$fips, as.numeric(lcumlageff[[2]]))]
+colors = c("#F1EEF6", "#D4B9DA", "#C994C7", "#DF65B0", "#DD1C77", 
+    "#980043")
+#map("county", col = colors[colorsmatched], fill = TRUE, resolution = 0, 
+#    lty = 0, projection = "polyconic", bg=grey(0.8))
+map("state",col = colors[colorsmatched],   fill = TRUE,lty = 1, lwd = 1, 
+    projection = "polyconic", bg=grey(0.8), resolution = 0)
+map("usa", fill = FALSE, add = TRUE, lty = 1, col = "black", lwd = 1, 
+    projection = "polyconic")
+title("Cummulative lag effect")
+
+leg.txt <- c("0.8-1.1", "1.1-1.2", "1.2-1.4", "1.4-1.6", "1.6-1.7", ">1.7")
+legend("topright", leg.txt, horiz = TRUE, fill = colors)
+
+
+
 trygetdata <- function(i){
     res<- try(getdata(i))
     if(class(res) == "try-error"){
